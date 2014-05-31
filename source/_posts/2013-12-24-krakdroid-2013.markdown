@@ -1,0 +1,23 @@
+---
+layout: post
+title: "Krakdroid 2013"
+date: 2013-12-24T15:28:00+01:00
+categories:
+ - conference
+ - krakdroid
+ - Android
+ - talk
+---
+
+At the beginning of the December I had an opportunity to gave a talk on a [Krakdroid conference](http://www.krakdroid.pl/). The organizers outdid themselves this year, the venue, other speakers and the overall event atmosphere was amazing. Definitely a place to be at if you're in Krakow at the end of the year.
+
+This year I talked about the offline mode in Android apps. The talk was 30% sales pitch, 10% shameless plug and 60% describing the pitfalls one can fall into when implementing offline mode. I'm going to describe two major problems with offline mode in details on my blog and here are the slides:
+
+<script async="" class="speakerdeck-embed" data-id="6b523f1041750131528c42d974972a8f" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"/>
+
+
+Protip on giving a public speech - take a sip of water every 2-3 slides, especially if you're not feeling well and you have a sore throat.
+
+I got an atrocious headache in the afternoon and went home, so I didn't see all the talks, but I've seen the rare thing - a succesful live coding - by [+Wojtek Erbetowski](http://plus.google.com/101390418023034694144) who presented the [RoboSpock](https://github.com/Polidea/RoboSpock) testing framework and incrementally turned a meh-Java code into concise Groove goodness. [+Maciej Górski](http://plus.google.com/102636096187402339072) did the maps framework overview, and although he's the author of excellent [Android Maps Extensions](https://github.com/mg6maciej/android-maps-extensions) he managed to be surprisingly objective. The first talk by [+Wojtek Kaliciński](http://plus.google.com/106250762035158784863) triggered an internal discussion and Base about reducing the support for old Android versions. It won't happen overnight, but at least we've moved from the dangerous "c'mon, it's not that hard to support Froyo" mindtrack. I'll definitely write more about this.
+
+To summarise, it was a great event. I've learned a lot, I've met some interesting people and I gave another talk, which completes [one of the goals I set myself up for 2013](/blog/2012/12/30/2012-summary). Good stuff.

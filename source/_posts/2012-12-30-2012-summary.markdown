@@ -1,0 +1,17 @@
+---
+layout: post
+title: "2012 summary"
+date: 2012-12-30T22:39:00+01:00
+---
+
+
+The end of the year is the usual time for looking back and making a new years' resolutions, so I'm going to gloat a little bit and do some wishful thinking about the next year. Without further ado, let me list what I've managed to accomplish:
+
+1. I have [published](http://store.ovi.com/content/219800) [three](http://store.ovi.com/content/262535) [apps](http://store.ovi.com/content/318428) on two [mobile](https://play.google.com/store/apps/developer?id=chalup) [platforms](http://store.ovi.com/publisher/Jerzy%20Chalupski/).
+1. I changed my safe corporate job for a position in the [startup](https://getbase.com/).
+1. I [gave a talk at the conference](http://www.krakdroid.pl/#speaker_8).
+1. There were over 4k unique visits of my blog and got a couple of +1s.
+
+And what are my plans for the next year? I like to keep things simple, so let's just double the values from the list above, except maybe for the second point - I hope I won't have to change the job, I'm very happy with my current employer.
+
+Anyways, thanks for reading my blog and stay tuned for more content next year!

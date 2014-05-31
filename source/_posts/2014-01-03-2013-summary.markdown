@@ -1,0 +1,21 @@
+---
+layout: post
+title: "2013 summary"
+date: 2014-01-03T09:07:00+01:00
+---
+
+One year ago [I set myself few goals for 2013](/blog/2012/12/30/2012-summary). Let's take a look how it went:
+
+1. I gave [two](https://speakerdeck.com/chalup/data-model-on-android) [talks](https://speakerdeck.com/chalup/offline-mode-in-android-apps).
+1. My blog was viewed over 13k times.
+1. I have [published another game](http://store.ovi.com/content/387592) on [Nokia Store](http://store.ovi.com/publisher/Jerzy%20Chalupski/).
+1. I [have](https://github.com/chalup/microorm) [authored](https://github.com/chalup/thneed) [or](https://github.com/futuresimple/forger) [contributed](https://github.com/futuresimple/android-db-commons) to [several](https://github.com/futuresimple/android-autoindexer) [open](https://github.com/futuresimple/android-schema-utils) [source](https://github.com/futuresimple/sqlitemaster) [projects](https://github.com/chalup/cerberus).
+
+Meeting two out of three goals and some open source bonus ain't that bad. The gloating part is done, let's move to the wishful thinking part, a.k.a. goals for 2014:
+
+1. **Keep giving the talks**. I find that preparing the presentation forces me to do thorough investigation of the topic, question all my assumptions and prepare answers for potential questions. This is probably the best way to learn about something, and as a bonus you're sharing that knowledge afterwards. 
+1. Blog more. This year for each post I wrote I have added at least one more topic to my blog todo list. The resolution for this year is clearing this backlog and generating at least **25k views**. BTW: when I started this blog I feared that I won't have enough content to write regularly. Bollocks.
+1. Publish at least **one app on Google Play**.
+1. Keep working on the libraries I have published this year. It might not be a perfect metric of how useful to others my work turns out to be, but I'd like to accumulate **200 Github stars total** on the projects I authored or co-authored.
+
+The only thing left to be done is to wish you a happy New Year!

@@ -1,0 +1,22 @@
+---
+layout: post
+title: "Mobilization 2013"
+date: 2013-10-28T09:30:00+01:00
+categories:
+ - conference
+ - gradle
+ - dependecy injection
+ - Android
+ - UI
+ - Dagger
+ - talk
+ - build system
+---
+
+I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at [Base CRM](https://getbase.com/) to make the data model maintainable. Here are the slides:
+
+<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+Besides giving the talk, I have attended few other very interesting talks: [+Wojtek Erbetowski](http://plus.google.com/101390418023034694144) has shown the way they test Android apps at Polidea using [RoboSpock](https://github.com/Polidea/RoboSpock); [+Mateusz Grzechociński](http://plus.google.com/110384974108475906298) introduced Android devs to new build system and shared an awesome gradle protip: use --daemon command line parameter to shave off few seconds from gradle startup. [+Mateusz Herych](http://plus.google.com/108555637824110226040) described the [Dagger](https://github.com/square/dagger) basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.
+
+All in all, this years Mobilization conference was a great place to be at. See you there next year!
