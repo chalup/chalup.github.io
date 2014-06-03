@@ -64,9 +64,10 @@ default_asides: [asides/recent_posts.html, asides/github.html, asides/delicious.
 
 # Github repositories
 github_user: chalup
-github_repo_count: 10
+github_repo_count: 0
 github_show_profile_link: true
 github_skip_forks: true
+github_filter_repos: [microorm, thneed, dawggenerator, cerberus]
 
 # Twitter
 twitter_user: jchalupski
