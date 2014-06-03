@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>KrakDroid Aftermath - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="I finally got some sleep after a really busy weekend. For the first time I had an opportunity to give a talk at the programming related conference. I &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2012/12/18/krakdroid-aftermath">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">KrakDroid Aftermath</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-18T09:03:00+01:00" pubdate data-updated="true">Dec 18<span>th</span>, 2012</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I finally got some sleep after a really busy weekend. For the first time I had an opportunity to give a talk at the programming related conference. I was also responsible for a programming contest organized by the company I work at, I tried to push the new release of our product and, on top of that, I had to do some Christmas related stuff, so I didn&rsquo;t get much sleep.</p>
+
+<p>Let&rsquo;s get back to the programming. I gave the talk about standard synchronization pattern on Android (<code>SyncAdapter</code> + <code>Authenticator</code> + <code>ContentProvider</code>) during this year&rsquo;s edition of KrakDroid conference. Here are the slides:</p>
+
+<iframe allowfullscreen="" frameborder="0" height="356" marginheight="0" marginwidth="0" mozallowfullscreen="" scrolling="no" src="http://www.slideshare.net/slideshow/embed_code/15668008" style="border-width: 1px 1px 0; border: 1px solid #CCC; margin-bottom: 5px;" webkitallowfullscreen="" width="427"> </iframe>
+
+
+<p>
+<strong> <a href="http://www.slideshare.net/chalup/sync-on-android">Sync on Android</a> </strong> from <strong><a href="http://www.slideshare.net/chalup">chalup</a></strong></p>
+
+<p>The link to recorded video can be found in the slideshare content description. I won&rsquo;t bother posting it here, because a) I gave the talk in Polish, and I try to keep the content of this blog in English b) I was really tired, at one point of the talk I had to stop and ask myself &ldquo;What the hell am I trying to say&rdquo;.</p>
+
+<p>Although my talk was average and there are many things I might have done better, I&rsquo;m very happy I had an opportunity to give this talk. Public speaking is definitely outside of my comfort zone and I learned a lot. Here&rsquo;s the &ldquo;conference speaker checklist&rdquo; for my future self:</p>
+
+<ol>
+<li>Get some sleep</li>
+<li><p>Do the test run of the talk in front of the mirror</p>
+
+<p> I finished the slides for my presentation half an hour before giving it, so I didn&rsquo;t have a chance to rehearse it. There were few points during my talk when adding a slide with a summary would make things much clearer. Which brings me to the next point:</p></li>
+<li><p>Recap</p>
+
+<p> I&rsquo;m not sure how much the listeners who didn&rsquo;t knew anything about sync will remember from my talk. The recaps could help them remember at least some keywords they would be able to google later.</p></li>
+<li><p>Do the test run of the talk in front of other people</p>
+
+<p> But not any other people &ndash; you want your audience to be critical and at least a bit familiar with the topic. You want someone who will tell you that this part of the talk is boring or that part is not clear.</p></li>
+<li><p>Get more sleep</p></li>
+</ol>
+
+
+<p>And finally, do not freak out &ndash; the hardest part is saying &ldquo;Hello, my name is&hellip;&rdquo;, the rest will pour out of you.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-18T09:03:00+01:00" pubdate data-updated="true">Dec 18<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/sync/'>sync</a>, <a class='category' href='/blog/categories/talk/'>talk</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2012/12/18/krakdroid-aftermath/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2012/12/18/krakdroid-aftermath/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/11/13/android-gets-nested-fragments/" title="Previous Post: Android gets nested fragments">&laquo; Android gets nested fragments</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/12/28/unknownhostexception-gotcha/" title="Next Post: UnknownHostException gotcha">UnknownHostException gotcha &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

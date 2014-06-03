@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Conference | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/conference/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Krakdroid 2013]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/24/krakdroid-2013/"/>
+    <updated>2013-12-24T15:28:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/24/krakdroid-2013</id>
+    <content type="html"><![CDATA[<p>At the beginning of the December I had an opportunity to gave a talk on a <a href="http://www.krakdroid.pl/">Krakdroid conference</a>. The organizers outdid themselves this year, the venue, other speakers and the overall event atmosphere was amazing. Definitely a place to be at if you&rsquo;re in Krakow at the end of the year.</p>
+
+<p>This year I talked about the offline mode in Android apps. The talk was 30% sales pitch, 10% shameless plug and 60% describing the pitfalls one can fall into when implementing offline mode. I&rsquo;m going to describe two major problems with offline mode in details on my blog and here are the slides:</p>
+
+<p><script async="" class="speakerdeck-embed" data-id="6b523f1041750131528c42d974972a8f" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"/></p>
+
+<p>Protip on giving a public speech &ndash; take a sip of water every 2-3 slides, especially if you&rsquo;re not feeling well and you have a sore throat.</p>
+
+<p>I got an atrocious headache in the afternoon and went home, so I didn&rsquo;t see all the talks, but I&rsquo;ve seen the rare thing &ndash; a succesful live coding &ndash; by <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> who presented the <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> testing framework and incrementally turned a meh-Java code into concise Groove goodness. <a href="http://plus.google.com/102636096187402339072">+Maciej Górski</a> did the maps framework overview, and although he&rsquo;s the author of excellent <a href="https://github.com/mg6maciej/android-maps-extensions">Android Maps Extensions</a> he managed to be surprisingly objective. The first talk by <a href="http://plus.google.com/106250762035158784863">+Wojtek Kaliciński</a> triggered an internal discussion and Base about reducing the support for old Android versions. It won&rsquo;t happen overnight, but at least we&rsquo;ve moved from the dangerous &ldquo;c'mon, it&rsquo;s not that hard to support Froyo&rdquo; mindtrack. I&rsquo;ll definitely write more about this.</p>
+
+<p>To summarise, it was a great event. I&rsquo;ve learned a lot, I&rsquo;ve met some interesting people and I gave another talk, which completes <a href="/blog/2012/12/30/2012-summary">one of the goals I set myself up for 2013</a>. Good stuff.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Mobilization 2013]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/28/mobilization-2013/"/>
+    <updated>2013-10-28T09:30:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/28/mobilization-2013</id>
+    <content type="html"><![CDATA[<p>I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at <a href="https://getbase.com/">Base CRM</a> to make the data model maintainable. Here are the slides:</p>
+
+<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+
+<p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
+
+<p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
+]]></content>
+  </entry>
+  
+</feed>

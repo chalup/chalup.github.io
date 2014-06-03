@@ -1,0 +1,1126 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="About once a month I interview potential employees at Base CRM. The nice thing about this is that I usually learn a thing or two. The not-so-nice &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/page/4">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/05/29/android-stuff-you-probably-want-to-know/">Android Stuff You Probably Want to Know About</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-29T23:24:00+02:00" pubdate data-updated="true">May 29<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/05/29/android-stuff-you-probably-want-to-know/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/05/29/android-stuff-you-probably-want-to-know/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>About once a month I interview potential employees at <a href="http://getbase.com/">Base CRM</a>. The nice thing about this is that I usually learn a thing or two. The not-so-nice thing about it is that sometimes you have to tell someone that there is much they have to learn.</p>
+
+<p>At this point most of the candidates ask &ldquo;OK, so what else should I know?&rdquo;. I used to give some ad-hoc answer for this question, but it&rsquo;s not the best idea, because I tend to forget to mention about some stuff; and even if I don&rsquo;t miss anything, the candidate probably won&rsquo;t remember half of what I said because of the stress accompanying the job interview.</p>
+
+<p>Anyways, I decided to write down the list of Android learning materials, blogs, libraries, etc. I recommend reading about.</p>
+
+<h2>Android basics</h2>
+
+<p>Some people&rsquo;s Android knowledge can be summed up as &ldquo;<a href="http://developer.android.com/reference/android/app/Activity.html"><code>Activities</code></a> + <a href="http://developer.android.com/reference/android/os/AsyncTask.html"><code>AsyncTasks</code></a>&rdquo;. That&rsquo;s not enough to write anything more complex than Yet Another Twitter Feed app, so if you seriously think of being the Android developer, go to <a href="http://developer.android.com/guide/components/index.html">http://developer.android.com/guide/components/index.html</a> and fill the gaps in your education.</p>
+
+<p>At the very least you should also know about <a href="http://developer.android.com/reference/android/app/Fragment.html"><code>Fragments</code></a> and <a href="http://developer.android.com/reference/android/content/Loader.html"><code>Loaders</code></a>. If you want to persist the data, I recommend using the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>. It looks like a hassle to implement at first, but it solves all the issues with communication between Services and UI. While we&rsquo;re at the <a href="http://developer.android.com/reference/android/app/Service.html"><code>Services</code></a>: you should know the difference between the bound Service and started Service, and you should know that most likely all you need is the <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a>. You should also know about <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html"><code>BroadcastReceivers</code></a>, and what is the ordered broadcast and sticky broadcast. Pay attention on what thread the different components operate.</p>
+
+<h2>Libraries</h2>
+
+<ul>
+<li><a href="http://developer.android.com/tools/extras/support-library.html">Support library</a></li>
+<li><a href="https://code.google.com/p/guava-libraries/">Guava</a></li>
+<li><a href="http://actionbarsherlock.com/">ActionBarSherlock</a></li>
+<li><a href="http://joda-time.sourceforge.net/">JodaTime</a></li>
+<li><a href="http://commons.apache.org/proper/commons-io/">Commons IO</a></li>
+<li><a href="http://square.github.io/dagger/">Dagger</a></li>
+<li><a href="http://square.github.io/otto/">Otto</a></li>
+<li><a href="https://code.google.com/p/google-gson/">Gson</a></li>
+<li><a href="https://github.com/Prototik/HoloEverywhere">HoloEverywhere</a></li>
+</ul>
+
+
+<h2>Blogs</h2>
+
+<ul>
+<li><a href="http://commonsware.com/blog/">Mark Murphy</a></li>
+<li><a href="http://cyrilmottier.com/">Cyril Mottier</a></li>
+<li><a href="http://www.curious-creature.org/category/android/">Romain Guy</a></li>
+<li><a href="http://roman.nurik.net/">Roman Nurik</a></li>
+</ul>
+
+
+<h2>Github</h2>
+
+<ul>
+<li><a href="https://github.com/JakeWharton">Jake Wharton</a></li>
+<li><a href="https://github.com/square">Square</a></li>
+</ul>
+
+
+<h2>Design / UI</h2>
+
+<ul>
+<li><a href="http://www.androidviews.net/">Android Views</a></li>
+<li><a href="http://www.androiduipatterns.com/">Android UI Patterns blog</a></li>
+<li><a href="http://androiduiux.com/">Android UI / UX</a></li>
+<li><a href="http://android-ui-utils.googlecode.com/hg/asset-studio/dist/index.html">Android Asset Studio</a></li>
+<li><a href="http://petrnohejl.github.io/Android-Cheatsheet-For-Graphic-Designers/">Android cheatsheet for graphic designers</a></li>
+</ul>
+
+
+<h2>Miscellaneous</h2>
+
+<ul>
+<li><a href="https://code.google.com/p/iosched/">Google I/O app sources</a></li>
+<li><a href="http://grepcode.com/project/repository.grepcode.com/java/ext/com.google.android/android/">Grepcode</a></li>
+<li><a href="http://androidxref.com/">AndroidXRef</a></li>
+</ul>
+
+
+<p>I probably forgot about something very important, so please leave the comment if you thing anything is missing.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/05/28/weekend-hack-microorm-library/">Weekend Hack: MicroOrm Library</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-28T17:28:00+02:00" pubdate data-updated="true">May 28<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/05/28/weekend-hack-microorm-library/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/05/28/weekend-hack-microorm-library/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Last week I had to write some <code>fromCursor()</code> and <code>getContentValues()</code> boilerplate. Again. I finally got fed up and decided to write a library to replace all the hand rolled crap.</p>
+
+<p>You may ask, why not use some existing ORM solution? There are plenty, five minutes with Google yielded these results:</p>
+
+<ul>
+<li><a href="http://www.mobeelizer.com/">http://www.mobeelizer.com/</a></li>
+<li><a href="http://ormlite.com/">http://ormlite.com/</a></li>
+<li><a href="http://greendao-orm.com/">http://greendao-orm.com/</a></li>
+<li><a href="https://github.com/ahmetalpbalkan/orman">https://github.com/ahmetalpbalkan/orman</a></li>
+<li><a href="http://hadi.sourceforge.net/">http://hadi.sourceforge.net/</a></li>
+<li><a href="https://www.activeandroid.com/">https://www.activeandroid.com/</a></li>
+<li><a href="https://github.com/roscopeco/ormdroid">https://github.com/roscopeco/ormdroid</a></li>
+<li><a href="http://droidparts.org/">http://droidparts.org/</a></li>
+<li><a href="http://robotoworks.com/mechanoid-plugin/">http://robotoworks.com/mechanoid-plugin/</a></li>
+</ul>
+
+
+<p>The problem is, all those solutions are all-or-nothing, full blown ORMs, and all I need is the sane way to convert the <a href="http://developer.android.com/reference/android/database/Cursor.html"><code>Cursor</code></a> to POJO and POJO to <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a>.</p>
+
+<p>And thus, the <a href="https://github.com/chalup/microorm">MicroOrm</a> project was born. The public API was inspired by <a href="https://code.google.com/p/google-gson/">google-gson</a> project and is dead simple:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MicroOrm</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">T</span> <span class="n">fromCursor</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">c</span><span class="o">,</span> <span class="n">Class</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">klass</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">T</span> <span class="n">fromCursor</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">c</span><span class="o">,</span> <span class="n">T</span> <span class="n">object</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">ContentValues</span> <span class="n">toContentValues</span><span class="o">(</span><span class="n">T</span> <span class="n">object</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">collectionFromCursor</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">c</span><span class="o">,</span> <span class="n">Class</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">klass</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&rsquo;d like to keep this library as simple as possible, so this is more or less the final API. I intend to add the <code>MircroOrm.Builder</code> which would allow registering adapters for custom types, but I haven&rsquo;t decided yet to what extent the conversion process should be customisable.</p>
+
+<p>The elephant in the room is obviously the performance. Current implementation is reflection-based, which incurs the significant overhead. I did some quick benchmarking and it seems that the MicroOrm is about 250% slower than the typical boilerplate code. Sounds appaling, but it&rsquo;s not that bad if you consider that a) the elapsed time of a single fromCursor call is still measured in 100s of microseconds and b) if you really need to process a lot of data you can fall back to manual <code>Cursor</code> iteration. I&rsquo;m also considering changing the implementation to use code generation instead of reflection, similarly to Jake Wharton&rsquo;s butterknife, which should solve the performance problems.</p>
+
+<p>In the following weeks I&rsquo;ll try to adapt the <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a> code I&rsquo;m working on to use the MicroOrm, and I expect this project to evolve as I face the real-life issues and requirements. All feedback, comments, ideas and pull requests are more than welcome. You can also show the support by <a href="https://github.com/chalup/microorm/star">starring</a> the project on <a href="https://github.com/chalup/microorm">Github</a>.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/">Upgrading to Android SDK Tools Revision 22</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-22T23:31:00+02:00" pubdate data-updated="true">May 22<span>nd</span>, 2013</time>
+        
+           | <a href="/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>The Google I/O 2013 has come and gone and one of the many things left in its wake is the new revision of Android SDK Tools and ADT plugin for Eclipse. If you haven&rsquo;t let Eclipse go in favor of new hot <a href="http://developer.android.com/sdk/installing/studio.html">Android Studio</a> (which is what Mark Murphy, a.k.a. commons guy, <a href="http://commonsware.com/blog/2013/05/16/android-studio-early-access-preview-and-you.html">recommends</a> BTW) and you upgraded to the latest Android SDK Tools, you&rsquo;ll probably have some issues with building your old projects.</p>
+
+<p>After installing all the updates from Android SDK Manager and updating the ADT Eclipse plugin your projects will simply fail to build, with the errors pointing to the R class in gen folder. If you try to build the project with ant you&rsquo;ll get more meaningful &ldquo;no build tools installed&rdquo; message. After re-running the Android SDK Manager, you should see an additional item in Tools section called Build-tools. Go ahead and install it.</p>
+
+<p>Now your project will build (you might have to restart the Eclipse), but if you use any external libraries from your projects libs directory, your app will crash on the first call using this libs. To fix this you have to go to the project Properties, Java Build Path, Order and Export tab and check the &ldquo;Android Private Libraries&rdquo; item. The previous name for this item was &ldquo;Android Dependencies&rdquo; and apparently the build rules for those two are not updated correctly.</p>
+
+<p>Of course new projects created with revision 22 of Android tools doesn&rsquo;t require jumping through all those hoops.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/24/android-gotcha-cursoradapter/">Android Gotcha: CursorAdapter Constructors</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-24T23:14:00+02:00" pubdate data-updated="true">Apr 24<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/04/24/android-gotcha-cursoradapter/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/04/24/android-gotcha-cursoradapter/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I just spend few hours analyzing and fixing a memory leak in Android application. With every orientation change the full <code>Context</code>, including the whole <code>Activity</code> was leaked. Long story short, the problem was caused by misuse of <code>CursorAdapter</code>: in subclass constructor we called <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> instead of <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20int%29"><code>CursorAdapter(context, null, 0)</code></a>.</p>
+
+<p>The difference is quite subtle. If you use the second constructor, you have to take care of handling content updates yourself. If you use the first constructor, the <code>CursorAdapter</code> will register an additional <code>ContentObserver</code> for you, but you need to manually reset the <code>Cursor</code>.</p>
+
+<p>The funny thing is, this behavior is described in javadocs, but the documentation is spread between the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29">constructor</a> and <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#FLAG_REGISTER_CONTENT_OBSERVER"><code>FLAG_REGISTER_CONTENT_OBSERVER</code></a> flag documentation. The second part contains most crucial information: you don&rsquo;t need to use this flag when you intend to use your adapter with <code>CursorLoader</code>.</p>
+
+<p>If for some reason you want to use the adapter without <code>CursorLoader</code>, you should use the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> constructor, and call <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#swapCursor%28android.database.Cursor%29"><code>swapCursor(null)</code></a> when leaving the <code>Activity</code> or <code>Fragment</code>.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/23/libphonenumber-crash-on-android-32/">Libphonenumber Crash on Android 3.2</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-23T18:54:00+01:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
+        
+           | <a href="/blog/2013/03/23/libphonenumber-crash-on-android-32/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/03/23/libphonenumber-crash-on-android-32/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Few days ago I saw the most peculiar crash on a tablet with Android 3.2:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>java.lang.NoSuchFieldError: com.google.i18n.phonenumbers.PhoneNumberUtil$PhoneNumberFormat.RFC3966</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Of course there is such field in this class, it works on every other Android hardware I have access to. This was a debug build, so it couldn&rsquo;t have been the Proguard issue. The other functionality from the com.google.i18n.phonenumbers package worked fine, the issue only appeared if I wanted to format a phone number using this specific format.</p>
+
+<p>Long story short, it turns out that some old version of libphonenumber, which doesn&rsquo;t support this particular phone number format, is included in the Android build on my 3.2 device. You can verify such thing by calling:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;com.google.i18n.phonenumbers.PhoneNumberUtil&quot;</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>inside a project without any libs &ndash; on this single 3.2 device it will return the valid <code>Class</code> object, on every other device I tried it throws <code>ClassNotFoundException</code>.</p>
+
+<p>I started to wonder if any other libraries are affected, so I picked up some class names from the most popular libraries (<a href="http://www.appbrain.com/stats/libraries/dev">as reported by AppBrain</a>) and it seems there might be a similar issue with <a href="http://commons.apache.org/codec/">Apache Commons Codec jar</a>. Fortunately there are no issues with stuff like Guava, GSON or support lib.</p>
+
+<p>What&rsquo;s the workaround for this issue? Fork the library and change the package name.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/23/android-ui-struggles-making-button-with/">Android UI Struggles: Making a Button With Centered Text and Icon</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-23T14:04:00+01:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
+        
+           | <a href="/blog/2013/03/23/android-ui-struggles-making-button-with/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/03/23/android-ui-struggles-making-button-with/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Every time I work on the UI of Android app I get the feeling that there is either something terribly wrong with the Android UI framework or with my understanding of how it works. I can reason about how the app works on the higher level, but I cannot apply the same methodology to Android UI, except for the simplest designs. I have read a lot of Android source code, I have written few dozens of sample-like apps, but I still cannot just think of the views structure, type it in and be done &ndash; for complicated layouts with some optional elements (i.e. which are sometimes visible and sometimes gone) I need at least few attempts and, I confess, sometimes I&rsquo;m desperate enough to do the &ldquo;let&rsquo;s change this and see what happens&rdquo; coding. Extremely frustrating.</p>
+
+<p>I&rsquo;m going to describe my struggles with Android UI on this blog, so if I&rsquo;m doing something terribly wrong, hopefully someone will enlighten me by posting a comment; and in case something is terribly wrong with Android UI framework, I might be able to help other programmers in distress.</p>
+
+<p>Today I have a simple task for you: create a button with some text and icon to the left of the text. The contents (both icon and text) should be centered inside the button.</p>
+
+<p><img class="center" src="/images/challenge.png"></p>
+
+<p>That&rsquo;s simple right? Here&rsquo;s the XML layout which comes to mind first:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;LinearLayout</span> <span class="na">xmlns:android=</span><span class="s">&quot;http://schemas.android.com/apk/res/android&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>    <span class="na">android:orientation=</span><span class="s">&quot;vertical&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;Button</span>
+</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
+</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
+</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;/LinearLayout&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Unfortunately, no cookie for you:</p>
+
+<p><img class="center" src="/images/try1.png"></p>
+
+<p>Someone decided that compound drawables should be always draw next to the <code>View</code>&rsquo;s padding, so we have to try something else. For example <code>TextView</code> centered inside the <code>FrameLayout</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;FrameLayout</span>
+</span><span class='line'>    <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;TextView</span>
+</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center&quot;</span>
+</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
+</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
+</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/FrameLayout&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img class="center" src="/images/try2.png"></p>
+
+<p>Almost there, but the text has a wrong size and color. There is something called <code>textAppearanceButton</code>, but apparently it&rsquo;s not what the <code>Button</code>s use:</p>
+
+<p><img class="center" src="/images/try3.png"></p>
+
+<p>OK, so let&rsquo;s use the buttonStyle again, this time on <code>TextView</code>:</p>
+
+<p><img class="center" src="/images/try4.png"></p>
+
+<p>Now we need to get rid of the extra background, reset minimum height and width and make it not focusable and not clickable (otherwise tapping the caption won&rsquo;t have any effect):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;FrameLayout</span>
+</span><span class='line'>    <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;TextView</span>
+</span><span class='line'>        <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center&quot;</span>
+</span><span class='line'>        <span class="na">android:background=</span><span class="s">&quot;@null&quot;</span>
+</span><span class='line'>        <span class="na">android:clickable=</span><span class="s">&quot;false&quot;</span>
+</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
+</span><span class='line'>        <span class="na">android:focusable=</span><span class="s">&quot;false&quot;</span>
+</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
+</span><span class='line'>        <span class="na">android:minHeight=</span><span class="s">&quot;0dp&quot;</span>
+</span><span class='line'>        <span class="na">android:minWidth=</span><span class="s">&quot;0dp&quot;</span>
+</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/FrameLayout&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lo and behold, it works!</p>
+
+<p><img class="center" src="/images/challenge.png"></p>
+
+<p>We&rsquo;d really like to use is something like <code>textAppearance="?android:attr/buttonStyle.textAppearance"</code>, but there is no such syntax. How about extracting all the attributes from <code>TextView</code> into some <code>buttonCaption</code> style with <code>?android:attr/buttonStyle</code> parent? No can do either: you can only inherit your style from the concrete <code>@style</code>, not from the styleable attribute.</p>
+
+<p>But what we can do is to use <code>Button</code> and create a style with no parent: Android will use the default button style and apply our captionOnly style:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;style</span> <span class="na">name=</span><span class="s">&quot;captionOnly&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:background&quot;</span><span class="nt">&gt;</span>@null<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:clickable&quot;</span><span class="nt">&gt;</span>false<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:focusable&quot;</span><span class="nt">&gt;</span>false<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:minHeight&quot;</span><span class="nt">&gt;</span>0dp<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:minWidth&quot;</span><span class="nt">&gt;</span>0dp<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'><span class="nt">&lt;/style&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;FrameLayout</span>
+</span><span class='line'>    <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;Button</span>
+</span><span class='line'>        <span class="na">style=</span><span class="s">&quot;@style/captionOnly&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center&quot;</span>
+</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
+</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
+</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/FrameLayout&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/16/android-nested-fragments-in-practice/">Android Nested Fragments in Practice</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-16T22:03:00+01:00" pubdate data-updated="true">Mar 16<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/03/16/android-nested-fragments-in-practice/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Last November I wrote about the new feature in rev11 of Android support package &ndash; <a href="/blog/2012/11/13/android-gets-nested-fragments">Fragments nesting</a>. Recently I had an opportunity to use this feature in practice and I&rsquo;d like to share my experience with it.</p>
+
+<p>The basics are simple: each <a href="http://developer.android.com/reference/android/support/v4/app/FragmentActivity.html"><code>FragmentActivity</code></a> and each <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html"><code>Fragment</code></a> has it&rsquo;s own <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html"><code>FragmentManager</code></a>. Inside the Fragment you may call <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getFragmentManager%28%29"><code>getFragmentManager()</code></a> to get the <code>FragmentManager</code> this <code>Fragment</code> was added to, or <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getChildFragmentManager%28%29"><code>getChildFragmentManager()</code></a> to get the <code>FragmentManager</code> which can be used to nest <code>Fragments</code> inside this <code>Fragment</code>. This basic flow works fine, but I have found two issues.</p>
+
+<p>If you have a <code>Fragment</code> with nested <code>Fragments</code> and you save its state with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#saveFragmentInstanceState%28android.support.v4.app.Fragment%29"><code>saveFragmentInstanceState()</code></a> and try to use it in <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#setInitialSavedState%28android.support.v4.app.Fragment.SavedState%29"><code>setInitialSavedState()</code></a> on another instance of this <code>Fragment</code>, you&rsquo;ll get the <code>BadParcelableException</code> from <code>onCreate</code>. Fortunately it&rsquo;s an obvious bug which is easy to fix: you just need to set the correct <code>ClassLoader</code> for a <code>Bundle</code> containing this <code>Fragment</code>&rsquo;s state. There is a <a href="https://android-review.googlesource.com/#/c/40760/">patch for it in support library project Gerrit</a>, and if you need this fix ASAP you may use <a href="https://github.com/futuresimple/android-support-v4">this fork of support lib on Github</a>.</p>
+
+<p>The second issue is related with the <code>Fragments</code> backstack. Inside each <code>FragmentManager</code> you may build stack of <code>Fragments</code> with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentTransaction.html#addToBackStack%28java.lang.String%29"><code>FragmentTransaction.addToBackStack()</code></a> and later on use <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#popBackStack%28%29"><code>popBackStack()</code></a> to go back to the previous state. Pressing hardware back key is also supposed to pop the <code>Fragments</code> from the back stack, but it doesn&rsquo;t take into account any nested <code>Fragments</code>, only <code>Fragments</code> added to the <code>Activity</code>&rsquo;s <code>FragmentManager</code>. This is not so easy to fix, but you may use the following workaround:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">String</span> <span class="n">FAKE_BACKSTACK_ENTRY</span> <span class="o">=</span> <span class="s">&quot;fakeBackstackEntry&quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">getFragmentManager</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>    <span class="c1">// call replace/add</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">setTransition</span><span class="o">(</span><span class="n">FragmentTransaction</span><span class="o">.</span><span class="na">TRANSIT_FRAGMENT_OPEN</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">final</span> <span class="n">FragmentManager</span> <span class="n">rootFragmentManager</span> <span class="o">=</span> <span class="n">getActivity</span><span class="o">().</span><span class="na">getSupportFragmentManager</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">rootFragmentManager</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Fragment</span><span class="o">(),</span> <span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">addOnBackStackChangedListener</span><span class="o">(</span><span class="k">new</span> <span class="n">OnBackStackChangedListener</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onBackStackChanged</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">findFragmentByTag</span><span class="o">(</span><span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">getFragmentManager</span><span class="o">().</span><span class="na">popBackStack</span><span class="o">();</span>
+</span><span class='line'>      <span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">removeOnBackStackChangedListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Quick explanation: together with the actual backstack entry we want to add, we also add the fake backstack entry with empty <code>Fragment</code> to top level <code>FragmentManager</code> and set up <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.OnBackStackChangedListener.html"><code>OnBackStackChangedListener</code></a>. When user presses hardware back button, the fake backstack entry is popped, the backstack listener is triggered and our implementation pops the backstack inside our <code>Fragment</code>. The backstack listeners are not persisted throughout the orientation change, so we need to setup it again inside <code>onCreate()</code>.</p>
+
+<p>Note that there are two issues with this workaround: it allows adding only one backstack entry and this setup won&rsquo;t be automatically recreated from state saved by <code>saveFragmentInstanceState()</code> (fortunately it does work with orientation change). Both issues probably can be solved by some additional hacks, but writing workarounds for workarounds is not something I do unless I really have to, and in this case I neither issue affected me.</p>
+
+<p>Besides those bumps the nested <code>Fragments</code> are a real blessing which allows much more cleaner and reusable code.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/05/weekend-hack-viewing-markdown/">Weekend Hack: Viewing Markdown Attachments in GMail on Android</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-05T23:02:00+01:00" pubdate data-updated="true">Mar 5<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/03/05/weekend-hack-viewing-markdown/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/03/05/weekend-hack-viewing-markdown/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I wanted to open a markdown email attachment on my Nexus 4, but after clicking &ldquo;readme.md&rdquo; instead of seeing the file contents I saw this message:</p>
+
+<p><img class="center" src="/images/no_app_dialog.png"></p>
+
+<p>I downloaded few apps from Google Play, but the message was still appearing. The same applications could open a local markdown file, so I went back to GMail app to download the attachment, but another unpleasant surprise awaited me:</p>
+
+<p><img class="center" src="/images/no_overflow.png"></p>
+
+<p>There is no &ldquo;overflow&rdquo; menu on the attachment (see the screenshot below), which means I couldn&rsquo;t access the &ldquo;Save&rdquo; option, so I could open it as a local file.</p>
+
+<p><img class="center" src="/images/save_menu.png"></p>
+
+<p>At this point I was:</p>
+
+<ol>
+<li>Pissed off, because, cmon, GMail is probably the most used app working on the mature operating system and I can&rsquo;t download a fucking file with it.</li>
+<li>Curious, because it looked liked an interesting issue with GMail app.</li>
+</ol>
+
+
+<p>The first clue was in the GMail logs in the logcat:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>03-04 21:12:50.477: W/Gmail(13823): Unable to find supporting activity. mime-type: application/octet-stream, uri: content://gmail-ls/jerzy.chalupski@gmail.com/messages/121/attachments/0.1/BEST/false, normalized mime-type: application/octet-stream normalized uri: content://gmail-ls/jerzy.chalupski@gmail.com/messages/121/attachments/0.1/BEST/false</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note the Uri: there is no file name and no file extension, and the mime-type is a generic application/octet-stream (most likely because the &ldquo;md&rdquo; extension is not present in <a href="http://grepcode.com/file/repo1.maven.org/maven2/com.google.okhttp/okhttp/20120626/libcore/net/MimeUtils.java">libcore.net.MimeUtils</a>). The markdown viewers/editors I downloaded probably register intent filters for specific file extensions, so they don&rsquo;t know they could handle this file. It sucks big time, because it means that the applications for viewing files with non-standard extensions would have to register for application/octet-stream mime-type, and even though they handle very specific file types they all appear in the app chooser dialog for many different file types, which defeats the whole purpose of Android Intent system and reduces the UX.</p>
+
+<p>My first idea was to create an &ldquo;GMail Attachment Forwarder&rdquo; app which registers for any content from GMail, gets the attachment mail by querying the <a href="http://developer.android.com/reference/android/provider/MediaStore.MediaColumns.html#DISPLAY_NAME"><code>DISPLAY_NAME</code></a> column on the Uri supplied by GMail, save this information along with original GMail Uri in public <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, and start the activity using Uri exposed by my <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> which does contain attachment name. This <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> should also forward any action to original GMail Uri.</p>
+
+<p>Unfortunatly I was foiled by the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>&rsquo;s permissions systems: the Activity in my app was temporarily granted with the read permissions for GMail&rsquo;s <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, but this permissions did not extend to my <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> and the app I was forwarding the attachment to failed because of the insufficient permissions.</p>
+
+<p>This approach didn&rsquo;t work, but having a catch-all handler for GMail attachments unlocked the attachment actions. I also noticed that when the attachment is downloaded, the GMail uses a slightly different intent:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>03-04 23:05:34.005: I/ActivityManager(526): START u0 {act=android.intent.action.VIEW dat=file:///storage/emulated/0/Download/readme-1.md typ=application/octet-stream flg=0x80001 cmp=com.chalup.markdownviewer/.MainActivity} from pid 3063</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This led me to plan B: have an app which enables the attachment download and use other apps to open downloaded attachments. I renamed my app to GMail Attachment Unlocker, cleared the manifest and source folder leaving only a single, automatically closing activity:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;application</span>
+</span><span class='line'>  <span class="na">android:allowBackup=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>  <span class="na">android:label=</span><span class="s">&quot;@string/app_name&quot;</span>
+</span><span class='line'>  <span class="na">android:theme=</span><span class="s">&quot;@android:style/Theme.NoDisplay&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;activity</span>
+</span><span class='line'>    <span class="na">android:name=</span><span class="s">&quot;com.chalup.gmailattachmentunlocker.MainActivity&quot;</span>
+</span><span class='line'>    <span class="na">android:label=</span><span class="s">&quot;@string/app_name&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;intent-filter&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;action</span> <span class="na">android:name=</span><span class="s">&quot;android.intent.action.VIEW&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nt">&lt;category</span> <span class="na">android:name=</span><span class="s">&quot;android.intent.category.DEFAULT&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;category</span> <span class="na">android:name=</span><span class="s">&quot;android.intent.category.BROWSABLE&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nt">&lt;data</span>
+</span><span class='line'>        <span class="na">android:host=</span><span class="s">&quot;gmail-ls&quot;</span>
+</span><span class='line'>        <span class="na">android:mimeType=</span><span class="s">&quot;*/*&quot;</span>
+</span><span class='line'>        <span class="na">android:scheme=</span><span class="s">&quot;content&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/intent-filter&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/activity&gt;</span>
+</span><span class='line'><span class="nt">&lt;/application&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainActivity</span> <span class="kd">extends</span> <span class="n">Activity</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">finish</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The full source code is <a href="https://github.com/chalup/gmail-attachment-unlocker">available on my Github</a> (althought there really isn&rsquo;t much more than what is posted here). In the end I also ended up writing my own markdown viewer (source code in <a href="https://github.com/chalup/android-markdown-viewer">another repo on my Github</a>), because none of the apps I have downloaded properly rendered tags (hint: you have to use <a href="http://developer.android.com/reference/android/webkit/WebView.html#loadDataWithBaseURL%28java.lang.String,%20java.lang.String,%20java.lang.String,%20java.lang.String,%20java.lang.String%29"><code>WebView.loadDataWithBaseUrl</code></a> instead of <a href="http://developer.android.com/reference/android/webkit/WebView.html#loadData%28java.lang.String,%20java.lang.String,%20java.lang.String%29"><code>WebView.loadData</code></a>).</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/02/20/guava-on-android/">Guava on Android</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-02-20T22:15:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/02/20/guava-on-android/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/02/20/guava-on-android/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In November 2012, the revision 21 of Android SDK Tools was released and one of the items in the <a href="http://developer.android.com/tools/sdk/tools-notes.html">release notes</a> made me a very happy panda:</p>
+
+<blockquote><p>Improved the build time by pre-dexing libraries (both JAR files and library projects).</p></blockquote>
+
+
+<p>This change solved the most problematic issue with <a href="http://code.google.com/p/guava-libraries/">Guava</a> and other large libraries &ndash; build time. Before this change Android tools executed dex for your code and every referenced library every time you wanted to launch the application, which in case of Guava took ages and required increasing heap space for Java VM, because the Eclipse closed with &ldquo;Unable to execute dex: Java heap space&rdquo; error.</p>
+
+<p>IntelliJ users could work around this issue by enabling Proguard for debug builds, which could reduce the size of dex input by removing unused code. Eclipse users might try generalizing the <a href="http://code.google.com/p/treeshaker/">Treeshaker plugin</a>, which does pretty much the same inside a custom compilation step added before dexing. But there was no straight way to use Guava and keep the build times on the sane level.</p>
+
+<p>Now the first build still takes ages, and the Eclipse still crashes if you don&rsquo;t bump its heap space, but for all consecutive builds everything works blazing fast. Goodbye hand rolled stuff, welcome <a href="http://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">immutable collections</a>, <a href="http://code.google.com/p/guava-libraries/wiki/OrderingExplained">fluent comparators</a>, <a href="http://code.google.com/p/guava-libraries/wiki/CommonObjectUtilitiesExplained#hashCode">hashCode helper</a> and tons of <a href="http://code.google.com/p/guava-libraries/wiki/GuavaExplained">other goodness</a>. I keep finding in our code base whole chunks of code which can be replaced with one or two lines utilizing Guava features. I plan to post a summary of those changes.</p>
+
+<p>Final note: if you are using Proguard, remember to add Guava specific entries <a href="http://code.google.com/p/guava-libraries/wiki/UsingProGuardWithGuava">mentioned in the documentation</a>.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/01/30/android-sync-adapter-lifecycle/">Android: Sync Adapter Lifecycle</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-30T21:46:00+01:00" pubdate data-updated="true">Jan 30<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/01/30/android-sync-adapter-lifecycle/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/01/30/android-sync-adapter-lifecycle/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In <a href="/blog/2012/09/26/android-sticky-broadcast-perils">Android sticky broadcast perils</a> I hinted that the <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>ContentResolver.isSyncActive()</code></a> might not yield the results you&rsquo;d expect. I described this issue in <a href="/blog/2012/12/18/krakdroid-aftermath">the talk I gave during the KrakDroid 2012 conference</a>, but the chances are you weren&rsquo;t there, so I decided to write a blog post about it.</p>
+
+<p><a href="http://developer.android.com/reference/android/content/ContentResolver.html"><code>ContentResolver</code></a> contains bunch of static methods with &ldquo;sync&rdquo; in their name: there is <a href="http://developer.android.com/reference/android/content/ContentResolver.html#requestSync%28android.accounts.Account,%20java.lang.String,%20android.os.Bundle%29"><code>requestSync</code></a> to start sync process, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> for polling the sync state, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#addStatusChangeListener%28int,%20android.content.SyncStatusObserver%29"><code>addStatusChangeListener</code></a> for listening for sync status and finally <a href="http://developer.android.com/reference/android/content/ContentResolver.html#cancelSync%28android.accounts.Account,%20java.lang.String%29"><code>cancelSync</code></a> for stopping the ongoing synchronization process. The list looks fine, in a sense that theoretically it&rsquo;s enough to implement the most sync-related functionality on the UI side. Let&rsquo;s see what is the relation between sync status reported by ContentResolver&rsquo;s sync methods and <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method in your <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html"><code>SyncAdapter</code></a>.</p>
+
+<p>After calling <a href="http://developer.android.com/reference/android/content/ContentResolver.html#requestSync%28android.accounts.Account,%20java.lang.String,%20android.os.Bundle%29"><code>requestSync</code></a>, the sync for a given account and authority is added to the pending list, meaning that the sync will be executed as soon as possible (for example when syncs for other authorities are finished). In this state the <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> returns true, the <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> registered with <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_PENDING"><code>SYNC_OBSERVER_TYPE_PENDING</code></a> mask will be triggered, and so on. This happens <strong>before</strong> your <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> code is executed. Nothing especially surprising yet. The key point here is, you should take into consideration that your sync request might spend a lot of time in this state, especially if many other SyncAdapters are registered in the system. For example, it&rsquo;s a good idea to indicate this state somehow in the UI, otherwise your app might seem unresponsive.</p>
+
+<p><img class="center" src="/images/sync.png"></p>
+
+<p>When there are no other pending or active sync requests, your sync operation will move to active state. The <code>onPerformSync</code> will start executing in the background thread, <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> will trigger for both <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_ACTIVE"><code>SYNC_OBSERVER_TYPE_ACTIVE</code></a> (because the sync request enters this state) and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_PENDING"><code>SYNC_OBSERVER_TYPE_PENDING</code></a> (because the sync request leaves this state) masks, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> will return false, and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return true. In the happy case, when the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method will finish normally, the <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> for <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_ACTIVE"><code>SYNC_OBSERVER_TYPE_ACTIVE</code></a> state will trigger again, and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return false again. Booring.</p>
+
+<p>The things get funny when the cancelSync is called during <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> execution. The sync thread will be interrupted and the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> method in <code>SyncAdapter</code> will be called. The <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> will trigger, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return false and so on, and&hellip; at some point the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method will finish execution.</p>
+
+<p>Say what? Wasn&rsquo;t the sync thread interrupted? It was, but not in a &ldquo;Bang, you&rsquo;re dead&rdquo; way, but in a <a href="http://www.drdobbs.com/parallel/interrupt-politely/207100682">&ldquo;polite&rdquo; way as described by Herb Sutter</a>. All the stuff described in the <a href="http://developer.android.com/reference/java/lang/Thread.html#interrupt%28%29"><code>Thread.interrupt</code></a> happened, but in 99% of cases it means that the thread continues to execute as usual, except the <a href="http://developer.android.com/reference/java/lang/Thread.html#isInterrupted%28%29"><code>interrupted</code></a> flag is now set. To really support cancelling the sync thread you&rsquo;d have to define an interruption points at which you&rsquo;ll check this flag and return early from <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a>.</p>
+
+<p><a href="http://twimgs.com/ddj/images/article/2008/0804/080401hs01_f1.gif"><img class="center" src="http://twimgs.com/ddj/images/article/2008/0804/080401hs01_f1.gif"></a>
+Things get even funnier here: when I used the <a href="http://developer.android.com/reference/java/lang/Thread.html#isInterrupted%28%29"><code>isInterrupted</code></a> method for polling the state of the sync thread, I got the bad case of heisenbug. In 9 cases out of 10 everything worked as expected, but every now and then the thread continued to execute even though earlier the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> was called. I guess somewhere else the <code>InterruptedException</code> was caught and never rethrown or someone else was polling the sync thread with <a href="http://developer.android.com/reference/java/lang/Thread.html#interrupted%28%29"><code>interrupted</code></a> and cleared the flag. To pinpoint the root cause of this behavior I&rsquo;d have to read through a lot of code, so instead I implemented my own flag and set it in <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> callback. Works like a charm.</p>
+
+<p>Why is this an issue though? Can&rsquo;t we just let <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> to finish in some undefined future? In most cases that&rsquo;s exactly the right way to think about this issue, but if the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> holds a lock on some resource like database handle, you might need to ensure that this lock is released as soon as possible after user cancels the sync.</p>
+
+<p><strong>Recap</strong>: show the sync pending state in the UI and if you really have to know when the sync has ended, do not trust the <code>ContentResolver</code> sync methods.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/5/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/3/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: SQL Injection | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/sql-injection/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[SQL Injection Through ContentProvider Projection]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider/"/>
+    <updated>2013-11-06T23:45:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider</id>
+    <content type="html"><![CDATA[<p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
+
+<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
+
+<p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
+
+<p><code>sql
+'Bobby Tables was here'; DROP TABLE Students; --
+* FROM sqlite_master; --
+* FROM non_public_table_I_found_out_about_using_previous_query; --
+</code></p>
+
+<p>Basically it means that if you exposed a single uri without sanitizing the projection, you have exposed your entire db.</p>
+
+<p>So how do you sanitize your projections? I&rsquo;ve given it some thought and it seems that the only sensible thing to do is allowing only subsets of predefined set of columns.</p>
+
+<p>You cannot allow any expression, because you&rsquo;d allow any expressions, including SELECTs from other tables and allowing certain expressions is not a trivial task.</p>
+
+<p>You shouldn&rsquo;t ignore the provided projection and return all columns, because one of the benefits of using projections is limiting the amount of data retrieved from database. Besides, <a href="https://play.google.com/store/apps/details?id=com.google.android.gm">certain widely used Google application</a> ignores the existence of <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnIndex%28java.lang.String%29"><code>Cursor.getColumnIndex</code></a> method and assumes that the columns will be returned in the same order they were specified in projection. The other app won&rsquo;t work correctly, and the users will probably blame you.</p>
+]]></content>
+  </entry>
+  
+</feed>

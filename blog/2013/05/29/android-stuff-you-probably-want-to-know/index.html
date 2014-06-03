@@ -1,0 +1,360 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Android Stuff You Probably Want to Know About - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="About once a month I interview potential employees at Base CRM. The nice thing about this is that I usually learn a thing or two. The not-so-nice &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2013/05/29/android-stuff-you-probably-want-to-know">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Android Stuff You Probably Want to Know About</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-29T23:24:00+02:00" pubdate data-updated="true">May 29<span>th</span>, 2013</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>About once a month I interview potential employees at <a href="http://getbase.com/">Base CRM</a>. The nice thing about this is that I usually learn a thing or two. The not-so-nice thing about it is that sometimes you have to tell someone that there is much they have to learn.</p>
+
+<p>At this point most of the candidates ask &ldquo;OK, so what else should I know?&rdquo;. I used to give some ad-hoc answer for this question, but it&rsquo;s not the best idea, because I tend to forget to mention about some stuff; and even if I don&rsquo;t miss anything, the candidate probably won&rsquo;t remember half of what I said because of the stress accompanying the job interview.</p>
+
+<p>Anyways, I decided to write down the list of Android learning materials, blogs, libraries, etc. I recommend reading about.</p>
+
+<h2>Android basics</h2>
+
+<p>Some people&rsquo;s Android knowledge can be summed up as &ldquo;<a href="http://developer.android.com/reference/android/app/Activity.html"><code>Activities</code></a> + <a href="http://developer.android.com/reference/android/os/AsyncTask.html"><code>AsyncTasks</code></a>&rdquo;. That&rsquo;s not enough to write anything more complex than Yet Another Twitter Feed app, so if you seriously think of being the Android developer, go to <a href="http://developer.android.com/guide/components/index.html">http://developer.android.com/guide/components/index.html</a> and fill the gaps in your education.</p>
+
+<p>At the very least you should also know about <a href="http://developer.android.com/reference/android/app/Fragment.html"><code>Fragments</code></a> and <a href="http://developer.android.com/reference/android/content/Loader.html"><code>Loaders</code></a>. If you want to persist the data, I recommend using the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>. It looks like a hassle to implement at first, but it solves all the issues with communication between Services and UI. While we&rsquo;re at the <a href="http://developer.android.com/reference/android/app/Service.html"><code>Services</code></a>: you should know the difference between the bound Service and started Service, and you should know that most likely all you need is the <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a>. You should also know about <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html"><code>BroadcastReceivers</code></a>, and what is the ordered broadcast and sticky broadcast. Pay attention on what thread the different components operate.</p>
+
+<h2>Libraries</h2>
+
+<ul>
+<li><a href="http://developer.android.com/tools/extras/support-library.html">Support library</a></li>
+<li><a href="https://code.google.com/p/guava-libraries/">Guava</a></li>
+<li><a href="http://actionbarsherlock.com/">ActionBarSherlock</a></li>
+<li><a href="http://joda-time.sourceforge.net/">JodaTime</a></li>
+<li><a href="http://commons.apache.org/proper/commons-io/">Commons IO</a></li>
+<li><a href="http://square.github.io/dagger/">Dagger</a></li>
+<li><a href="http://square.github.io/otto/">Otto</a></li>
+<li><a href="https://code.google.com/p/google-gson/">Gson</a></li>
+<li><a href="https://github.com/Prototik/HoloEverywhere">HoloEverywhere</a></li>
+</ul>
+
+
+<h2>Blogs</h2>
+
+<ul>
+<li><a href="http://commonsware.com/blog/">Mark Murphy</a></li>
+<li><a href="http://cyrilmottier.com/">Cyril Mottier</a></li>
+<li><a href="http://www.curious-creature.org/category/android/">Romain Guy</a></li>
+<li><a href="http://roman.nurik.net/">Roman Nurik</a></li>
+</ul>
+
+
+<h2>Github</h2>
+
+<ul>
+<li><a href="https://github.com/JakeWharton">Jake Wharton</a></li>
+<li><a href="https://github.com/square">Square</a></li>
+</ul>
+
+
+<h2>Design / UI</h2>
+
+<ul>
+<li><a href="http://www.androidviews.net/">Android Views</a></li>
+<li><a href="http://www.androiduipatterns.com/">Android UI Patterns blog</a></li>
+<li><a href="http://androiduiux.com/">Android UI / UX</a></li>
+<li><a href="http://android-ui-utils.googlecode.com/hg/asset-studio/dist/index.html">Android Asset Studio</a></li>
+<li><a href="http://petrnohejl.github.io/Android-Cheatsheet-For-Graphic-Designers/">Android cheatsheet for graphic designers</a></li>
+</ul>
+
+
+<h2>Miscellaneous</h2>
+
+<ul>
+<li><a href="https://code.google.com/p/iosched/">Google I/O app sources</a></li>
+<li><a href="http://grepcode.com/project/repository.grepcode.com/java/ext/com.google.android/android/">Grepcode</a></li>
+<li><a href="http://androidxref.com/">AndroidXRef</a></li>
+</ul>
+
+
+<p>I probably forgot about something very important, so please leave the comment if you thing anything is missing.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-29T23:24:00+02:00" pubdate data-updated="true">May 29<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2013/05/29/android-stuff-you-probably-want-to-know/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2013/05/29/android-stuff-you-probably-want-to-know/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/05/28/weekend-hack-microorm-library/" title="Previous Post: Weekend hack: MicroOrm library">&laquo; Weekend hack: MicroOrm library</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/06/04/microorm-api-established/" title="Next Post: MicroOrm API established">MicroOrm API established &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

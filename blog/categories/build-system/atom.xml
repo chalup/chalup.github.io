@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Build System | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/build-system/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Mobilization 2013]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/28/mobilization-2013/"/>
+    <updated>2013-10-28T09:30:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/28/mobilization-2013</id>
+    <content type="html"><![CDATA[<p>I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at <a href="https://getbase.com/">Base CRM</a> to make the data model maintainable. Here are the slides:</p>
+
+<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+
+<p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
+
+<p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Proguard Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/20/proguard-gotcha/"/>
+    <updated>2013-08-20T19:53:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/20/proguard-gotcha</id>
+    <content type="html"><![CDATA[<p>A while ago I wrote about <a href="/blog/2012/10/17/android-protip-remove-debug-logs-from">removing the logs from release builds using Proguard</a>. As usual, I&rsquo;ve found a gotcha that might cost you a couple hours of head scratching.</p>
+
+<p>Let&rsquo;s say that we have a code like this somewhere:</p>
+
+<p>``` java
+package com.porcupineprogrammer.proguardgotcha;</p>
+
+<p>import android.app.Activity;
+import android.os.Bundle;
+import android.util.Log;</p>
+
+<p>public class MainActivity extends Activity {
+  static final String TAG = &ldquo;ProguardGotcha&rdquo;;</p>
+
+<p>  @Override
+  protected void onCreate(Bundle savedInstanceState) {</p>
+
+<pre><code>super.onCreate(savedInstanceState);
+
+Log.d(TAG, doNotRunOnProduction());
+</code></pre>
+
+<p>  }</p>
+
+<p>  private String doNotRunOnProduction() {</p>
+
+<pre><code>Log.e(TAG, "FIRE ZE MISSILES!");
+
+return "Harmless log message";
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The <code>doNotRunOnProduction()</code> method might perform some expensive database query, send some data over the network or launch intercontinental missiles &ndash; anyways do something that you don&rsquo;t want to happen in production app. If you run the code on the debug build you&rsquo;ll of course get the following logs.</p>
+
+<p><code>
+08-20 19:31:34.183    1819-1819/com.porcupineprogrammer.proguardgotcha E/ProguardGotcha: FIRE ZE MISSILES!
+08-20 19:31:34.183    1819-1819/com.porcupineprogrammer.proguardgotcha D/ProguardGotcha: Harmless log message
+</code></p>
+
+<p>Now, let&rsquo;s add Proguard config that removes all the <code>Log.d()</code> calls:</p>
+
+<p><code>
+-assumenosideeffects class android.util.Log {
+  public static *** d(...);
+}
+</code></p>
+
+<p>We might expect the <code>Log.e()</code> call to be gone as well, but alas, here is what we get:</p>
+
+<p><code>
+08-20 19:34:45.733    2078-2078/com.porcupineprogrammer.proguardgotcha E/ProguardGotcha: FIRE ZE MISSILES!
+</code></p>
+
+<p>The key point to understanding what is happening here is the fact that the Proguard does not operate on the source code, but on the compiled bytecode. In this case, what the Proguard processes is more like this code:</p>
+
+<p>``` java
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+  super.onCreate(savedInstanceState);</p>
+
+<p>  String tmp = doNotRunOnProduction();
+  Log.d(TAG, tmp);
+}
+```</p>
+
+<p>One might argue that the temporary variable is not used and Proguard should remove it as well. Actually that might happen if you add some other Proguard configuration settings, but the point of this blog post is that when you specify that you want to remove calls to <code>Log.d()</code>, you shouldn&rsquo;t expect that any other calls will be affected. They might, but if your code really launches the missiles (or does something with similar effect for your users), you don&rsquo;t want to bet on this.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Gradle - First Impressions]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/18/gradle-first-impressions/"/>
+    <updated>2013-08-18T22:36:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/18/gradle-first-impressions</id>
+    <content type="html"><![CDATA[<p>Android Studio kept nagging me about make implementation deprecation, so I decided to try the new build system based on Gradle. At first I obviously hit the <a href="http://developer.android.com/sdk/installing/studio.html#Troubleshooting">missing Android Support Repository issue</a>, but after installing missing component in Android SDK Manager everything was created correctly (AFAIK the v0.2.3 of Android Studio doesn&rsquo;t have this issue anymore). On Mac I also had to set the ANDROID_HOME env variable to be able to build stuff from command line.</p>
+
+<p>The app templates are a bit outdated, for example you might get rid of the libs/android-support-v4.jar, because gradle will anyways use the jar from aforementioned Android Support Repository. The build.gradle also references older support lib and build tools so you should probably bump it to the latest versions.</p>
+
+<p>Adding the dependency to the local jar is trivially easy &ndash; we need just one line in dependencies section:</p>
+
+<p><code>groovy
+dependencies {
+  compile files("libs/gson-2.2.4.jar")
+}
+</code></p>
+
+<p>You can also define dependency to every jar in libs directory:</p>
+
+<p><code>groovy
+dependencies {
+  compile fileTree(dir: 'libs', include: '*.jar')
+}
+</code></p>
+
+<p>Using code annotation processors (like <a href="https://github.com/JakeWharton/butterknife">butterknife</a>) is also trivial:</p>
+
+<p>``` groovy
+repositories {
+  mavenCentral()
+}</p>
+
+<p>dependencies {
+  compile &lsquo;com.jakewharton:butterknife:2.0.1&rsquo;
+}
+```</p>
+
+<p>The fist of the gradle&rsquo;s ugly warts is related to the native libs support. You can add the directory with *.so files, the build will succeed, but you&rsquo;ll get the runtime errors when your app will try to call native method. The workaround found on teh interwebs is to copy your native libs into the following directory structure:</p>
+
+<p><code>
+lib
+lib/mips/*.so
+lib/other_architectures/*.so
+lib/x86/*.so
+</code></p>
+
+<p>NOTE: there is no typo, the top level directory should be a singular &ldquo;lib&rdquo;. Then you have to zip the whole thing, rename it to *.jar and include as a regular jar library. Lame, but does the trick.</p>
+
+<p>Let&rsquo;s get back to the good parts. The list of the tasks returned by &ldquo;gradlew tasks&rdquo; command contains the installDebug task, but not the installRelease one. This happens, because there is no default apk signing configuration for release builds. The simplest workaround is to use the same configuration as debug builds:</p>
+
+<p>``` groovy
+android {
+  buildTypes {</p>
+
+<pre><code>release {
+  signingConfig signingConfigs.debug
+}
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>But in the real project you should of course define the real signing configuration along the lines:</p>
+
+<p>``` groovy
+android {
+  signingConfigs {</p>
+
+<pre><code>release {
+  storeFile file("release.keystore")
+  storePassword "XXX"
+  keyAlias "XXX"
+  keyPassword "XXX"
+}
+</code></pre>
+
+<p>  }</p>
+
+<p>  buildTypes {</p>
+
+<pre><code>release {
+  signingConfig signingConfigs.release
+}
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The other useful setting that goes into the buildTypes section is the Proguard configuration. Proguard is disabled by default in gradle builds so we need to turn it on for release builds; we also need to specify the rules to be used by Proguard:</p>
+
+<p>``` groovy
+android {
+  buildTypes {</p>
+
+<pre><code>release {
+  runProguard true
+  proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), file('proguard').listFiles()
+  signingConfig signingConfigs.release
+}
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>There are two nice things about this configuration: we can easily specify that we want to use the default rules defined in Android SDK and we can specify multiple additional files. In the configuration above I use all files from &lsquo;proguard&rsquo; directory, but you can defined a simple list of files as well. It allows you to create a reusable Proguard config files for the commonly used libraries like <a href="http://actionbarsherlock.com/">ActionBarSherlock</a> or <a href="https://code.google.com/p/google-gson/">google-gson</a>.
+So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. module):</p>
+
+<p><code>groovy
+dependencies {
+  compile project(':submoduleA')
+}
+</code></p>
+
+<p>Note that this is also declared in the app project&rsquo;s build.gradle. It&rsquo;s perfectly fine to include this kind of dependency in your app project, but I&rsquo;m not happy with this solution for declaring dependencies between subprojects, because we&rsquo;re introducing dependencies to main project&rsquo;s structure.</p>
+
+<p>``` groovy
+// in build.gradle in main project</p>
+
+<p>dependencies {
+  compile project(&lsquo;:submoduleA&rsquo;)
+  compile project(&lsquo;:submoduleB&rsquo;)
+}</p>
+
+<p>// in build.gradle of submoduleB, which depends on submoduleA</p>
+
+<p>dependencies {
+  compile project(&lsquo;:submoduleA&rsquo;)
+}
+```</p>
+
+<p>It&rsquo;s especially bad when those subprojects are reusable libraries which should be completely separate from your main project. The workaround I read about, but haven&rsquo;t tested myself is creating a local Maven repository and publishing the artifacts from subprojects. AFAIK you still have to publish the artifacts in the right order, so you still have to kind of manually manage your dependencies, which IMO defeats the purpose of having .</p>
+
+<p>I feel I&rsquo;m missing something elementary. The way I expect it to work is to define in each project what kind of artifacts are created, define artifacts each project depends on and let Gradle figure out the order of building subprojects. Please drop me a line if what I just wrote doesn&rsquo;t make any sense, I expect too much from the build system, or I missed some basic stuff.</p>
+
+<p>Another thing that&rsquo;s not so great is the long startup time. Even getting the list of available tasks for a simple project takes between 5 and 8 seconds on 2012 MBP every single time. I understand why this happens &ndash; build configs theoretically can check the weather forecast and use different configuration on a rainy days &ndash; and that this overhead is negligible when compared to the actual build time, but every time I stare a this &ldquo;Loading&rdquo; prompt I think that this should be somehow cached.</p>
+
+<p>It&rsquo;s time to wrap this blog post up. The main question I asked myself was: is it worth to move to gradle? I&rsquo;d say that if you have a manageable Maven build, then you shouldn&rsquo;t bother (yet), but it&rsquo;s a huge step forward when compared to ant builds.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Upgrading to Android SDK Tools Revision 22]]></title>
+    <link href="http://chalup.github.io/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/"/>
+    <updated>2013-05-22T23:31:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/05/22/upgrading-to-android-sdk-tools-revision</id>
+    <content type="html"><![CDATA[<p>The Google I/O 2013 has come and gone and one of the many things left in its wake is the new revision of Android SDK Tools and ADT plugin for Eclipse. If you haven&rsquo;t let Eclipse go in favor of new hot <a href="http://developer.android.com/sdk/installing/studio.html">Android Studio</a> (which is what Mark Murphy, a.k.a. commons guy, <a href="http://commonsware.com/blog/2013/05/16/android-studio-early-access-preview-and-you.html">recommends</a> BTW) and you upgraded to the latest Android SDK Tools, you&rsquo;ll probably have some issues with building your old projects.</p>
+
+<p>After installing all the updates from Android SDK Manager and updating the ADT Eclipse plugin your projects will simply fail to build, with the errors pointing to the R class in gen folder. If you try to build the project with ant you&rsquo;ll get more meaningful &ldquo;no build tools installed&rdquo; message. After re-running the Android SDK Manager, you should see an additional item in Tools section called Build-tools. Go ahead and install it.</p>
+
+<p>Now your project will build (you might have to restart the Eclipse), but if you use any external libraries from your projects libs directory, your app will crash on the first call using this libs. To fix this you have to go to the project Properties, Java Build Path, Order and Export tab and check the &ldquo;Android Private Libraries&rdquo; item. The previous name for this item was &ldquo;Android Dependencies&rdquo; and apparently the build rules for those two are not updated correctly.</p>
+
+<p>Of course new projects created with revision 22 of Android tools doesn&rsquo;t require jumping through all those hoops.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Guava on Android]]></title>
+    <link href="http://chalup.github.io/blog/2013/02/20/guava-on-android/"/>
+    <updated>2013-02-20T22:15:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/02/20/guava-on-android</id>
+    <content type="html"><![CDATA[<p>In November 2012, the revision 21 of Android SDK Tools was released and one of the items in the <a href="http://developer.android.com/tools/sdk/tools-notes.html">release notes</a> made me a very happy panda:</p>
+
+<p><blockquote><p>Improved the build time by pre-dexing libraries (both JAR files and library projects).</p></blockquote></p>
+
+<p>This change solved the most problematic issue with <a href="http://code.google.com/p/guava-libraries/">Guava</a> and other large libraries &ndash; build time. Before this change Android tools executed dex for your code and every referenced library every time you wanted to launch the application, which in case of Guava took ages and required increasing heap space for Java VM, because the Eclipse closed with &ldquo;Unable to execute dex: Java heap space&rdquo; error.</p>
+
+<p>IntelliJ users could work around this issue by enabling Proguard for debug builds, which could reduce the size of dex input by removing unused code. Eclipse users might try generalizing the <a href="http://code.google.com/p/treeshaker/">Treeshaker plugin</a>, which does pretty much the same inside a custom compilation step added before dexing. But there was no straight way to use Guava and keep the build times on the sane level.</p>
+
+<p>Now the first build still takes ages, and the Eclipse still crashes if you don&rsquo;t bump its heap space, but for all consecutive builds everything works blazing fast. Goodbye hand rolled stuff, welcome <a href="http://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">immutable collections</a>, <a href="http://code.google.com/p/guava-libraries/wiki/OrderingExplained">fluent comparators</a>, <a href="http://code.google.com/p/guava-libraries/wiki/CommonObjectUtilitiesExplained#hashCode">hashCode helper</a> and tons of <a href="http://code.google.com/p/guava-libraries/wiki/GuavaExplained">other goodness</a>. I keep finding in our code base whole chunks of code which can be replaced with one or two lines utilizing Guava features. I plan to post a summary of those changes.</p>
+
+<p>Final note: if you are using Proguard, remember to add Guava specific entries <a href="http://code.google.com/p/guava-libraries/wiki/UsingProGuardWithGuava">mentioned in the documentation</a>.</p>
+]]></content>
+  </entry>
+  
+</feed>

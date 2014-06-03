@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Layout | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/layout/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android Gets Nested Fragments]]></title>
+    <link href="http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments/"/>
+    <updated>2012-11-13T21:31:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments</id>
+    <content type="html"><![CDATA[<p>Most of the items in the <a href="http://developer.android.com/about/versions/android-4.2.html">Android 4.2 APIs list</a> are kind of &ldquo;meh&rdquo; to me, but there is one item that&rsquo;s make me very happy: <a href="http://developer.android.com/about/versions/android-4.2.html#NestedFragments">nested fragments</a>. Fragments were supposed to be reusable UI components, but for some unfathomable reason the initial release of the fragments API didn&rsquo;t allow composing a fragment from other fragments. Even during the 2012 Google I/O one of the Google developers said that they have discussed this idea, but they&rsquo;re not sure if it&rsquo;s a good one, which is an absolute surprise to me, because I don&rsquo;t think anyone sane would consider making the <a href="http://developer.android.com/reference/android/view/ViewGroup.html"><code>ViewGroup</code></a> which isn&rsquo;t a subclass of a <a href="http://developer.android.com/reference/android/view/View.html"><code>View</code></a>.</p>
+
+<p>Fragment nesting was a topic I kept on my topic list for a day when I feel I need to bitch about something, but now I&rsquo;m happy to remove it and write this ecstatic post. So now launch your SDK managers and download the r11 of support package! (or wait for half a year and hope it will be added to <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.google.android%22%20AND%20a%3A%22support-v4%22">Maven Central</a>)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android Font Metrics for Dummies]]></title>
+    <link href="http://chalup.github.io/blog/2012/10/09/android-font-metrics-for-dummies/"/>
+    <updated>2012-10-09T22:59:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/10/09/android-font-metrics-for-dummies</id>
+    <content type="html"><![CDATA[<p>Recently I was working on a custom View with overridden <a href="http://developer.android.com/reference/android/view/View.html#onDraw%28android.graphics.Canvas%29"><code>onDraw()</code></a> method and at some point I needed to center some text vertically. Unfortunately <a href="http://developer.android.com/reference/android/graphics/Paint.html#setTextAlign%28android.graphics.Paint.Align%29"><code>Paint.setTextAlign()</code></a> supports only horizontal orientation, so I tried calculating the y-coordinate of the origin myself, but I couldn&rsquo;t get it exactly right. After two failed attempts I decided that I need a program which visualizes the available font metrics, because it seems that I do not understand the <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> documentation, or the aforementioned class and it&rsquo;s documentation sucks.</p>
+
+<p>You can find the <a href="https://github.com/chalup/android-fontmetricstest">source code on my GitHub</a>, and here&rsquo;s the screenshot for other typographically challenged programmers:</p>
+
+<p><img class="center" src="/images/fontsfordummies.png"></p>
+
+<p>(BTW: the word &ldquo;Żyłę&rdquo; used there is not a complete gibberish, it&rsquo;s an accusative case of word &ldquo;vein&rdquo; in Polish; it&rsquo;s nice, because it&rsquo;s short, but it covers all cases of the metrics class).</p>
+
+<p>Let&rsquo;s get back to vertical alignment. In general you should center text vertically either on <a href="http://en.wikipedia.org/wiki/X-height">x-height</a> or on half the <a href="http://en.wikipedia.org/wiki/Cap_height">cap height</a> above the <a href="http://en.wikipedia.org/wiki/Baseline_%28typography%29">baseline</a> (at least that&rsquo;s the info I found). Neither metric is directly available in <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> class, but you can approximate the cap height as a <code>textSize - descent</code> or calculate x-height yourself using Rect height returned by <a href="http://developer.android.com/reference/android/graphics/Paint.html#getTextBounds%28java.lang.String,%20int,%20int,%20android.graphics.Rect%29"><code>Paint.getTextBounds</code></a> for string &ldquo;x&rdquo;.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[DIP on BlackBerry]]></title>
+    <link href="http://chalup.github.io/blog/2012/03/02/dip-on-blackberry/"/>
+    <updated>2012-03-02T21:35:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/03/02/dip-on-blackberry</id>
+    <content type="html"><![CDATA[<p>Android has this nice notion of <a href="http://developer.android.com/guide/practices/screens_support.html#density-independence">density-independent pixel</a> &ndash; a measurement unit which ensures the widgets have the same physical size on the devices with different screen size and different resolution. Basically 1dp is 1px on a device with 160dpi and is scaled appropriately on devices with different dpi.</p>
+
+<p>Why is it important? Because if you design your UI in px on high resolution device and then run it on low resolution device, you&rsquo;ll end up with gigantic buttons which take 50% of the screen. If you do the opposite, you&rsquo;ll end up with button, which are too small to click on high res device.</p>
+
+<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png"><img class="center" src="http://developer.android.com/images/screens_support/density-test-bad.png"></a></p>
+
+<p>Unfortunately the BlackBerry doesn&rsquo;t support this concept out of the box. By default you specify the size and position of UI controls in regular pixels. The <a href="http://docs.blackberry.com/en/developers/deliverables/29251/Developing_apps_for_different_screen_sizes_1579421_11.jsp">BlackBerry documentation</a> suggests using this nugget of a code:</p>
+
+<p>``` java
+boolean lowRes = Display.getWidth() &lt;= 320;</p>
+
+<p>if (lowRes)
+{</p>
+
+<pre><code>// The device has a low resolution screen size
+</code></pre>
+
+<p>}
+else
+{</p>
+
+<pre><code>// The device has a high resolution screen size
+</code></pre>
+
+<p>}
+```</p>
+
+<p>But I think there is a better way.</p>
+
+<p>The net.rim.device.api.ui.Ui contains the static method convertSize that can be used, as you might have guessed, for size conversion between different measurement units. We&rsquo;ll of course convert our measurements to pixels, because that&rsquo;s the unit expected by most drawing methods. But what unit will we convert from?</p>
+
+<p>Points are nice, because you probably use them for your font size already, but they are to coarse to be used for all components. Fortunately there is no need to write a wrapper for your own unit, because you can use built-in unit called centipoints. 100 centipoints = 1 point, so this unit should provide enough precision to layout elements just the way you want.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android LayoutInflater Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/22/android-layoutinflater-gotcha/"/>
+    <updated>2012-02-22T09:26:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/22/android-layoutinflater-gotcha</id>
+    <content type="html"><![CDATA[<p>Many custom Adapter tutorials contain subtle error which can be hard to find and fix. Even <a href="http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/view/List14.html">efficient list adapter sample from Android SDK</a> contains this bug. If you compile and run the sample without any changes you should see something like this:</p>
+
+<p><img class="center" src="/images/original.png"></p>
+
+<p>There&rsquo;s nothing wrong with the list on this screenshot, as long as that&rsquo;s the look you want. But what if you want the list items to be wider? Let&rsquo;s change the list item layout:</p>
+
+<p>``` xml
+&lt;?xml version=&ldquo;1.0&rdquo; encoding=&ldquo;utf-8&rdquo;?></p>
+
+<!-- Copyright (C) 2007 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+  
+          http://www.apache.org/licenses/LICENSE-2.0
+  
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+
+<p>&lt;LinearLayout xmlns:android=&ldquo;<a href="http://schemas.android.com/apk/res/android">http://schemas.android.com/apk/res/android</a>&rdquo;</p>
+
+<pre><code>android:orientation="horizontal"
+android:layout_width="match_parent"
+android:layout_height="150dip"&gt;
+
+&lt;ImageView android:id="@+id/icon"
+    android:layout_width="48dip"
+    android:layout_height="48dip" /&gt;
+
+&lt;TextView android:id="@+id/text"
+    android:layout_gravity="center_vertical"
+    android:layout_width="0dip"
+    android:layout_weight="1.0"
+    android:layout_height="wrap_content" /&gt;
+</code></pre>
+
+<p></LinearLayout>
+```</p>
+
+<p>What&rsquo;s changed? Nothing, nada, zilch, zip. No changes whatsoever:</p>
+
+<p><img class="center" src="/images/changed.png"></p>
+
+<p>You can use hierarchy viewer tool to verify that the list item height was not set correctly.</p>
+
+<p><img class="center" src="/images/hierarchy.png"></p>
+
+<p>There&rsquo;s obviously nothing wrong with the layout xml, so let&rsquo;s take a look at the code:</p>
+
+<p>``` java
+/<em>
+ * Copyright &copy; 2008 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a>
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ </em>/</p>
+
+<p>package com.example.android.apis.view;</p>
+
+<p>import android.app.ListActivity;
+import android.content.Context;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
+import android.widget.ImageView;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
+import com.example.android.apis.R;</p>
+
+<p>/<em>*
+ * Demonstrates how to write an efficient list adapter. The adapter used in this example binds
+ * to an ImageView and to a TextView for each row in the list.
+ *
+ * To work efficiently the adapter implemented here uses two techniques:
+ * &ndash; It reuses the convertView passed to getView() to avoid inflating View when it is not necessary
+ * &ndash; It uses the ViewHolder pattern to avoid calling findViewById() when it is not necessary
+ *
+ * The ViewHolder pattern consists in storing a data structure in the tag of the view returned by
+ * getView(). This data structures contains references to the views we want to bind data to, thus
+ * avoiding calls to findViewById() every time getView() is invoked.
+ </em>/
+public class List14 extends ListActivity {</p>
+
+<pre><code>private static class EfficientAdapter extends BaseAdapter {
+    private LayoutInflater mInflater;
+    private Bitmap mIcon1;
+    private Bitmap mIcon2;
+
+    public EfficientAdapter(Context context) {
+        // Cache the LayoutInflate to avoid asking for a new one each time.
+        mInflater = LayoutInflater.from(context);
+
+        // Icons bound to the rows.
+        mIcon1 = BitmapFactory.decodeResource(context.getResources(), R.drawable.icon48x48_1);
+        mIcon2 = BitmapFactory.decodeResource(context.getResources(), R.drawable.icon48x48_2);
+    }
+
+    /**
+     * The number of items in the list is determined by the number of speeches
+     * in our array.
+     *
+     * @see android.widget.ListAdapter#getCount()
+     */
+    public int getCount() {
+        return DATA.length;
+    }
+
+    /**
+     * Since the data comes from an array, just returning the index is
+     * sufficent to get at the data. If we were using a more complex data
+     * structure, we would return whatever object represents one row in the
+     * list.
+     *
+     * @see android.widget.ListAdapter#getItem(int)
+     */
+    public Object getItem(int position) {
+        return position;
+    }
+
+    /**
+     * Use the array index as a unique id.
+     *
+     * @see android.widget.ListAdapter#getItemId(int)
+     */
+    public long getItemId(int position) {
+        return position;
+    }
+
+    /**
+     * Make a view to hold each row.
+     *
+     * @see android.widget.ListAdapter#getView(int, android.view.View,
+     *      android.view.ViewGroup)
+     */
+    public View getView(int position, View convertView, ViewGroup parent) {
+        // A ViewHolder keeps references to children views to avoid unneccessary calls
+        // to findViewById() on each row.
+        ViewHolder holder;
+
+        // When convertView is not null, we can reuse it directly, there is no need
+        // to reinflate it. We only inflate a new View when the convertView supplied
+        // by ListView is null.
+        if (convertView == null) {
+            convertView = mInflater.inflate(R.layout.list_item_icon_text, null);
+
+            // Creates a ViewHolder and store references to the two children views
+            // we want to bind data to.
+            holder = new ViewHolder();
+            holder.text = (TextView) convertView.findViewById(R.id.text);
+            holder.icon = (ImageView) convertView.findViewById(R.id.icon);
+
+            convertView.setTag(holder);
+        } else {
+            // Get the ViewHolder back to get fast access to the TextView
+            // and the ImageView.
+            holder = (ViewHolder) convertView.getTag();
+        }
+
+        // Bind the data efficiently with the holder.
+        holder.text.setText(DATA[position]);
+        holder.icon.setImageBitmap((position &amp; 1) == 1 ? mIcon1 : mIcon2);
+
+        return convertView;
+    }
+
+    static class ViewHolder {
+        TextView text;
+        ImageView icon;
+    }
+}
+
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setListAdapter(new EfficientAdapter(this));
+}
+
+private static final String[] DATA = Cheeses.sCheeseStrings;
+</code></pre>
+
+<p>}
+```</p>
+
+<p>I&rsquo;ve highlighted the problematic line. It turns out that you have to use another overload of LayoutInflater.inflate method:</p>
+
+<p><code>java
+convertView = mInflater.inflate(R.layout.list_item_icon_text, parent, false);
+</code></p>
+
+<p>We set the attachToRoot to false, because we just want to properly intialize LayoutParams for the LinearLayout of the item and let the ListView to add the inflated views wherever it needs. In fact, setting it to true causes exception to be thrown from AdapterView:</p>
+
+<p>``` java
+java.lang.UnsupportedOperationException: addView(View, LayoutParams) is not supported in AdapterView</p>
+
+<pre><code>at android.widget.AdapterView.addView(AdapterView.java:461)
+at android.view.LayoutInflater.inflate(LayoutInflater.java:416)
+at android.view.LayoutInflater.inflate(LayoutInflater.java:320)
+at android.view.LayoutInflater.inflate(LayoutInflater.java:276)
+at com.fu.InflaterBugActivity$EfficientAdapter.getView(InflaterBugActivity.java:77)
+at android.widget.AbsListView.obtainView(AbsListView.java:1430)
+at android.widget.ListView.makeAndAddView(ListView.java:1745)
+at android.widget.ListView.fillDown(ListView.java:670)
+at android.widget.ListView.fillFromTop(ListView.java:727)
+at android.widget.ListView.layoutChildren(ListView.java:1598)
+at android.widget.AbsListView.onLayout(AbsListView.java:1260)
+at android.view.View.layout(View.java:7175)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:338)
+at android.view.View.layout(View.java:7175)
+at android.widget.LinearLayout.setChildFrame(LinearLayout.java:1254)
+at android.widget.LinearLayout.layoutVertical(LinearLayout.java:1130)
+at android.widget.LinearLayout.onLayout(LinearLayout.java:1047)
+at android.view.View.layout(View.java:7175)
+at android.widget.FrameLayout.onLayout(FrameLayout.java:338)
+at android.view.View.layout(View.java:7175)
+at android.view.ViewRoot.performTraversals(ViewRoot.java:1140)
+at android.view.ViewRoot.handleMessage(ViewRoot.java:1859)
+at android.os.Handler.dispatchMessage(Handler.java:99)
+at android.os.Looper.loop(Looper.java:123)
+at android.app.ActivityThread.main(ActivityThread.java:3683)
+at java.lang.reflect.Method.invokeNative(Native Method)
+at java.lang.reflect.Method.invoke(Method.java:507)
+at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:839)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:597)
+at dalvik.system.NativeStart.main(Native Method)
+</code></pre>
+
+<p>```</p>
+
+<p>Here&rsquo;s the application screenshot after the change:</p>
+
+<p><img class="center" src="/images/fixed.png"></p>
+
+<p>Ugly, but that&rsquo;s exactly what we should get after setting layout height to 150dip.</p>
+]]></content>
+  </entry>
+  
+</feed>

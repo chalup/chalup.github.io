@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Android App Widgets Issues - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="This week I spend few days analyzing and fixing various issues of app widget in Base CRM application. This part of our codebase was created over a &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Android App Widgets Issues</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-10T15:42:00+02:00" pubdate data-updated="true">May 10<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This week I spend few days analyzing and fixing various issues of app widget in Base CRM application.</p>
+
+<p>This part of our codebase was created over a year ago during one of our internal hackathons and was released soon after that. Most of the times it worked. Every once in a while we received a weird crash report from Google Analytics, but it never caused much trouble. Recently though we received few complaints from customers. I happened to have few hours available for bug hunting, so I took a dive.</p>
+
+<p>The widget is really a simple todo list backed by <code>ContentProvider</code>. The code looks like it was based on the WeatherWidget from SDK samples. What can possibly go wrong?</p>
+
+<h2>Issue #1: gazillions of threads started</h2>
+
+<p>Take a look at the code of WeatherWidgetProvider:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">WeatherWidgetProvider</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="c1">// Start the worker thread</span>
+</span><span class='line'>  <span class="n">sWorkerThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HandlerThread</span><span class="o">(</span><span class="s">&quot;WeatherWidgetProvider-worker&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">sWorkerThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span><span class='line'>  <span class="n">sWorkerQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Handler</span><span class="o">(</span><span class="n">sWorkerThread</span><span class="o">.</span><span class="na">getLooper</span><span class="o">());</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The WeatherWidgetProvider is an <code>AppWidgetProvider</code> implementation, which extends a regular <code>BroadcastReceiver</code>. It means that for every action a new instance of WeatherWidgetProvider is created, and the current implementation spawns new thread which is never closed.</p>
+
+<p>The sample author obviously intended to create only one worker thread &ndash; the sWorkerThread is the static &ndash; but forgot to do the null check before creating a new thread. So let&rsquo;s fix it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">WeatherWidgetProvider</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">sWorkerThread</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="c1">// Start the worker thread</span>
+</span><span class='line'>    <span class="n">sWorkerThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HandlerThread</span><span class="o">(</span><span class="s">&quot;WeatherWidgetProvider-worker&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">sWorkerThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span><span class='line'>    <span class="n">sWorkerQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Handler</span><span class="o">(</span><span class="n">sWorkerThread</span><span class="o">.</span><span class="na">getLooper</span><span class="o">());</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Issue #2: no refresh after application update</h2>
+
+<p>The widget shows data from the same <code>ContentProvider</code> as the main app, so when the user creates a task inside in the main app and then goes back to homescreen, the task should be displayed on the widget. To achieve this we did the same thing the WeatherWidget sample does &ndash; we register the <code>ContentObserver</code> in <code>onEnabled</code> callback of <code>AppWidgetProvider</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onEnabled</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">final</span> <span class="n">ContentResolver</span> <span class="n">r</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getContentResolver</span><span class="o">();</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">sDataObserver</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">final</span> <span class="n">AppWidgetManager</span> <span class="n">mgr</span> <span class="o">=</span> <span class="n">AppWidgetManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>    <span class="kd">final</span> <span class="n">ComponentName</span> <span class="n">cn</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ComponentName</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">WeatherWidgetProvider</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">sDataObserver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WeatherDataProviderObserver</span><span class="o">(</span><span class="n">mgr</span><span class="o">,</span> <span class="n">cn</span><span class="o">,</span> <span class="n">sWorkerQueue</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">r</span><span class="o">.</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">WeatherDataProvider</span><span class="o">.</span><span class="na">CONTENT_URI</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">sDataObserver</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>onEnabled</code> callback is called when the first instance of the widget is added to homescreen, so the code looks fine. Unfortunately the callback is not called at your process startup. So if your app is updated and the process is restarted, the <code>ContentObserver</code> won&rsquo;t be registered. The same thing happens if your app crashes or is stopped by the OS to free resources.</p>
+
+<p>To solve this you have to register the <code>ContentObserver</code> in few more places. I have added registration to <code>onCreate</code> callback in <code>RemoteViewsFactory</code> and the <code>onReceive</code> part which handles our custom actions in <code>AppWidgetProvider</code>.</p>
+
+<p>WeatherWidget sample does one more thing wrong: the <code>ContentObserver</code> is never unregistered and the worker thread is never stopped. The correct place to do this is <code>onDisabled</code> callback in <code>AppWidgetProvider</code>.</p>
+
+<h2>Issue #3: <code>CursorOutOfBoundsException</code> crash</h2>
+
+<p>Ever since we introduced the tasks widget, we&rsquo;ve occasionally received the crash reports indicating that the RemoteViewsFactory requested elements outside of <code>[0, getCount)</code> range:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="mi">05</span><span class="o">-</span><span class="mi">10</span> <span class="mi">15</span><span class="o">:</span><span class="mi">22</span><span class="o">:</span><span class="mf">50.559</span>  <span class="mi">13781</span><span class="o">-</span><span class="mi">13795</span><span class="o">/</span><span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">widgetfail</span><span class="o">.</span><span class="na">widget</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="err">﹕</span> <span class="n">FATAL</span> <span class="nl">EXCEPTION:</span> <span class="n">Binder_2</span>
+</span><span class='line'>    <span class="nl">Process:</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">widgetfail</span><span class="o">.</span><span class="na">widget</span><span class="o">,</span> <span class="nl">PID:</span> <span class="mi">13781</span>
+</span><span class='line'>    <span class="n">android</span><span class="o">.</span><span class="na">database</span><span class="o">.</span><span class="na">CursorIndexOutOfBoundsException</span><span class="o">:</span> <span class="n">Index</span> <span class="mi">1</span> <span class="n">requested</span><span class="o">,</span> <span class="n">with</span> <span class="n">a</span> <span class="n">size</span> <span class="n">of</span> <span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The reproduction steps for this issue are quite complicated:</p>
+
+<ul>
+<li>Tap the task on the widget to mark it was completed. Internally we set the <code>PENDING_DONE</code> flag, so the task is marked as done, but is still displayed on the list, so the user can tap it again and reset the flag.</li>
+<li>Trigger the sync</li>
+<li><code>SyncAdapter</code> syncs the Task to our backend. The task is marked as <code>DONE</code> in our database, which triggers the <code>ContentObserver</code> registered by the widget.</li>
+<li><code>ContentObserver</code> triggers <code>onDataSetChanged</code> callback in <code>RemoteViewsFactory</code>, which then calls <code>getCount</code> and <code>getViewAt</code></li>
+<li>In some rare cases <code>getViewAt</code> with position == result of <code>getCount</code> is called</li>
+</ul>
+
+
+<p>It looks like some kind of a race condition or another threading issue in Android code which populates the app widgets. I tried synchronizing the <code>RemoteViewsFactory</code> methods, but it didn&rsquo;t help. The <code>getViewAt</code> have to return a valid <code>RemoteViews</code>, so I fixed it up by returning the loading view when element outside of valid range is requested:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">synchronized</span> <span class="n">RemoteViews</span> <span class="nf">getViewAt</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">position</span> <span class="o">&gt;=</span> <span class="n">mCursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">getLoadingView</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mCursor</span><span class="o">.</span><span class="na">moveToPosition</span><span class="o">(</span><span class="n">position</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Issue #4: no refresh when &ldquo;Don&rsquo;t keep activities&rdquo; setting is enabled</h2>
+
+<p>User can click on the tasks displayed on the widget to go to the edit screen. The activity is closed when user saves or discards changes and the homescreen with the widget is shown again. Changing the task triggers the <code>ContentObserver</code>, the <code>onDataSetChanged</code> is called on all active <code>RemoteViewsFactories</code>, but sometimes other callbacks (<code>getCount</code>, <code>getViewAt</code>, etc.) are not called.</p>
+
+<p>It turns out this happens when the Homescreen activity is recreated because of low memory condition. To easily reproduce this issue you can check the &ldquo;Don&rsquo;t keep activities&rdquo; in developers settings.</p>
+
+<p>I do not have a solution or workaround for this issue unfortunately. I&rsquo;ll file a bug report and hope for the best.</p>
+
+<h2>Recap</h2>
+
+<p>There are mutliple issues with the WeatherWidget sample and some issues with the system services responsible for populating app widgets with content. I&rsquo;ve created a simple project which reproduces the issues #3 and #4 and shows the correct way of registering <code>ContentObserver</code> for your widget. The sources are <a href="https://github.com/chalup/android-widget-fail">available on Github</a>.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-10T15:42:00+02:00" pubdate data-updated="true">May 10<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/app-widget/'>App Widget</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/02/25/use-minsdkversion10-for-libraries/" title="Previous Post: Use minSdkVersion=10 for libraries">&laquo; Use minSdkVersion=10 for libraries</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/05/22/clicking-unclickable-list-items/" title="Next Post: Clicking unclickable list items">Clicking unclickable list items &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

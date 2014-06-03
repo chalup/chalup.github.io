@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Merry Cook | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/merry-cook/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing: Merry Cook]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/19/introducing-merry-cook/"/>
+    <updated>2013-08-19T21:10:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/19/introducing-merry-cook</id>
+    <content type="html"><![CDATA[<p><img class="center" src="/images/ss3.png"></p>
+
+<p>After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I knew that the &ldquo;Nu, Pogodi!&rdquo; code wasn&rsquo;t my top achievement, and I had to force myself into diving into it, but I feel it was worth it. Few things I think I did right this time:</p>
+
+<ul>
+<li><strong>Do not keep <em>any</em> game logic in QML</strong>. Qt has an excellent state machine framework, which makes writing the game logic in C++ relatively easy.</li>
+<li><strong>Keep the QML/C++ interface as simple as possible</strong>. Send signals from QML to C++ when user takes some action and update the QML UI from the C++ side by changing QProperties on some context property object. I&rsquo;ve actually used two objects for that, because it made testing a bit easier.</li>
+<li><strong>Unit tests</strong>. I&rsquo;ve set up the testing harness using gmock/gtest and I&rsquo;ve used it to unit test some things. I probably would have been fine without them, since Merry Cook is a very simple but a) it forced me to divide stuff into more manageable classes and b) it gave me a sense of accomplishing something early. It&rsquo;s funny, because even though I&rsquo;m absolutely conscious of the latter fact, I think it gave me enough boost to get to the point where I had moved forward with implementation and polishing, because I really wanted to publish this game.</li>
+<li><strong>QProperty helper</strong>. I wrote an abominable macro for reducing the QProperty boilerplate:</li>
+</ul>
+
+
+<script src="https://gist.github.com/chalup/6267728.js"></script>
+
+
+<p></li></p>
+
+<p>Things still on my TODO list:</p>
+
+<ul>
+<li><strong>More tests</strong>. Besides unit tests I&rsquo;d also like to write some integration tests for the state machine setup and connections, but I didn&rsquo;t have time to think how this should be done without making too much state public just for testing. Maybe next time.</li>
+<li><strong>Refactor &ldquo;Nu, Pogodi!&rdquo;</strong>. I jumped straight into new project, but I should have started with refactoring the old crap. On the other hand, it might have sucked out all the motivation out of me, and had I done it, I wouldn&rsquo;t have been writing this post right now. So, maybe next time.</li>
+<li><strong>Passing enums to QML</strong>. I have no idea what I did wrong, but I couldn&rsquo;t get the QML to see my C++ enums. I&rsquo;ve resorted to passing them as simple ints and using magic numbers on QML side, but it&rsquo;s definitely something I should fix. Obviously not now, but next time.</li>
+</ul>
+
+
+<p>Anyways, I&rsquo;m really happy with the final results, especially with the gameplay experience, which I think mimics the original game very well. Try it yourself!</p>
+]]></content>
+  </entry>
+  
+</feed>

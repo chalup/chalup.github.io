@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Word Judge | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/word-judge/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Word Judge for Symbian Available in Nokia Store]]></title>
+    <link href="http://chalup.github.io/blog/2012/03/23/word-judge-for-symbian-available-in/"/>
+    <updated>2012-03-23T23:23:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/03/23/word-judge-for-symbian-available-in</id>
+    <content type="html"><![CDATA[<p>Today I have finally pushed both versions of Word Judge through Nokia Store QA. The version with an english dictionary was available for over the week now, but I had to submit the polish version few times until it passed the Nokia tests.</p>
+
+<p>Anyways, the applications are available for free in Nokia Store. Here&rsquo;s the link for <a href="http://store.ovi.com/content/262526">english version</a> and <a href="http://store.ovi.com/content/262535">polish version</a> (might not be available in all countries &ndash; I had to add some restrictions to pass QA process).</p>
+
+<p>Stay tuned for posts about development of Symbian version and enjoy your Scrabble games.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[DAWG Data Structure in Word Judge]]></title>
+    <link href="http://chalup.github.io/blog/2012/03/19/dawg-data-structure-in-word-judge/"/>
+    <updated>2012-03-19T14:01:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/03/19/dawg-data-structure-in-word-judge</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m the first to admit that the Word Judge is booooring application. Checking if the word can be used in a word game? Meh. From a programmer perspective however, there is one very interesting problem to solve &ndash; how to compress a large dictionary to reduce the size of the application package and at the same time be able to query this dictionary without using excessive amount of memory and CPU power?</p>
+
+<p>First, let&rsquo;s settle on what is a &ldquo;large dictionary&rdquo;. One of the languages supported by Word Judge is Polish, for which the valid word list has over 2 million entries and takes about 36MB after unpacking. Do we need to compress this data at all? Probably not. If you consider the average hardware spec and modern network speed, the 36MB is not much, but we can do so much better. Besides, it&rsquo;s fun!</p>
+
+<p>One the other end of the spectrum is the &ldquo;zip all the things&rdquo; approach. It&rsquo;s not a good idea though &ndash; it puts a very heavy load on the CPU and doesn&rsquo;t compress the data that well. The zipped Polish dictionary takes 4.5MB.</p>
+
+<p>The most important observation is that we&rsquo;re not compressing some random white noise, but words from real language. We can leverage this information to get a much better compression than some generic algorithm. Lot of words share the same prefix and suffix, which means they can be efficiently represented as a directed acyclic graph with shared nodes for common prefixes and suffixes. Let&rsquo;s see how the graph would look like for couple of words:</p>
+
+<p><img class="center" src="/images/dag.png"></p>
+
+<p>White letters on black background mark the nodes representing the ends of words. So the graph above represents the following words:</p>
+
+<p><code>
+abject
+abjection
+abjections
+abjectly
+abjectness
+ablate
+ablated
+ablation
+ablations
+</code></p>
+
+<p>The nodes for <code>ab</code> prefix are of course shared, the <code>ions</code>, <code>s</code> suffixes nodes as well. For obvious reasons we cannot share the <code>t</code> node: in one group it marks the end of the word, in other it does not; the child nodes for each &rsquo;t' nodes are also different. Nodes are equal, and thus can be shared, if and only if they represent the same letter, the End Of Word flag is the same for both of them, and the list of children is exactly the same.</p>
+
+<p>This type of graph contains minimal number of nodes, but each node takes quite a lot of space. We need 8 bits for the letter, 1 bit for EOW flag, 8 bits for the children list length and some kind of reference, for example node index, to each child, which is log2(n) rounded up bits, where n is a number of nodes in the graph. As you can see the major contributor to a single node size is the children list: for TWL06 dictionary the number of nodes is in the 10k-100k order of magnitude, which means we need several bits per node index.</p>
+
+<p>A guy called John Paul Adamovsky <a href="http://www.pathcom.com/~vadco/dawg.html">found a neat solution to that</a>. Instead of keeping the full list of children, we can keep children in something similar to singly-linked list: let&rsquo;s store only the index of the first child, number the nodes in such way that the children always have consecutive indices and add a End Of Children List flag to each node. This way we need exactly 1 + log2(n) bits for child list. This way we can keep the entire node in one byte. What&rsquo;s the catch? We need to introduce few more nodes.</p>
+
+<p>For example on the graph above we can no longer share the <code>i</code> node in the <code>ions</code> suffix: if it was shared it would have to have a number one greater than the number of both <code>e</code> node in <code>ablate</code> and <code>n</code> node in <code>abjectness</code> (this is, of course, assuming the <code>i</code> node is the last on the child list of both <code>t</code> nodes; but it&rsquo;s impossible for any node ordering). Our graph would look like this:</p>
+
+<p><img class="center" src="/images/dawg.png"></p>
+
+<p>The rule for node equality has to be extended: the nodes are equal if they represent the same letter, the flags are the same, the children are equal and the siblings further on the children list are equal. The last condition is a bit confusing, so I&rsquo;ll provide an example.</p>
+
+<p>Let&rsquo;s add a <code>absolution</code> and <code>absolutions</code> to our dictionary. We can certainly share the <code>ab</code> prefix and <code>ons</code> suffix, but do we need a separate <code>i</code> node as well? The <code>i</code> node in <code>absolution</code> must have a End-Of-Child-List flag set. If we arrange the child nodes in either <code>ablat-</code> or <code>abject-</code> part of graph in such way that the <code>i</code> node is the last node, we can share the <code>i</code> node between that part of graph and the newly added branch. Our graph would look like this:</p>
+
+<p><img class="center" src="/images/dawg2.png"></p>
+
+<p>This is the way we can squeeze the 36MB dictionary to 1.5MB. The structure also doesn&rsquo;t need any processing, it can be loaded to int array and used directly. If you&rsquo;re curious how to convert the dictionary into this kind of graph you can read the description of <a href="https://github.com/chalup/dawggenerator">my dawggenerator project on github</a> (C++) or the <a href="http://www.pathcom.com/~vadco/dawg.html">original description by John Paul Adamovsky</a> (pure C).</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing: Word Judge]]></title>
+    <link href="http://chalup.github.io/blog/2012/03/10/introducing-word-judge/"/>
+    <updated>2012-03-10T11:17:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/03/10/introducing-word-judge</id>
+    <content type="html"><![CDATA[<p>I enjoy playing Scrabble and other word games like WordSquared of Word with Friends and I think I&rsquo;m quite good at them for an amateur &ndash; my average score in 2-player Scrabble game is around 330 points. I do not have a tournament aspirations, because memorizing word lists or best stems doesn&rsquo;t fit my definition of fun, but I&rsquo;m always in for a casual game.</p>
+
+<p>The only thing that bothers me during these casual games are occasional, but unpleasant arguments &ndash; how do you spell given word or what is some 3 letter combination an obscure word or gibberish. Polish language have both <a href="http://en.wikipedia.org/wiki/Declension">declension</a> and <a href="http://en.wikipedia.org/wiki/Conjugation">conjugation</a> with a lot of irregularities, so there are plenty of things to argue about.</p>
+
+<p>Most of the times we sort things out simply by checking the word spelling on the Internet, but there are situations when you can&rsquo;t do that, for example when you&rsquo;re abroad and don&rsquo;t have wi-fi access and roaming data access price is extraorbitant, or you&rsquo;re in the middle of the outback with no connectivity whatsoever. Without that possibility you have to find a compromise, and boy, that&rsquo;s not easy when you challenge someones 7-letter word on two triple-word bonus tiles.</p>
+
+<p>That&rsquo;s why I created Word Judge &ndash; an ultimate way to settle all word-related disputes. The application contains full dictionary of valid words and short word list with definitions. Dictionary is shipped with the application, so you don&rsquo;t need internet connectivity to check if the word can be used in a word game. Currently the application is available only for Android devices, but I&rsquo;m going to release Symbian (and maybe Harmattan?) version soon.</p>
+
+<table class="separator" style="clear: both; text-align: center;"><tbody><tr><td><img class="center" src="/images/screenshot1.png"></td><td><img class="center" src="/images/screenshot2.png"></td><td><img class="center" src="/images/screenshot3.png"></td></tr></tbody></table>
+
+
+<p>Unlike many other word game helpers, Word Judge doesn&rsquo;t contain anagrammer tool. It&rsquo;s not an oversight, it didn&rsquo;t add it for two reasons. First of all I don&rsquo;t think that such functionality should be bundled with the application, which is basically a dictionary. You use a dictionary to check the spelling, not to cheat. The second reason is more prosaic &ndash; I don&rsquo;t like the UI of any anagrammer tools I found. It&rsquo;s usually a jumble of checkboxes and radio buttons and two fields for board and rack tiles. Even if you figure out what all those controls do, these tools don&rsquo;t really solve the problem, which is finding the best move. It&rsquo;s not an easy problem, even if you find a convenient way to import current game state to the application (<a href="http://en.wikipedia.org/wiki/Augmented_reality">AR</a> maybe?). It&rsquo;s certainly a good idea for a separate application, but not for a part of a dictionary app.</p>
+
+<p>I released one version of my application for every supported language (currently only <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">English</a> and <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgePL">Polish</a>). I considered setting up a service with downloadable dictionaries, but I decided against it, because it would needlessly complicate the application and I think that using multiple dictionaries is quite rare use case. Let me know if I&rsquo;m wrong, I might change my mind. Also, if you like the idea of my application and want me to create a Word Judge for your language, <a href="mailto:jerzy.chalupski@gmail.com">send me an email</a>. Unfortunately, since the app is free I cannot offer you anything more than a mention in application description and &ldquo;About&rdquo; window.</p>
+
+<p>I was sure from the start that I won&rsquo;t charge money for this app, but I pondered for quite a long time if I should use ads. On one hand they are visually displeasing and take scarce screen real estate. On the other hand, I want to see for myself how much revenue they generate &ndash; the testimonies of other developers vary from ecstatic to disappointed. In the end I decided to add a small banner as an experiment.</p>
+
+<p>This post is already getting too long, so let me just mention that in the next week or so I&rsquo;m going to write about stuff I learned while working on this application. I hope you&rsquo;ll enjoy the reading. Meanwhile, dust of your Scrabble board, <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">download my app</a> and enjoy an argument-free game!</p>
+]]></content>
+  </entry>
+  
+</feed>

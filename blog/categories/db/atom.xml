@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Db | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/db/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 3 - Old Db Schemas]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/"/>
+    <updated>2014-01-25T11:43:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old</id>
+    <content type="html"><![CDATA[<p>The <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first post in this series</a> explained the first consequence on implementing the offline mode &ndash; performing the data migrations. In <a href="/blog/2014/01/03/offline-mode-in-android-apps-part-2">second part</a> I showed a workaround for the rudimentary SQLite&rsquo;s ALTER TABLE syntax. If you have checked the link to <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationHelper</code></a> class I mentioned, you migth have noticed that it&rsquo;s just a tiny part of a <a href="https://github.com/futuresimple/android-schema-utils">larger library</a>, which allows you to define database schemas. Note the plural &ldquo;schemas&rdquo;: the whole point of this library is defining both current schema and the schemas for the older versions of your app. This post explains why do you have to do this.</p>
+
+<p>Let&rsquo;s say in the first version you have the following data structure:</p>
+
+<p><code>java
+public static class User {
+  public long id;
+  public String firstName;
+  public String lastName;
+  public String email;
+}
+</code></p>
+
+<p>And the table definition for this table in your <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper.html"><code>SQLiteOpenHelper</code></a> looks like this:</p>
+
+<p>``` java
+private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
+
+<pre><code>TABLE_USERS +
+" ( " +
+ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
+FIRST_NAME + " TEXT " + ", " +
+LAST_NAME + " TEXT " + ", " +
+EMAIL + " TEXT " +
+" ) ";
+</code></pre>
+
+<p>```</p>
+
+<p>In the next version you decide to keep only the first name in a single field, so you change your data structure accordingly and perform the data migration. In the snippet below I used the <code>MigrationHelper</code>, but you might have as well performed the migration by hand:</p>
+
+<p>``` java
+private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
+
+<pre><code>TABLE_USERS +
+" ( " +
+ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
+NAME + " TEXT " + ", " +
+EMAIL + " TEXT " +
+" ) ";
+</code></pre>
+
+<p>@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  MigrationsHelper helper = new MigrationsHelper();
+  if (oldVersion &lt; 2) {</p>
+
+<pre><code>helper.performMigrations(db, 
+    TableMigration.of(TABLE_USERS)
+        .to(CREATE_TABLE_USERS)
+        .withMapping(NAME, FIRST_NAME)
+        .build()
+);
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>Then you decide that the email field should be mandatory, so you change the schema and migrate the data again:</p>
+
+<p>``` java
+private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
+
+<pre><code>TABLE_USERS +
+" ( " +
+ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
+NAME + " TEXT " + ", " +
+EMAIL + " TEXT NOT NULL" +
+" ) ";
+</code></pre>
+
+<p>@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  MigrationsHelper helper = new MigrationsHelper();
+  if (oldVersion &lt; 2) {</p>
+
+<pre><code>helper.performMigrations(db,
+    TableMigration.of(TABLE_USERS)
+        .to(CREATE_TABLE_USERS)
+        .withMapping(NAME, FIRST_NAME)
+        .build()
+);
+</code></pre>
+
+<p>  }
+  if (oldVersion &lt; 3) {</p>
+
+<pre><code>db.execSQL("DELETE FROM " + TABLE_USERS + " WHERE " + EMAIL + " IS NULL");
+helper.performMigrations(db,
+    TableMigration.of(TABLE_USERS)
+        .to(CREATE_TABLE_USERS)
+        .build()
+);
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The code looks fine, but you have just broken migrations from v1 to v3. If there is an user with a null email field, the app will crash in line 13 above. But why, shouldn&rsquo;t the email field in v2 schema be nullable? It should, but this migration uses the constant containing the latest schema definition with different column constraint.</p>
+
+<p>The worst thing about this kind of bugs is that it might slip through your tests, because the crash happens only if you have a specific data before the application update.</p>
+
+<p>You migth be tempted to define separate migrations from every old version to the latest one (in our case migrations from v1 to v3 and from v2 to v3) and always execute only single migration, but this workaround doesn&rsquo;t scale. For each new migration you&rsquo;d have to check and potentially update every existing migration. When you publish the app twice a month, this quickly becomes a huge problem.</p>
+
+<p>The other solution is to make every migration completely independent from the others, and execute them sequentially. This way, when you define a new migration, you don&rsquo;t have to worry about the previous ones. This means that when you upgrade from v1 to v3, you first upgrade from v1 to v2 and then from v2 to v2 and after the first step the database should be in the same state it were, when the v2 was the latest version. In other words, you have to keep an old database schemas.</p>
+
+<p>As usual there are multiple ways to do this. You can copy the schema definition to another constant and append &ldquo;ver#&rdquo; suffix, but it means there will be a lot of duplicated code (although this code should never, ever change, so it&rsquo;s not as bad as the regular case of copypaste). The other way is to keep the initial database state and all the schema updates. The issue here is that you don&rsquo;t have a place in your code with current schema definition. The opposite solution is to keep the current schema and the list of downgrades. Sounds counterintuitive? Don&rsquo;t worry, that&rsquo;s because it <strong><em>is</em></strong> counterintuitive.</p>
+
+<p>In <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils</a> I&rsquo;ve chosen the third approach, because in the long run it processes less data than the upgrades solution &ndash; in case of upgrade from vN-1 to vN it has to generate only 1 additional schema instead of N-1 schemas. I&rsquo;m still not sure if the code wouldn&rsquo;t be clearer had I went with duplicated schema definitions approach, but the current approach, once you get used to it, works fine. The schema and migrations for our example would look like this:</p>
+
+<p>``` java
+private static final MigrationsHelper MIGRATIONS_HELPER = new MigrationsHelper();
+private static final Schemas SCHEMAS = Schemas.Builder</p>
+
+<pre><code>.currentSchema(3,
+    new TableDefinition(TABLE_USERS,
+        new AddColumn(ID, "INTEGER PRIMARY KEY AUTOINCREMENT"),
+        new AddColumn(NAME, "TEXT"),
+        new AddColumn(EMAIL, "TEXT NOT NULL")
+    )
+)
+.upgradeTo(3,
+    new SimpleMigration() {
+      @Override
+      public void apply(SQLiteDatabase db, Schema schema) {
+        db.execSQL("DELETE FROM " + TABLE_USERS + " WHERE " + EMAIL + " IS NULL");
+      }
+    },
+    auto()
+)
+.downgradeTo(2,
+    new TableDowngrade(TABLE_USERS, new AddColumn(EMAIL, "TEXT"))
+)
+.upgradeTo(2,
+    SimpleTableMigration.of(TABLE_USERS)
+        .withMapping(NAME, FIRST_NAME)
+        .using(MIGRATIONS_HELPER)
+    )
+.downgradeTo(1,
+    new TableDowngrade(TABLE_USERS,
+        new AddColumn(FIRST_NAME, "TEXT"),
+        new AddColumn(LAST_NAME, "TEXT"),
+        new DropColumn(EMAIL)
+    )
+)
+.build();
+</code></pre>
+
+<p>```</p>
+
+<p>There are other benefits of keeping the old schemas in a more reasonable format than raw strings. Most of the schema migrations can be deducted from comparing subsequent schema versions, so you don&rsquo;t have to do it yourself. For example in migration from v2 to v3 I didn&rsquo;t have to specify that I want to migrate the Users table &ndash; the <code>auto()</code> migration automatically handles it. If the <code>auto()</code> is the only migration for a given upgrade, you can skip the whole <code>upgradeTo()</code> block. In our case that covered about 50% migrations, but YMMV.</p>
+
+<p>If you go this way, your <code>onUpgrade</code> method, which usually is the most complex part of <code>SQLiteOpenHelper</code>, can be reduced to this:
+<code>java
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  SCHEMAS.upgrade(oldVersion, mContext, db);
+}
+</code></p>
+
+<p>This part concludes the &ldquo;offline mode&rdquo; series. Here&rsquo;s the short recap:</p>
+
+<ul>
+<li>If you don&rsquo;t want to compromise on UX, your application should work regardless whether the user is connected to internet or not.</li>
+<li>In this case the user may end up in a situation when the application is upgraded, but not all data is synced with the server yet. You <strong><em>do not</em></strong> want to lose your users' data. You&rsquo;ll have to migrate them.</li>
+<li>If you migrate your data, you should keep the migrations separate from one another, because otherwise maintaining them becomes a nightmare.</li>
+<li>The best way to do this that I know of, is keeping the old schemas and always performing all migrations sequentially. To make things simpler, I recommend the <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils library</a>.</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 2 - SQLite's ALTER TABLE]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2/"/>
+    <updated>2014-01-03T20:29:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2</id>
+    <content type="html"><![CDATA[<p>In <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first part of this series</a> I showed that to implement offline mode in your Android app you have to implement data migrations. If you&rsquo;re using SQLite database, it means you&rsquo;ll have to use (or rather work around) it&rsquo;s ALTER TABLE syntax:</p>
+
+<p><a href="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"><img class="center" src="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"></a></p>
+
+<p>So all you can do with it is adding the column or renaming the table, but in reality you probably need to alter a single column, remove column or change the table constraints. You can achieve this by doing the following operation:</p>
+
+<ol>
+<li>Rename the table T with old schema to old_T.</li>
+<li>Create the table T with new schema.</li>
+<li>Use &ldquo;INSERT INTO T (new_columns) SELECT old_columns FROM old_T&rdquo; query to populate the table T with the data from the renamed table old_T.</li>
+<li>Drop old_T.</li>
+</ol>
+
+
+<p>Doing it manually is quite error prone though: for every migration you have to specify the new_columns and old_columns list. What&rsquo;s worse, in 95% of cases you just want to list the columns common for old and new schema. Fortunately we can automate such trivial migrations by executing <code>SELECT</code> with <code>LIMIT 0</code> (or <code>PRAGMA TABLE_INFO</code>) for both tables, getting the columns set using <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnNames%28%29"><code>Cursor.getColumnNames()</code></a>, and calculating these columns sets intersection.</p>
+
+<p>You can write a nice wrapper for this yourself, but a) I already did it, so you don&rsquo;t have to and b) there is a <a href="/blog/2014/01/12/android-sqlitedatabase-gotcha">very nasty gotcha</a> which would probably cost you few hours of teeth grinding, so do yourself a favor and check <a href="https://github.com/futuresimple/android-schema-utils">this repository</a> out, especially the <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationsHelper</code></a> class. It automates the trivial migrations and allows you to define a mappings for situations when you rename the column or add a non-nullable column in new schema.</p>
+
+<p>In the next two posts I&rsquo;ll <a href="/blog/2014/01/12/android-sqlitedatabase-gotcha">describe the gotcha I&rsquo;ve mentioned</a> in the previous paragraph and show some other non-obvious consequences of doing data migrations.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 1 - Data Migrations]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/26/offline-mode-in-android-apps-part-1/"/>
+    <updated>2013-12-26T14:05:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/26/offline-mode-in-android-apps-part-1</id>
+    <content type="html"><![CDATA[<p>This year I gave a talk on <a href="http://www.krakdroid.pl/">Krakdroid</a> conference about offline mode in Android apps. By offline mode I mean implementing the app such way that the network availability is completely transparent to the end users. The high level implementation idea is to decouple the operations changing the data from sending these changes through unreliable network by saving the changes in local database and sending them at convinient moment. We have encountered two major problems when we implemented this behavior in <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a>: data migrations and identifying entities. This blog post describes the first issue.
+It might not be obvious why do you need the data migrations, so let&rsquo;s clear this out. Let&rsquo;s say on your mobile you have some data synced with backend (green squares on left and right) and some unsynced data created locally on mobile (red squares on the left).</p>
+
+<p><img class="center" src="/images/unsynced.png"></p>
+
+<p>Now let&rsquo;s say that we introduce new functionality to our app, which changes the schema of our data models (the squares on the backend side are changed to circles).</p>
+
+<p><img class="center" src="/images/schemachange.png"></p>
+
+<p>The schema of the local database have to be changed as well. The naive way of handling this situation is dropping old database with old schema, creating new one with new schema and resyncing all the data from backend, but there are two issues with this approach: if there is a lot of data the resyncing might take a while, which negates the most important advantage of offline mode &ndash; that the app is fully functional all the time.</p>
+
+<p><img class="center" src="/images/lotofdata.png"></p>
+
+<p>More serious issue is that dropping the old database means that the unsynced data will be dropped along with it.</p>
+
+<p><img class="center" src="/images/unsynceddata.png"></p>
+
+<p>The only way to provide the optimal user experience is to perform schema migrations locally for both synced and unsynced data:</p>
+
+<p><img class="center" src="/images/migration.png"></p>
+
+<p>Migrating the data doesn&rsquo;t sound like a challenging thing to code, but the combination of obscure SQLite and Android issues complicates the matter. Without proper tools it&rsquo;s quite easy to make your code unmaintainable in the long run. I&rsquo;ll describe this issues and our solutions in the further posts.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQL Injection Through ContentProvider Projection]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider/"/>
+    <updated>2013-11-06T23:45:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider</id>
+    <content type="html"><![CDATA[<p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
+
+<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
+
+<p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
+
+<p><code>sql
+'Bobby Tables was here'; DROP TABLE Students; --
+* FROM sqlite_master; --
+* FROM non_public_table_I_found_out_about_using_previous_query; --
+</code></p>
+
+<p>Basically it means that if you exposed a single uri without sanitizing the projection, you have exposed your entire db.</p>
+
+<p>So how do you sanitize your projections? I&rsquo;ve given it some thought and it seems that the only sensible thing to do is allowing only subsets of predefined set of columns.</p>
+
+<p>You cannot allow any expression, because you&rsquo;d allow any expressions, including SELECTs from other tables and allowing certain expressions is not a trivial task.</p>
+
+<p>You shouldn&rsquo;t ignore the provided projection and return all columns, because one of the benefits of using projections is limiting the amount of data retrieved from database. Besides, <a href="https://play.google.com/store/apps/details?id=com.google.android.gm">certain widely used Google application</a> ignores the existence of <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnIndex%28java.lang.String%29"><code>Cursor.getColumnIndex</code></a> method and assumes that the columns will be returned in the same order they were specified in projection. The other app won&rsquo;t work correctly, and the users will probably blame you.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Thneed, Notes and Db Design]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design/"/>
+    <updated>2013-11-03T18:59:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design</id>
+    <content type="html"><![CDATA[<p>We&rsquo;re starting to find more and more interesting use cases for <a href="https://github.com/chalup/thneed">Thneed</a> in Base CRM codebase. The first release using it, and <a href="https://github.com/chalup/microorm">few</a> <a href="https://github.com/futuresimple/forger">other</a> <a href="https://github.com/futuresimple/android-db-commons">libraries</a> <a href="https://github.com/futuresimple/android-autoindexer">we</a> <a href="https://github.com/futuresimple/android-schema-utils">recently</a> <a href="https://github.com/futuresimple/sqlitemaster">developed</a>, was released just before the Halloween and we haven&rsquo;t registered any critical issues related to it. All in all, the results look very promising. I won&rsquo;t recommend using <a href="https://github.com/chalup/thneed">Thneed</a> in your production builds yet, but I urge you to <a href="https://github.com/chalup/thneed/star">star the project on Github</a> and watch its progress.</p>
+
+<p>The <a href="https://github.com/chalup/thneed">Thneed</a> was created as an answer to some issues we faced when developing and maintaining <a href="https://getbase.com/">Base CRM</a>, and this fact is sometimes reflected by the API. The example of this is something we internally called PolyModels.</p>
+
+<p>Let&rsquo;s start with a scenario, where we have a some objects and we&rsquo;d like to add notes to. It&rsquo;s a classic one-to-many relationship, which I&rsquo;d model with a foreign key in notes table:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+some_entity_id INTEGER REFERENCES some_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>Now let&rsquo;s introduce another type of objects, which also can have notes attached to it. We have few options now. The simplest thing to do is to keep these notes in a completely separate table:</p>
+
+<p>``` sql
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE other_enity_notes (</p>
+
+<pre><code>id INTEGER, 
+other_entity_id INTEGER REFERENCES other_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>The issue with this solution is that we have two separate schemas that need to be updated in parallel, and in 95% of cases would be exactly the same. Another approach is making the objects which contain notes sort of inherit a base class:</p>
+
+<p>``` sql
+CREATE TABLE notables (id INTEGER);
+CREATE TABLE some_entity (id INTEGER, notable_id INTEGER REFERENCES notables(id));
+CREATE TABLE other_entity (id INTEGER, notable_id INTEGER REFERENCES notables(id));
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+notable_id INTEGER REFERENCES notables(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>These two solutions work perfectly in the &ldquo;give me all notes for object X&rdquo; scenario, but it gets ugly if you want to display a single note with the simple &ldquo;Associated with object X&rdquo; info. In this case you have to query every model which can contain notes, to see if this particular association references the objects from this model. On top of that, the Noteable table approach requires some additional work to create the entry in</p>
+
+<p>You can always have a several mutually exclusive foreing keys in your notes:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+some_entity_id INTEGER REFERENCES some_entity(id), 
+other_entity_id INTEGER REFERENCES other_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>But this solution doesn&rsquo;t really scale well as the number of the models which can contain notes increases. Also, your DBAs will love you if you go this way.</p>
+
+<p>The solution to this problem we used in Base was to have two columns in Notes table: one holding the type of the &ldquo;noteable&rdquo; object, i.e. and the other for the id of this object:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+noteable_id INTEGER, 
+noteable_type TEXT, 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>The glaring issue with this approach is losing the consistency guarantee &ndash; no database I know of support this kind of foreign keys. But when you have SOA on the backend and the notes are stored in a separate database than the noteable objects, this is not your top concern. On mobile apps, even though we have a single database, we use the same structure, because all the other have some implementation issues and worse performance characteristics.</p>
+
+<p>I&rsquo;m not a db expert, and I haven&rsquo;t found any discussion of similar cases, which means that a) we&rsquo;re doing something very wrong or b) we have just very specific requirements. Let me know if it&rsquo;s a former case.</p>
+
+<p>I needed to model this relationships in Thneed, which tured out to be quite tricky, but that&rsquo;s the topic for another blog post.</p>
+]]></content>
+  </entry>
+  
+</feed>

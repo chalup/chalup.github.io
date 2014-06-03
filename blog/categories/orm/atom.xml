@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ORM | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/orm/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Thneed Library]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/15/thneed-library/"/>
+    <updated>2013-08-15T23:32:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/15/thneed-library</id>
+    <content type="html"><![CDATA[<p>The <a href="https://github.com/chalup/microorm">MicroOrm</a> library I started <a href="/blog/2013/05/28/weekend-hack-microorm-library">a while ago</a> solves only a tiny part of data model related problems &ndash; conversion between strongly typed objects and storage classes specific for Android. We discussed few existing libraries for data model implementation we might use at <a href="http://getbase.com/">Base CRM</a>, but we were not fully satisfied with any of them. There are two approaches to this problem:</p>
+
+<p>The first approach is to define the Data Access Objects / entity objects and create SQLite tables using this data. Almost every ORM solution for Android works this way. The deal breaker for those solutions is the complete disregard for data migrations. The <a href="http://ormlite.com/javadoc/ormlite-core/doc-files/ormlite_4.html#Upgrading-Schema">ORMLite docs</a> suggest that you should just fall back to the raw queries, but this means that you need to know the schema generated from DAOs, which is a classic case of <a href="http://www.joelonsoftware.com/articles/LeakyAbstractions.html">leaky abstraction</a>.</p>
+
+<p>The completely opposite approach is used in <a href="http://robotoworks.com/mechanoid/doc/db/">Mechanoid library</a>. You define the database schema as a sequence of migrations and the library generates the DAOs and some other stuff. I was initially very excited about this project, but it&rsquo;s in a very early state of development and the commit activity is not very high. The main problem with this concept is extensibility and customization. For both you probably have to change the way the code is generated from parsed SQLite schema. We also have some project specific issues that would makes this project hard to use.</p>
+
+<p>At the end we haven&rsquo;t found an acceptable solution among existing libraries and frameworks, but something good came out of our discussions. The sentence which came up again and again was &ldquo;It wouldn&rsquo;t be too hard to implement if we knew the relationships between our models&rdquo;. Wait a minute, we do know these relationships! We just need a way to represent them in the Java code!</p>
+
+<p>And so, the <a href="https://github.com/chalup/thneed">Thneed</a> was born.</p>
+
+<p>By itself the Thneed doesn&rsquo;t do anything useful &ndash; it just lets you tell that one X has many Ys and so on, to create a relationship graph of your data models. The trick is, this graph is a Visitable part of <a href="http://en.wikipedia.org/wiki/Visitor_pattern">Visitor design pattern</a>, which means that you can write any number of Visitors to do something useful with the information about declared relationships (see the <a href="https://github.com/chalup/thneed/blob/master/README.md">project&rsquo;s readme</a> for some ideas). Think about it as a tool for creating other tools.</p>
+
+<p>The project is in a very early stage, but I&rsquo;ve already started <a href="https://github.com/futuresimple/forger">another project</a> on top of Thneed and at this point the general idea seems sound. I&rsquo;ve also learned few tricks I&rsquo;ll write about in a little while. As usual, the feedback is welcome, and if you find this idea interesting, do not hesitate to <a href="https://github.com/chalup/thneed/star">star</a> the project <a href="https://github.com/chalup/thneed/">on Github</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[MicroOrm API Established]]></title>
+    <link href="http://chalup.github.io/blog/2013/06/04/microorm-api-established/"/>
+    <updated>2013-06-04T21:51:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/06/04/microorm-api-established</id>
+    <content type="html"><![CDATA[<p>Last weekend I have found some time again to work on the <a href="https://github.com/chalup/microorm">MicroOrm</a>. Basically it&rsquo;s something like google-gson for Android database types &ndash; <a href="http://developer.android.com/reference/android/database/Cursor.html"><code>Cursors</code></a> and <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a>.</p>
+
+<p>With help from <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> and <a href="http://plus.google.com/104340031708315230732">+Bartek Filipowicz</a> I have, hopefully, finalized the API of the v1.0. The <a href="/blog/2013/05/28/weekend-hack-microorm-library">initial draft of the library</a> supported only basic field types: primitives and their boxed equivalents and of course strings. The current version allows registering adapters for any non-generic types. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> added also the <code>@Embedded</code> annotation which allows easy nesting of POJOs which are represented by multiple columns.</p>
+
+<p>Those two mechanisms should allow you to write the entity objects for almost any data structure you have.The only unsupported cases are generic entities and generic fields in entities. I decided to leave them out of the first release, because due to type erasure in java the implementation is not straightforward and I don&rsquo;t have such cases anywhere in my code anyways.</p>
+
+<p>The next step is using the library in the existing project. I intend to use it in <a href="http://getbase.com/">Base CRM</a>, which should be sufficiently large project to reveal any <a href="https://github.com/chalup/microorm">MicroOrm&rsquo;s</a> shortcomings.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Weekend Hack: MicroOrm Library]]></title>
+    <link href="http://chalup.github.io/blog/2013/05/28/weekend-hack-microorm-library/"/>
+    <updated>2013-05-28T17:28:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/05/28/weekend-hack-microorm-library</id>
+    <content type="html"><![CDATA[<p>Last week I had to write some <code>fromCursor()</code> and <code>getContentValues()</code> boilerplate. Again. I finally got fed up and decided to write a library to replace all the hand rolled crap.</p>
+
+<p>You may ask, why not use some existing ORM solution? There are plenty, five minutes with Google yielded these results:</p>
+
+<ul>
+<li><a href="http://www.mobeelizer.com/">http://www.mobeelizer.com/</a></li>
+<li><a href="http://ormlite.com/">http://ormlite.com/</a></li>
+<li><a href="http://greendao-orm.com/">http://greendao-orm.com/</a></li>
+<li><a href="https://github.com/ahmetalpbalkan/orman">https://github.com/ahmetalpbalkan/orman</a></li>
+<li><a href="http://hadi.sourceforge.net/">http://hadi.sourceforge.net/</a></li>
+<li><a href="https://www.activeandroid.com/">https://www.activeandroid.com/</a></li>
+<li><a href="https://github.com/roscopeco/ormdroid">https://github.com/roscopeco/ormdroid</a></li>
+<li><a href="http://droidparts.org/">http://droidparts.org/</a></li>
+<li><a href="http://robotoworks.com/mechanoid-plugin/">http://robotoworks.com/mechanoid-plugin/</a></li>
+</ul>
+
+
+<p>The problem is, all those solutions are all-or-nothing, full blown ORMs, and all I need is the sane way to convert the <a href="http://developer.android.com/reference/android/database/Cursor.html"><code>Cursor</code></a> to POJO and POJO to <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a>.</p>
+
+<p>And thus, the <a href="https://github.com/chalup/microorm">MicroOrm</a> project was born. The public API was inspired by <a href="https://code.google.com/p/google-gson/">google-gson</a> project and is dead simple:</p>
+
+<p><code>java
+public class MicroOrm {
+  public &lt;T&gt; T fromCursor(Cursor c, Class&lt;T&gt; klass);
+  public &lt;T&gt; T fromCursor(Cursor c, T object);
+  public &lt;T&gt; ContentValues toContentValues(T object);
+  public &lt;T&gt; Collection&lt;T&gt; collectionFromCursor(Cursor c, Class&lt;T&gt; klass);
+}
+</code></p>
+
+<p>I&rsquo;d like to keep this library as simple as possible, so this is more or less the final API. I intend to add the <code>MircroOrm.Builder</code> which would allow registering adapters for custom types, but I haven&rsquo;t decided yet to what extent the conversion process should be customisable.</p>
+
+<p>The elephant in the room is obviously the performance. Current implementation is reflection-based, which incurs the significant overhead. I did some quick benchmarking and it seems that the MicroOrm is about 250% slower than the typical boilerplate code. Sounds appaling, but it&rsquo;s not that bad if you consider that a) the elapsed time of a single fromCursor call is still measured in 100s of microseconds and b) if you really need to process a lot of data you can fall back to manual <code>Cursor</code> iteration. I&rsquo;m also considering changing the implementation to use code generation instead of reflection, similarly to Jake Wharton&rsquo;s butterknife, which should solve the performance problems.</p>
+
+<p>In the following weeks I&rsquo;ll try to adapt the <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a> code I&rsquo;m working on to use the MicroOrm, and I expect this project to evolve as I face the real-life issues and requirements. All feedback, comments, ideas and pull requests are more than welcome. You can also show the support by <a href="https://github.com/chalup/microorm/star">starring</a> the project on <a href="https://github.com/chalup/microorm">Github</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The Dark Side of LINQ: LINQ to SQL on Windows Phone]]></title>
+    <link href="http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/"/>
+    <updated>2012-04-10T08:23:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on</id>
+    <content type="html"><![CDATA[<p>In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn LINQ, you won&rsquo;t be able to work with Java collections (Guava makes them bearable, but barely) or Qt/STL containers without throwing in your mouth every now and then.</p>
+
+<p>Here&rsquo;s tl;dr for the non-enlightened: LINQ is a sane way to query and alter the data. Instead of this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>List&lt;int&gt; filtered = new List&lt;int&gt;();
+foreach (int i in unfiltered)
+    if (i % 2 == 0)
+        filtered.Add(i);
+filtered.Sort();
+foreach (int i in filtered)
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>You can just write this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>foreach (int i in unfiltered.Where(num =&gt; num % 2 == 0).OrderBy(n =&gt; n))
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This is a trivial example, but the more complicated code, the more benefit you get from using LINQ.</p>
+
+<p>I started using it for operations on collections and XML files and I immediately fell in love with it. Imagine my joy when I learned that Windows Phone 7.1 finally supports local relational database which can be queried through LINQ to SQL!</p>
+
+<p>I&rsquo;ve read the <a href="http://msdn.microsoft.com/en-us/library/hh286405(v=vs.92">tutorial</a>.aspx), thought a bit about the application I was writing at the time and decided that I need many-to-many relationship. Oops, that&rsquo;s not supported. Well, it&rsquo;s &ldquo;kinda&rdquo; supported, meaning you can create a data structure and insert some data, but when you remove the data the foreign key constraints won&rsquo;t be verified and cascade triggers won&rsquo;t work. I think I can simplify the above statement and just call it &ldquo;not supported feature&rdquo;.</p>
+
+<p>Fortunately I didn&rsquo;t absolutely had to use many-to-many relationship. It would be nicer and would allow us to relax some constraints, but the current data could be as well represented using a nested one-to-many relationships. I&rsquo;ve wrote the code based on aforementioned LINQ to SQL tutorial, wrote the tests, run them and watched in amazement as they fail. After googling a lot and experimenting I was able to make my code work, but it was quite different than the crap they posted on MSDN as tutorial. If you want to use LINQ to SQL, take a look at <a href="https://gist.github.com/1682648">this code on github</a>.</p>
+
+<p>I spent about two days reading about LINQ to SQL and experimenting with the code and in the end I didn&rsquo;t even had the data structure I wanted to. And we&rsquo;re not talking here about rocket science, the SQLite scheme I needed was something like this:</p>
+
+<p>``` sql
+create table x (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table y (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table z (id INTEGER PRIMARY KEY AUTOINCREMENT,</p>
+
+<pre><code>            x_id INTEGER NOT NULL,
+            y_id INTEGER NOT NULL,
+            FOREIGN KEY(x_id) REFERENCES x(id) ON DELETE CASCADE,
+            FOREIGN KEY(y_id) REFERENCES y(id) ON DELETE CASCADE);
+</code></pre>
+
+<p>```</p>
+
+<p>Which leads me to conclusion: LINQ to SQL for Windows Phone just doesn&rsquo;t work. Consider also the amount of boilerplate code I had to write for simple foreign key relation: in case you didn&rsquo;t looked at the github link that&rsquo;s whooping 80 lines of code for every one-to-many relationship. I don&rsquo;t know, maybe there are some tools that generate this stuff for you, but in this case why does the official tutorial even mention writing the table classes by hand? And where are those tools?</p>
+
+<p>Recently I was also playing with Django which also features an ORM for the model definition. You need the foreign key? You use something called <code>ForeignKey</code>. You need the many-to-many relationship? You use the <code>ManyToManyField</code>. Dirt simple. I&rsquo;m sure there are some dark corners you have to be aware of, but the basic stuff just works.</p>
+]]></content>
+  </entry>
+  
+</feed>

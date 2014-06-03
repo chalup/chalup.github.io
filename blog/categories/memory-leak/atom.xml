@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Memory Leak | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/memory-leak/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android Gotcha: CursorAdapter Constructors]]></title>
+    <link href="http://chalup.github.io/blog/2013/04/24/android-gotcha-cursoradapter/"/>
+    <updated>2013-04-24T23:14:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/04/24/android-gotcha-cursoradapter</id>
+    <content type="html"><![CDATA[<p>I just spend few hours analyzing and fixing a memory leak in Android application. With every orientation change the full <code>Context</code>, including the whole <code>Activity</code> was leaked. Long story short, the problem was caused by misuse of <code>CursorAdapter</code>: in subclass constructor we called <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> instead of <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20int%29"><code>CursorAdapter(context, null, 0)</code></a>.</p>
+
+<p>The difference is quite subtle. If you use the second constructor, you have to take care of handling content updates yourself. If you use the first constructor, the <code>CursorAdapter</code> will register an additional <code>ContentObserver</code> for you, but you need to manually reset the <code>Cursor</code>.</p>
+
+<p>The funny thing is, this behavior is described in javadocs, but the documentation is spread between the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29">constructor</a> and <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#FLAG_REGISTER_CONTENT_OBSERVER"><code>FLAG_REGISTER_CONTENT_OBSERVER</code></a> flag documentation. The second part contains most crucial information: you don&rsquo;t need to use this flag when you intend to use your adapter with <code>CursorLoader</code>.</p>
+
+<p>If for some reason you want to use the adapter without <code>CursorLoader</code>, you should use the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> constructor, and call <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#swapCursor%28android.database.Cursor%29"><code>swapCursor(null)</code></a> when leaving the <code>Activity</code> or <code>Fragment</code>.</p>
+]]></content>
+  </entry>
+  
+</feed>

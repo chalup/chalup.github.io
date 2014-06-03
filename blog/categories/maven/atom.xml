@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Maven | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/maven/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[MicroOrm and Thneed Available on Maven Central]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/17/microorm-and-thneed-available-on-maven/"/>
+    <updated>2013-08-17T21:56:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/17/microorm-and-thneed-available-on-maven</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve uploaded my two experimental projects, <a href="https://github.com/chalup/microorm">MicroOrm</a> and <a href="https://github.com/chalup/thneed">Thneed</a>, to <a href="http://search.maven.org/#search%7Cga%7C1%7Corg.chalup">Maven Central</a>. If you want to try them out, just add the following lines to your pom.xml:</p>
+
+<p>``` xml
+<dependency>
+  <groupId>org.chalup.thneed</groupId>
+  <artifactId>thneed</artifactId>
+  <version>0.3</version>
+</dependency></p>
+
+<p><dependency>
+  <groupId>org.chalup.microorm</groupId>
+  <artifactId>microorm</artifactId>
+  <version>0.2</version>
+</dependency>
+```</p>
+
+<p>Don&rsquo;t hesitate to <a href="mailto:jerzy.chalupski@gmail.com"><code>email me</code></a>, create an issue on github or propose a pull request. Any form of feedback is welcome!</p>
+]]></content>
+  </entry>
+  
+</feed>

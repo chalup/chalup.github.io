@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: C# | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/c-number/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[C# Feature I Miss in Java: Extension Methods]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension/"/>
+    <updated>2014-01-09T00:12:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m primarily an Android developer, so when I checked the <a href="http://openjdk.java.net/projects/jdk8/features">Java 8 features list</a> I thought there is a lot of cool stuff, by sadly I won&rsquo;t be able to use them anytime soon. It&rsquo;s the same case as <a href="http://developer.android.com/reference/java/lang/AutoCloseable.html"><code>AutoCloseable</code></a> interface from Java 7. It&rsquo;s available from API lvl 19, and seeing how long it takes Android community to unanimously drop the support for Froyo, Gingerbread and Honeycomb, I think won&rsquo;t be able to use it before 2017. Anyways, good stuff is added to Java, but there is one cool feature from C# I do not see there: extension methods.</p>
+
+<p>Let me explain to you what they are in case you haven&rsquo;t wrote any C# code. In almost every code base there are simple utility methods which operate on a single object.</p>
+
+<p>``` java
+public static final class CollectionsUtils {
+  public static <E> Collection<E> filter(Collection<E> unfiltered, Predicate&lt;? super E> predicate) { /<em> &hellip; </em>/ };
+  public static &lt;F, T> Collection<T> transform(Collection<F> fromCollection, Function&lt;? super F, T> function) { /<em> &hellip; </em>/ };
+}</p>
+
+<p>// usage
+CollectionsUtils.filter(list, IS_NOT_NULL);
+```</p>
+
+<p>Things get ugly when you want to call multiple utility methods:
+<code>java
+CollectionsUtils.transform(CollectionsUtils.filter(list, IS_NOT_NULL), TO_STRING);
+</code></p>
+
+<p>C# allows you to add &ldquo;this&rdquo; modifier to the first parameter of static method, which basically tells the compiler to pretend that the objects of that type have a method with the same signature as our static method, sans the &ldquo;this&rdquo; parameter. Underneath it&rsquo;s treated exactly as the ugly nested calls above, but it allows you to write the code this way:</p>
+
+<p><code>java
+list.filter(IS_NOT_NULL).transform(TO_STRING);
+</code></p>
+
+<p>Syntactic sugar, but it goes a long way. I&rsquo;ve intentionally choose the methods for this examples &ndash; whole LINQ-to-objects interface is based on extension methods.</p>
+
+<p>Java 8 introduces a feature with similar name but completely different functionality: virtual extension methods. Simply put it allows merging the Foo interface and AbstractFoo abstract class with a reasonable implementation of some of Foo&rsquo;s methods. For example if your interface has <code>size()</code> method you can add the <code>isEmpty()</code> virtual extension method with default implementation returning true when <code>size()</code> returns 0. So it&rsquo;s a nice feature, but IMO less powerful than C# solution. Both solutions allow adding new methods with default implementation to interfaces you wrote without having to worry about backwards compatibility, but C# extension methods allows you also to extend 3rd party or even <code>java.lang</code> intefaces and classes to make their API cleaner or better suited to your particular problem.</p>
+
+<p>I wonder why the C#-style extension methods weren&rsquo;t added to Java 8. Maybe there are some implementation issues I do not see, maybe there is a conflict with another language features, maybe the powers that be think it would be inconsistent with the language philosophy. Do let me know if you have such information.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The Dark Side of LINQ: LINQ to SQL on Windows Phone]]></title>
+    <link href="http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/"/>
+    <updated>2012-04-10T08:23:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on</id>
+    <content type="html"><![CDATA[<p>In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn LINQ, you won&rsquo;t be able to work with Java collections (Guava makes them bearable, but barely) or Qt/STL containers without throwing in your mouth every now and then.</p>
+
+<p>Here&rsquo;s tl;dr for the non-enlightened: LINQ is a sane way to query and alter the data. Instead of this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>List&lt;int&gt; filtered = new List&lt;int&gt;();
+foreach (int i in unfiltered)
+    if (i % 2 == 0)
+        filtered.Add(i);
+filtered.Sort();
+foreach (int i in filtered)
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>You can just write this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>foreach (int i in unfiltered.Where(num =&gt; num % 2 == 0).OrderBy(n =&gt; n))
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This is a trivial example, but the more complicated code, the more benefit you get from using LINQ.</p>
+
+<p>I started using it for operations on collections and XML files and I immediately fell in love with it. Imagine my joy when I learned that Windows Phone 7.1 finally supports local relational database which can be queried through LINQ to SQL!</p>
+
+<p>I&rsquo;ve read the <a href="http://msdn.microsoft.com/en-us/library/hh286405(v=vs.92">tutorial</a>.aspx), thought a bit about the application I was writing at the time and decided that I need many-to-many relationship. Oops, that&rsquo;s not supported. Well, it&rsquo;s &ldquo;kinda&rdquo; supported, meaning you can create a data structure and insert some data, but when you remove the data the foreign key constraints won&rsquo;t be verified and cascade triggers won&rsquo;t work. I think I can simplify the above statement and just call it &ldquo;not supported feature&rdquo;.</p>
+
+<p>Fortunately I didn&rsquo;t absolutely had to use many-to-many relationship. It would be nicer and would allow us to relax some constraints, but the current data could be as well represented using a nested one-to-many relationships. I&rsquo;ve wrote the code based on aforementioned LINQ to SQL tutorial, wrote the tests, run them and watched in amazement as they fail. After googling a lot and experimenting I was able to make my code work, but it was quite different than the crap they posted on MSDN as tutorial. If you want to use LINQ to SQL, take a look at <a href="https://gist.github.com/1682648">this code on github</a>.</p>
+
+<p>I spent about two days reading about LINQ to SQL and experimenting with the code and in the end I didn&rsquo;t even had the data structure I wanted to. And we&rsquo;re not talking here about rocket science, the SQLite scheme I needed was something like this:</p>
+
+<p>``` sql
+create table x (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table y (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table z (id INTEGER PRIMARY KEY AUTOINCREMENT,</p>
+
+<pre><code>            x_id INTEGER NOT NULL,
+            y_id INTEGER NOT NULL,
+            FOREIGN KEY(x_id) REFERENCES x(id) ON DELETE CASCADE,
+            FOREIGN KEY(y_id) REFERENCES y(id) ON DELETE CASCADE);
+</code></pre>
+
+<p>```</p>
+
+<p>Which leads me to conclusion: LINQ to SQL for Windows Phone just doesn&rsquo;t work. Consider also the amount of boilerplate code I had to write for simple foreign key relation: in case you didn&rsquo;t looked at the github link that&rsquo;s whooping 80 lines of code for every one-to-many relationship. I don&rsquo;t know, maybe there are some tools that generate this stuff for you, but in this case why does the official tutorial even mention writing the table classes by hand? And where are those tools?</p>
+
+<p>Recently I was also playing with Django which also features an ORM for the model definition. You need the foreign key? You use something called <code>ForeignKey</code>. You need the many-to-many relationship? You use the <code>ManyToManyField</code>. Dirt simple. I&rsquo;m sure there are some dark corners you have to be aware of, but the basic stuff just works.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[WP7 WebRequest Oddity]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/28/wp7-webrequest-oddity/"/>
+    <updated>2012-02-28T09:50:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/28/wp7-webrequest-oddity</id>
+    <content type="html"><![CDATA[<p>During testing of a Windows Phone 7 application I write during my day job I noticed strange thing: when I disabled network connection, I received 404 NotFound error. More precisely, the WebRequest threw WebException with Status = UnknownError, Response.Uri = {} and Response.StatusCode = NotFound.</p>
+
+<p><img class="center" src="/images/no+connection.jpg"></p>
+
+<p>So you get 404 in two cases: when either connection endpoint is down or when server actually responds with 404 NotFound. It would be nice to separate those two cases though, for example to display to the user the message that actually helps them fix the problem.</p>
+
+<p><img class="center" src="/images/wrong+url.jpg"></p>
+
+<p>Fortunately you can tell those two situations apart by checking WebException.Response.ResponseUri &ndash; in case of connection failure it contains empty Uri object (not null, just empty). Here&rsquo;s the extension method I use to convert the exception to the one that makes more sense to me:</p>
+
+<p>``` c#
+public static WebResponse SaneEndGetResponse(this WebRequest request, IAsyncResult asyncResult)
+{</p>
+
+<pre><code>try
+{
+    return request.EndGetResponse(asyncResult);
+}
+catch (WebException wex)
+{
+    if (wex.Response != null &amp;&amp;
+        ((HttpWebResponse)wex.Response).StatusCode == HttpStatusCode.NotFound &amp;&amp;
+        wex.Response.ResponseUri != null &amp;&amp;
+        String.IsNullOrEmpty(wex.Response.ResponseUri.ToString()))
+    {
+        throw new WebException("Network error", WebExceptionStatus.ConnectFailure);
+    }
+    throw;
+}
+</code></pre>
+
+<p>}
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[MessageBox Crash on Windows Phone 7]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/02/messagebox-crash-on-windows-phone-7/"/>
+    <updated>2012-02-02T22:05:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/02/messagebox-crash-on-windows-phone-7</id>
+    <content type="html"><![CDATA[<p>Guess what&rsquo;s wrong with this Application Bar button handler:</p>
+
+<p>``` c#
+private void OnAboutButtonClick(object sender, EventArgs e)
+{</p>
+
+<pre><code>MessageBox.Show("Blah blah blah, our app v1.0");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>If you answered &ldquo;you&rsquo;re using hardcoded string instead of application resource&rdquo; you are of course right, but that&rsquo;s not the worst problem with it, so no cookie for you. If the user clicks the application bar button twice before the message box is shown it crashes:</p>
+
+<p>``` c#
+System.Exception was unhandled
+  Message=0x8000ffff
+  StackTrace:</p>
+
+<pre><code>at MS.Internal.XcpImports.CheckHResult(UInt32 hr)
+at MS.Internal.XcpImports.MessageBox_ShowCore(String messageBoxText, String caption, UInt32 type)
+at System.Windows.MessageBox.ShowCore(String messageBoxText, String caption, MessageBoxButton button)
+at System.Windows.MessageBox.Show(String messageBoxText)
+at PhoneApp1.MainPage.OnAboutButtonClick(Object sender, EventArgs e)
+at Microsoft.Phone.Shell.ApplicationBarItemContainer.FireEventHandler(EventHandler handler, Object sender, EventArgs args)
+at Microsoft.Phone.Shell.ApplicationBarIconButton.ClickEvent()
+at Microsoft.Phone.Shell.ApplicationBarIconButtonContainer.ClickEvent()
+at Microsoft.Phone.Shell.ApplicationBar.OnCommand(UInt32 idCommand)
+at Microsoft.Phone.Shell.Interop.NativeCallbackInteropWrapper.OnCommand(UInt32 idCommand)
+at MS.Internal.XcpImports.MessageBox_ShowCoreNative(IntPtr context, String messageBoxText, String caption, UInt32 type, Int32&amp; result)
+at MS.Internal.XcpImports.MessageBox_ShowCore(String messageBoxText, String caption, UInt32 type)
+at System.Windows.MessageBox.ShowCore(String messageBoxText, String caption, MessageBoxButton button)
+at System.Windows.MessageBox.Show(String messageBoxText)
+at PhoneApp1.MainPage.OnAboutButtonClick(Object sender, EventArgs e)
+at Microsoft.Phone.Shell.ApplicationBarItemContainer.FireEventHandler(EventHandler handler, Object sender, EventArgs args)
+at Microsoft.Phone.Shell.ApplicationBarIconButton.ClickEvent()
+at Microsoft.Phone.Shell.ApplicationBarIconButtonContainer.ClickEvent()
+at Microsoft.Phone.Shell.ApplicationBar.OnCommand(UInt32 idCommand)
+at Microsoft.Phone.Shell.Interop.NativeCallbackInteropWrapper.OnCommand(UInt32 idCommand)
+</code></pre>
+
+<p>```</p>
+
+<p>The interesting thing about this stack trace is that it contains two calls to <code>MessageBox.Show()</code>. WTF? Since <code>MessageBox.Show()</code> returns the value, I assumed it&rsquo;s a synchronous call, i.e. no stuff would happen until the user clicks &ldquo;OK&rdquo;. Apparently MessageBox opens internal event loop (which kind of makes sense, since something has to handle the user clicking &ldquo;OK&rdquo;), which handles the second application bar click, tries to open the second message box and the whole application blows up.</p>
+
+<p>Now, you may say &ldquo;It&rsquo;s only a problem if the user intentionally bangs the poor phone like an ADD afflicted monkey on speed&rdquo;. I say &ldquo;Fix your god damn app&rdquo; (and in case anyone from Microsoft would ever read this, I also say &ldquo;Fix your god damn framework&rdquo;).</p>
+
+<p>So what can we do? Using lock is out of the question, since everything is executed in the same thread. So the only option I came up with is a Crappy Boolean Flag Pattern:</p>
+
+<p>``` c#
+private bool _msgboxShown = false;
+private void OnAboutButtonClick(object sender, EventArgs e)
+{</p>
+
+<pre><code>if (!_msgboxShown)
+{
+    _msgboxShown = true;
+    MessageBox.Show("Blah blah blah, our app v1.0");
+    _msgboxShown = false;
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Not elegant, but it works. Of course if you use message boxes for other stuff, create some helper class for this crap.</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,485 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>QML Error Handling Revisited - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="After releasing Nu, Pogodi! I learned the hard way that checking the QML runtime errors might be a good idea. For that particular application, simply &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2012/03/28/qml-error-handling-revisited">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">QML Error Handling Revisited</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-28T23:01:00+02:00" pubdate data-updated="true">Mar 28<span>th</span>, 2012</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>After releasing <a href="http://store.ovi.com/content/219800">Nu, Pogodi!</a> I learned the hard way that checking the QML runtime errors might be a good idea. For that particular application, simply checking the errors from <code>QDeclarativeView</code> after setting the main qml file was enough, because everything in qml file was statically declared. But what if you use <a href="https://qt-project.org/doc/qt-4.8/qml-loader.html">QML Loader</a> element, either explicitly or through some other qml element like <a href="http://doc.qt.nokia.com/qt-components-symbian/qml-pagestack.html">PageStack from Qt Components</a>, and something goes wrong?</p>
+
+<p>Well, if you don&rsquo;t improve the error handling code, your application will silently fail in some places, which probably won&rsquo;t make the users happy. I didn&rsquo;t wanted to repeat the <a href="http://store.ovi.com/content/219800">Nu, Pogodi!</a> screw up when releasing <a href="http://store.ovi.com/content/262535">Word Judge</a>, so I&rsquo;ve created a better error handling solution. First part is an error handler class:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'><span class="c1">//  qmlerrorhandler.h</span>
+</span><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">QmlErrorHandler</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QObject</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">Q_OBJECT</span>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>    <span class="k">explicit</span> <span class="n">QmlErrorHandler</span><span class="p">(</span><span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">bool</span> <span class="n">errorOccured</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="nl">slots:</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span> <span class="n">status</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">handleQmlErrors</span><span class="p">(</span><span class="k">const</span> <span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;&amp;</span> <span class="n">qmlErrors</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span><span class="o">:</span>
+</span><span class='line'>    <span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">mView</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">bool</span> <span class="n">mErrorOccured</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'><span class="c1">//  qmlerrorhandler.cpp</span>
+</span><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">QmlErrorHandler</span><span class="p">(</span><span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span><span class="p">)</span> <span class="o">:</span>
+</span><span class='line'>    <span class="n">QObject</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">mView</span><span class="p">(</span><span class="n">view</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">mErrorOccured</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">connect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">statusChanged</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span><span class="p">)),</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span><span class="p">)));</span>
+</span><span class='line'>    <span class="n">connect</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">engine</span><span class="p">(),</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">warnings</span><span class="p">(</span><span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;</span><span class="p">)),</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">handleQmlErrors</span><span class="p">(</span><span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;</span><span class="p">)));</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">void</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span> <span class="n">status</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">handleQmlErrors</span><span class="p">(</span><span class="n">mView</span><span class="p">.</span><span class="n">errors</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">void</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">handleQmlErrors</span><span class="p">(</span><span class="k">const</span> <span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;&amp;</span> <span class="n">qmlErrors</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">QStringList</span> <span class="n">errors</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">foreach</span> <span class="p">(</span><span class="k">const</span> <span class="n">QDeclarativeError</span><span class="o">&amp;</span> <span class="n">error</span><span class="p">,</span> <span class="n">qmlErrors</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// Special case for bug in QtComponents 1.1</span>
+</span><span class='line'>        <span class="c1">// https://bugreports.qt-project.org/browse/QTCOMPONENTS-1217</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">error</span><span class="p">.</span><span class="n">url</span><span class="p">().</span><span class="n">toString</span><span class="p">().</span><span class="n">endsWith</span><span class="p">(</span><span class="s">&quot;PageStackWindow.qml&quot;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">error</span><span class="p">.</span><span class="n">line</span><span class="p">()</span> <span class="o">==</span> <span class="mi">70</span><span class="p">)</span>
+</span><span class='line'>            <span class="k">continue</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">errors</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">errors</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">())</span>
+</span><span class='line'>        <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">mErrorOccured</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">QMessageBox</span> <span class="n">msgBox</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&quot;Uh oh, something went terribly wrong!&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">setInformativeText</span><span class="p">(</span><span class="s">&quot;We&#39;re sorry, but it seems there are some problems &quot;</span>
+</span><span class='line'>                              <span class="s">&quot;with running our application on your phone. Please &quot;</span>
+</span><span class='line'>                              <span class="s">&quot;send us the following information to help us resolve &quot;</span>
+</span><span class='line'>                              <span class="s">&quot;this issue:</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">)</span> <span class="o">+</span>
+</span><span class='line'>                              <span class="n">errors</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">qApp</span><span class="o">-&gt;</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">bool</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">errorOccured</span><span class="p">()</span> <span class="k">const</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">mErrorOccured</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And here&rsquo;s how I use it in my applications:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QApplication</span><span class="o">&gt;</span> <span class="n">app</span><span class="p">(</span><span class="n">createApplication</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QmlApplicationViewer</span><span class="o">&gt;</span> <span class="n">viewer</span><span class="p">(</span><span class="n">QmlApplicationViewer</span><span class="o">::</span><span class="n">create</span><span class="p">());</span>
+</span><span class='line'>    <span class="n">QmlErrorHandler</span> <span class="n">errorHandler</span><span class="p">(</span><span class="o">*</span><span class="n">viewer</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="o">-&gt;</span><span class="n">setMainQmlFile</span><span class="p">(</span><span class="n">QLatin1String</span><span class="p">(</span><span class="s">&quot;main.qml&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="o">-&gt;</span><span class="n">showExpanded</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">errorHandler</span><span class="p">.</span><span class="n">errorOccured</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">app</span><span class="o">-&gt;</span><span class="n">exec</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Basically we need to catch the runtime errors, which are emitted from <code>QDeclarativeEngine</code> in signal named for some unfathomable reason <code>warnings</code>. Checking the <code>errorOccured()</code> in <code>main()</code> is ugly, but the <code>qApp-&gt;exit()</code> doesn&rsquo;t work until the event loop in main is started and that&rsquo;s the first thing which came to my mind. Please leave a comment if you know a simpler solution.</p>
+
+<p>Note the lines 46-49 in <code>QmlErrorHandler</code>: we&rsquo;re catching all warnings and the qt components are not completely free of them. I had to add a special case to prevent triggering the handler on every orientation change. If you stumble upon some other errors that should be ignored, please let me know.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-28T23:01:00+02:00" pubdate data-updated="true">Mar 28<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/qml/'>QML</a>, <a class='category' href='/blog/categories/qt/'>Qt</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2012/03/28/qml-error-handling-revisited/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2012/03/28/qml-error-handling-revisited/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/03/23/word-judge-for-symbian-available-in/" title="Previous Post: Word Judge for Symbian available in Nokia Store">&laquo; Word Judge for Symbian available in Nokia Store</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/04/04/background-operations-on-windows-phone/" title="Next Post: Background operations on Windows Phone 7">Background operations on Windows Phone 7 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

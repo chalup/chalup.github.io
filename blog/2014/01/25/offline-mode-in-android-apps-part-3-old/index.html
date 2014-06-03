@@ -1,0 +1,547 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Offline Mode in Android Apps, Part 3 - Old Db Schemas - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="The first post in this series explained the first consequence on implementing the offline mode &ndash; performing the data migrations. In second part &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Offline Mode in Android Apps, Part 3 - Old Db Schemas</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-25T11:43:00+01:00" pubdate data-updated="true">Jan 25<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>The <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first post in this series</a> explained the first consequence on implementing the offline mode &ndash; performing the data migrations. In <a href="/blog/2014/01/03/offline-mode-in-android-apps-part-2">second part</a> I showed a workaround for the rudimentary SQLite&rsquo;s ALTER TABLE syntax. If you have checked the link to <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationHelper</code></a> class I mentioned, you migth have noticed that it&rsquo;s just a tiny part of a <a href="https://github.com/futuresimple/android-schema-utils">larger library</a>, which allows you to define database schemas. Note the plural &ldquo;schemas&rdquo;: the whole point of this library is defining both current schema and the schemas for the older versions of your app. This post explains why do you have to do this.</p>
+
+<p>Let&rsquo;s say in the first version you have the following data structure:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">long</span> <span class="n">id</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="n">firstName</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="n">lastName</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="n">email</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And the table definition for this table in your <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper.html"><code>SQLiteOpenHelper</code></a> looks like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_TABLE_USERS</span> <span class="o">=</span> <span class="s">&quot;CREATE TABLE &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">TABLE_USERS</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ( &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">ID</span> <span class="o">+</span> <span class="s">&quot; INTEGER PRIMARY KEY AUTOINCREMENT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">FIRST_NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">LAST_NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ) &quot;</span><span class="o">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the next version you decide to keep only the first name in a single field, so you change your data structure accordingly and perform the data migration. In the snippet below I used the <code>MigrationHelper</code>, but you might have as well performed the migration by hand:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_TABLE_USERS</span> <span class="o">=</span> <span class="s">&quot;CREATE TABLE &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">TABLE_USERS</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ( &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">ID</span> <span class="o">+</span> <span class="s">&quot; INTEGER PRIMARY KEY AUTOINCREMENT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ) &quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">MigrationsHelper</span> <span class="n">helper</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MigrationsHelper</span><span class="o">();</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">helper</span><span class="o">.</span><span class="na">performMigrations</span><span class="o">(</span><span class="n">db</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">TableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">to</span><span class="o">(</span><span class="n">CREATE_TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">withMapping</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">FIRST_NAME</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then you decide that the email field should be mandatory, so you change the schema and migrate the data again:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_TABLE_USERS</span> <span class="o">=</span> <span class="s">&quot;CREATE TABLE &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">TABLE_USERS</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ( &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">ID</span> <span class="o">+</span> <span class="s">&quot; INTEGER PRIMARY KEY AUTOINCREMENT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; TEXT NOT NULL&quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ) &quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">MigrationsHelper</span> <span class="n">helper</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MigrationsHelper</span><span class="o">();</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">helper</span><span class="o">.</span><span class="na">performMigrations</span><span class="o">(</span><span class="n">db</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">TableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">to</span><span class="o">(</span><span class="n">CREATE_TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">withMapping</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">FIRST_NAME</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;DELETE FROM &quot;</span> <span class="o">+</span> <span class="n">TABLE_USERS</span> <span class="o">+</span> <span class="s">&quot; WHERE &quot;</span> <span class="o">+</span> <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; IS NULL&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">helper</span><span class="o">.</span><span class="na">performMigrations</span><span class="o">(</span><span class="n">db</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">TableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">to</span><span class="o">(</span><span class="n">CREATE_TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The code looks fine, but you have just broken migrations from v1 to v3. If there is an user with a null email field, the app will crash in line 13 above. But why, shouldn&rsquo;t the email field in v2 schema be nullable? It should, but this migration uses the constant containing the latest schema definition with different column constraint.</p>
+
+<p>The worst thing about this kind of bugs is that it might slip through your tests, because the crash happens only if you have a specific data before the application update.</p>
+
+<p>You migth be tempted to define separate migrations from every old version to the latest one (in our case migrations from v1 to v3 and from v2 to v3) and always execute only single migration, but this workaround doesn&rsquo;t scale. For each new migration you&rsquo;d have to check and potentially update every existing migration. When you publish the app twice a month, this quickly becomes a huge problem.</p>
+
+<p>The other solution is to make every migration completely independent from the others, and execute them sequentially. This way, when you define a new migration, you don&rsquo;t have to worry about the previous ones. This means that when you upgrade from v1 to v3, you first upgrade from v1 to v2 and then from v2 to v2 and after the first step the database should be in the same state it were, when the v2 was the latest version. In other words, you have to keep an old database schemas.</p>
+
+<p>As usual there are multiple ways to do this. You can copy the schema definition to another constant and append &ldquo;ver#&rdquo; suffix, but it means there will be a lot of duplicated code (although this code should never, ever change, so it&rsquo;s not as bad as the regular case of copypaste). The other way is to keep the initial database state and all the schema updates. The issue here is that you don&rsquo;t have a place in your code with current schema definition. The opposite solution is to keep the current schema and the list of downgrades. Sounds counterintuitive? Don&rsquo;t worry, that&rsquo;s because it <strong><em>is</em></strong> counterintuitive.</p>
+
+<p>In <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils</a> I&rsquo;ve chosen the third approach, because in the long run it processes less data than the upgrades solution &ndash; in case of upgrade from vN-1 to vN it has to generate only 1 additional schema instead of N-1 schemas. I&rsquo;m still not sure if the code wouldn&rsquo;t be clearer had I went with duplicated schema definitions approach, but the current approach, once you get used to it, works fine. The schema and migrations for our example would look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">MigrationsHelper</span> <span class="n">MIGRATIONS_HELPER</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MigrationsHelper</span><span class="o">();</span>
+</span><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schemas</span> <span class="n">SCHEMAS</span> <span class="o">=</span> <span class="n">Schemas</span><span class="o">.</span><span class="na">Builder</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">currentSchema</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">TableDefinition</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">,</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">ID</span><span class="o">,</span> <span class="s">&quot;INTEGER PRIMARY KEY AUTOINCREMENT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">EMAIL</span><span class="o">,</span> <span class="s">&quot;TEXT NOT NULL&quot;</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">)</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">upgradeTo</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">SimpleMigration</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="nd">@Override</span>
+</span><span class='line'>          <span class="kd">public</span> <span class="kt">void</span> <span class="nf">apply</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="n">Schema</span> <span class="n">schema</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;DELETE FROM &quot;</span> <span class="o">+</span> <span class="n">TABLE_USERS</span> <span class="o">+</span> <span class="s">&quot; WHERE &quot;</span> <span class="o">+</span> <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; IS NULL&quot;</span><span class="o">);</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>        <span class="o">},</span>
+</span><span class='line'>        <span class="n">auto</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">downgradeTo</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">TableDowngrade</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">,</span> <span class="k">new</span> <span class="n">AddColumn</span><span class="o">(</span><span class="n">EMAIL</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">))</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">upgradeTo</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">SimpleTableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">withMapping</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">FIRST_NAME</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">using</span><span class="o">(</span><span class="n">MIGRATIONS_HELPER</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">downgradeTo</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">TableDowngrade</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">,</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">FIRST_NAME</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">LAST_NAME</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">DropColumn</span><span class="o">(</span><span class="n">EMAIL</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">)</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are other benefits of keeping the old schemas in a more reasonable format than raw strings. Most of the schema migrations can be deducted from comparing subsequent schema versions, so you don&rsquo;t have to do it yourself. For example in migration from v2 to v3 I didn&rsquo;t have to specify that I want to migrate the Users table &ndash; the <code>auto()</code> migration automatically handles it. If the <code>auto()</code> is the only migration for a given upgrade, you can skip the whole <code>upgradeTo()</code> block. In our case that covered about 50% migrations, but YMMV.</p>
+
+<p>If you go this way, your <code>onUpgrade</code> method, which usually is the most complex part of <code>SQLiteOpenHelper</code>, can be reduced to this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">SCHEMAS</span><span class="o">.</span><span class="na">upgrade</span><span class="o">(</span><span class="n">oldVersion</span><span class="o">,</span> <span class="n">mContext</span><span class="o">,</span> <span class="n">db</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This part concludes the &ldquo;offline mode&rdquo; series. Here&rsquo;s the short recap:</p>
+
+<ul>
+<li>If you don&rsquo;t want to compromise on UX, your application should work regardless whether the user is connected to internet or not.</li>
+<li>In this case the user may end up in a situation when the application is upgraded, but not all data is synced with the server yet. You <strong><em>do not</em></strong> want to lose your users&#8217; data. You&rsquo;ll have to migrate them.</li>
+<li>If you migrate your data, you should keep the migrations separate from one another, because otherwise maintaining them becomes a nightmare.</li>
+<li>The best way to do this that I know of, is keeping the old schemas and always performing all migrations sequentially. To make things simpler, I recommend the <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils library</a>.</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-25T11:43:00+01:00" pubdate data-updated="true">Jan 25<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/gotcha/'>Gotcha</a>, <a class='category' href='/blog/categories/sqlite/'>SQLite</a>, <a class='category' href='/blog/categories/db/'>db</a>, <a class='category' href='/blog/categories/offline-mode/'>offline mode</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/01/12/android-sqlitedatabase-gotcha/" title="Previous Post: Android SQLiteDatabase gotcha">&laquo; Android SQLiteDatabase gotcha</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/02/20/when-do-you-absolutely-need/" title="Next Post: When do you absolutely need WakefulBroadcastReceiver">When do you absolutely need WakefulBroadcastReceiver &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

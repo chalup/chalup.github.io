@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Dependecy Injection | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/dependecy-injection/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Mobilization 2013]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/28/mobilization-2013/"/>
+    <updated>2013-10-28T09:30:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/28/mobilization-2013</id>
+    <content type="html"><![CDATA[<p>I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at <a href="https://getbase.com/">Base CRM</a> to make the data model maintainable. Here are the slides:</p>
+
+<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+
+<p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
+
+<p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
+]]></content>
+  </entry>
+  
+</feed>

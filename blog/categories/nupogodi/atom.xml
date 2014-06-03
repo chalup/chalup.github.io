@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: NuPogodi | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/nupogodi/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA["Nu, Pogodi!" Bought by Over 2000 Users]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/"/>
+    <updated>2012-02-24T22:53:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users</id>
+    <content type="html"><![CDATA[<p>This week my <a href="http://store.ovi.com/content/219800">&ldquo;Nu, Pogodi!&rdquo;</a> game reached the 2000 downloads from Nokia Store. It might not be a lot if you compare it to the number of Angry Birds downloads, but considering that a) the game is paid, i.e. those 2000 Nokia phone users actually spent their money on my game, and b) it took about two weeks total to program it, I think it&rsquo;s a very good result.</p>
+
+<p>Despite the fact that the game is very simple, <a href="/blog/2012/01/22/how-not-to-test-your-qml-application">I&rsquo;ve learned</a> <a href="/blog/2012/01/31/updating-qt-applications-in-nokia-store/">a lot</a> <a href="/blog/2012/02/01/handling-qml-errors-101">while writing</a> <a href="/blog/2012/02/23/nokia-belle-update-and-content">and publishing it</a>, which makes me very excited about the next, more complex programs I&rsquo;m going to release and gives me enormous motivation boost. Now I just need to get to keep working before it wears off.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Nokia Belle Update and Content Published in Nokia Store]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/23/nokia-belle-update-and-content/"/>
+    <updated>2012-02-23T16:22:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/23/nokia-belle-update-and-content</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve received an email from &ldquo;Nu, Pogodi!&rdquo; customer, saying that he cannot <a href="http://store.ovi.com/content/219800">download my game from Nokia Store</a> after updating his N8 phone firmware to Symbian Belle. After quick investigation in turned out that the N8 Belle device was listed as &ldquo;Not compatible&rdquo; in content distribution details.</p>
+
+<p>When I published my game in November, the only devices running with Belle firmware were Nokia 603, 700 and 701. When the Belle update for various phones was released, the new firmwares were added to the list as &ldquo;Not compatible&rdquo;, because that&rsquo;s the only reasonable default. It&rsquo;s prudent to prevent users from downloading application that might not work, because it&rsquo;s very likely that in case of any errors they&rsquo;ll post a negative review, and it&rsquo;s very hard to bump your rating from 1 or 2 stars average. I verified that everything works fine and updated the distribution metadata.</p>
+
+<p>So here&rsquo;s the piece of advice for anyone who published some content in Nokia Store: periodically check if there are new firmwares available and update your content distribution.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing: Nu, Pogodi!]]></title>
+    <link href="http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi/"/>
+    <updated>2012-01-20T12:05:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi</id>
+    <content type="html"><![CDATA[<p><img class="center" src="/images/nupogodi.png"></p>
+
+<p>&ldquo;Nu, pogodi!&rdquo; is the first application I&rsquo;ve published in Nokia Store (or any other app store, in fact). It&rsquo;s a remake of a classic handheld console game I used to play in my childhood: you had to place a wolf with a basket under one of four roosts to catch the eggs rolling from them. Despite the extreme simplicity and the obvious flaw in the game plot (namely: what the hell does the wolf need the eggs for?) the game was quite addictive and I spent many hours listening to the hypnotizing ticking of the falling eggs (if you played this game you know what I&rsquo;m talking about).</p>
+
+<p>The handheld console I based my game on is actually a Russian clone of &ldquo;Egg&rdquo; game from Nintendo&rsquo;s &ldquo;Game &amp; Watch&rdquo; game series. The main difference is the graphics &ndash; instead of fox and hen the Russian clone featured the Wolf and the Hare from a &ldquo;Nu, pogodi!&rdquo; cartoon &ndash; hence the name of the game.</p>
+
+<p><img class="center" src="/images/handhelds.jpg"></p>
+
+<p>At the beginning of 2011 I wanted to check out the Qt Quick, which was advertised by Nokia as the best thing since sliced bread. I never liked the go-through-a-boring-tutorials way of learning new things, so I started writing UI for a simple game instead. Few weeks later Nokia announced <a href="http://www.developer.nokia.com/Community/Wiki/The_Quick_Competition_2011Q1">Qt Quick Competition</a> &ndash; an event promoting Qt Quick introduced in Qt 4.7. I&rsquo;ve entered the competition with the early version of my game under the name <a href="http://projects.developer.nokia.com/PAGADI">&ldquo;Nu, Pagadi!&rdquo;</a> (which is, as I learned later, incorrect &ndash; apparently in Russian sometimes you write an &lsquo;o&rsquo;, but pronounce it as &lsquo;a&rsquo;), which didn&rsquo;t won me anything, but at least I had a motivation to work on the game. In accordance with the competition rules I&rsquo;ve published my code under OSS license and forgot about the whole deal.</p>
+
+<p>In November 2011 I&rsquo;ve stumbled upon a &ldquo;Soviet Eggs&rdquo; game in Nokia Store. It seems that some company forked my competition entry, added a splash screen and the menu and charged 2 euros for it. I&rsquo;ve watched the gameplay videos on YouTube, and thought I can do much better version than them. I polished my game, added sound effects, better looking menu and new game mode which resembles the gameplay of original game much more than the one included in the competition entry. All those changes took me about one week worth of evenings and one weekend. Subsequentially I&rsquo;ve <a href="/blog/2012/01/22/how-not-to-test-your-qml-application">screwed up testing</a>, published to Nokia Store a game which silently crashed on 90% of the phones, fixed the problem, and then I screwed up again, this time when <a href="/blog/2012/01/31/updating-qt-applications-in-nokia-store">publishing the update</a>.</p>
+
+<p>Despite the initial issues the game reached top 10 bestseller list in two weeks and stayed there ever since. Try it yourself!</p>
+
+<p><a href="http://store.ovi.com/content/219800"><img class="center" src="/images/nupogodi-banner.png"></a></p>
+]]></content>
+  </entry>
+  
+</feed>

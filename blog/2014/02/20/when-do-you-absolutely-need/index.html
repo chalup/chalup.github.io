@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>When Do You Absolutely Need WakefulBroadcastReceiver - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="Yesterdays #AndroidDev #Protip explains how to use WakefulBroadcastReceiver utility class and what problem does it solve, but it doesn&rsquo;t &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">When Do You Absolutely Need WakefulBroadcastReceiver</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-20T10:24:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="https://plus.google.com/108967384991768947849/posts/i6MzCp1NyzF">Yesterdays #AndroidDev #Protip</a> explains how to use <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> utility class and what problem does it solve, but it doesn&rsquo;t mention a case when using it or manually acquiring <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> is essential &ndash; using the <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a>.</p>
+
+<p>If you&rsquo;re not familiar with <code>AlarmManager</code>&rsquo;s API, here is <strong>tl;dr</strong> of the docs: it allows you to specify the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> that should be fired at some point, even if your application is in background. The common use cases for using <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a> is for example showing a <a href="http://developer.android.com/reference/android/app/Notification.html"><code>Notification</code></a> at the specified time or sending some kind of heartbeat to your backend. In both cases, your code performs potentially long running operation (in case of showing notification you might need some content from your local database), so you don&rsquo;t want to run it in the UI thread. The first thing that comes to mind is to specify an <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> as a <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> target:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">PendingIntent</span> <span class="n">intent</span> <span class="o">=</span> <span class="n">PendingIntent</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span>
+</span><span class='line'>  <span class="n">context</span><span class="o">,</span>
+</span><span class='line'>  <span class="mi">0</span><span class="o">,</span>
+</span><span class='line'>  <span class="k">new</span> <span class="nf">Intent</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">MyIntentService</span><span class="o">.</span><span class="na">class</span><span class="o">),</span>
+</span><span class='line'>  <span class="n">PendingIntent</span><span class="o">.</span><span class="na">FLAG_UPDATE_CURRENT</span>
+</span><span class='line'><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">AlarmManager</span> <span class="n">alarmManager</span> <span class="o">=</span> <span class="o">(</span><span class="n">AlarmManager</span><span class="o">)</span> <span class="n">context</span><span class="o">.</span><span class="na">getSystemService</span><span class="o">(</span><span class="n">Context</span><span class="o">.</span><span class="na">ALARM_SERVICE</span><span class="o">);</span>
+</span><span class='line'><span class="n">alarmManager</span><span class="o">.</span><span class="na">set</span><span class="o">(</span>
+</span><span class='line'>  <span class="n">AlarmManager</span><span class="o">.</span><span class="na">ELAPSED_REALTIME_WAKEUP</span><span class="o">,</span>
+</span><span class='line'>  <span class="n">SystemClock</span><span class="o">.</span><span class="na">elapsedRealtime</span><span class="o">()</span> <span class="o">+</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MINUTES</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="mi">15</span><span class="o">)</span>
+</span><span class='line'>  <span class="n">intent</span>
+</span><span class='line'><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This code won&rsquo;t always work though. While it is guaranteed that the alarm will go off and the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> will be sent, because we used a <code>_WAKEUP</code> alarm type, the device is allowed to go back to sleep before the service is started.</p>
+
+<p><img class="center" src="/images/wakelock.001.png"></p>
+
+<p>It&rsquo;s not explicitly documented, but both <a href="https://plus.google.com/105051985738280261832">+Dianne Hackborn</a> and <a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> <a href="https://groups.google.com/d/msg/android-developers/K5ggbRigGS8/B5KajJYAae4J">confirmed</a> <a href="http://stackoverflow.com/a/7444510/184953">this</a>. The workaround is to use <a href="http://developer.android.com/reference/android/app/PendingIntent.html#getBroadcast%28android.content.Context,%20int,%20android.content.Intent,%20int%29"><code>PendingIntent.getBroadcast()</code></a>, because it is guaranteed that the <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html#onReceive%28android.content.Context,%20android.content.Intent%29"><code>BroadcastReceiver.onReceive()</code></a> will be always fully executed before the CPU goes to sleep. Inside that callback you have to acquire <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> start your <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> and release the lock at the end of <a href="http://developer.android.com/reference/android/app/IntentService.html#onHandleIntent%28android.content.Intent%29"><code>onHandleIntent()</code></a> method.</p>
+
+<p><img class="center" src="/images/wakelock.002.png"></p>
+
+<p>This is where the <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> comes into play: its <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#startWakefulService%28android.content.Context,%20android.content.Intent%29"><code>startWakefulService</code></a> and <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#completeWakefulIntent%28android.content.Intent%29"><code>completeWakefulIntent</code></a> static methods encapsulate all the <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLocks</code></a> juggling, allowing you to focus on your business logic.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-20T10:24:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/protip/'>Protip</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/" title="Previous Post: Offline mode in Android apps, part 3 - old db schemas">&laquo; Offline mode in Android apps, part 3 - old db schemas</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/02/25/use-minsdkversion10-for-libraries/" title="Next Post: Use minSdkVersion=10 for libraries">Use minSdkVersion=10 for libraries &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

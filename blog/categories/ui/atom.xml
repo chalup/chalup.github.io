@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: UI | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/ui/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android Drawables Stroke Inconsistency]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/05/android-drawables-stroke-inconsistency/"/>
+    <updated>2013-11-05T00:34:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/05/android-drawables-stroke-inconsistency</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve run into a funny little problem when creating custom drawables recently &ndash; some of the lines were crisp and some were blurred:</p>
+
+<p><img class="center" src="/images/zoomed.png"></p>
+
+<p>After few debug iterations I was able to narrow down the difference to the shapes drawn using the <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawRoundRect%28android.graphics.RectF,%20float,%20float,%20android.graphics.Paint%29"><code>Canvas.drawRoundRect</code></a> and <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawPath%28android.graphics.Path,%20android.graphics.Paint%29"><code>Canvas.drawPath</code></a>. The former looked much crispier. I&rsquo;ve dug down to Skia classes and it turns out that they reach the same drawing function through slightly different code paths and I guess at some point some rounding is applied at one of them, but I haven&rsquo;t verified this.</p>
+
+<p>The minimal example which demonstrates the issue are two solid <a href="http://developer.android.com/guide/topics/resources/drawable-resource.html#Shape">XML shape drawables</a> (which are parsed into <a href="http://developer.android.com/reference/android/graphics/drawable/GradientDrawable.html"><code>GradientDrawables</code></a>), one with radius defined in radius attribute, the other one with four radii defined (can be the same).</p>
+
+<p>Besides satisfying my idle curiosity and honing my AOSP code diving skills, I have learned something useful: do not mix paths and round rects on <code>Canvas</code> and use <code>Path.addRoundRect</code> with radii array when your path contains other curved shapes.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Mobilization 2013]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/28/mobilization-2013/"/>
+    <updated>2013-10-28T09:30:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/28/mobilization-2013</id>
+    <content type="html"><![CDATA[<p>I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at <a href="https://getbase.com/">Base CRM</a> to make the data model maintainable. Here are the slides:</p>
+
+<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+
+<p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
+
+<p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android UI Struggles: Making a Button With Centered Text and Icon]]></title>
+    <link href="http://chalup.github.io/blog/2013/03/23/android-ui-struggles-making-button-with/"/>
+    <updated>2013-03-23T14:04:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/03/23/android-ui-struggles-making-button-with</id>
+    <content type="html"><![CDATA[<p>Every time I work on the UI of Android app I get the feeling that there is either something terribly wrong with the Android UI framework or with my understanding of how it works. I can reason about how the app works on the higher level, but I cannot apply the same methodology to Android UI, except for the simplest designs. I have read a lot of Android source code, I have written few dozens of sample-like apps, but I still cannot just think of the views structure, type it in and be done &ndash; for complicated layouts with some optional elements (i.e. which are sometimes visible and sometimes gone) I need at least few attempts and, I confess, sometimes I&rsquo;m desperate enough to do the &ldquo;let&rsquo;s change this and see what happens&rdquo; coding. Extremely frustrating.</p>
+
+<p>I&rsquo;m going to describe my struggles with Android UI on this blog, so if I&rsquo;m doing something terribly wrong, hopefully someone will enlighten me by posting a comment; and in case something is terribly wrong with Android UI framework, I might be able to help other programmers in distress.</p>
+
+<p>Today I have a simple task for you: create a button with some text and icon to the left of the text. The contents (both icon and text) should be centered inside the button.</p>
+
+<p><img class="center" src="/images/challenge.png"></p>
+
+<p>That&rsquo;s simple right? Here&rsquo;s the XML layout which comes to mind first:</p>
+
+<p>``` xml
+&lt;LinearLayout xmlns:android=&ldquo;<a href="http://schemas.android.com/apk/res/android">http://schemas.android.com/apk/res/android</a>&rdquo;</p>
+
+<pre><code>android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="vertical" &gt;
+
+&lt;Button
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:gravity="center"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></LinearLayout>
+```</p>
+
+<p>Unfortunately, no cookie for you:</p>
+
+<p><img class="center" src="/images/try1.png"></p>
+
+<p>Someone decided that compound drawables should be always draw next to the <code>View</code>&rsquo;s padding, so we have to try something else. For example <code>TextView</code> centered inside the <code>FrameLayout</code>.</p>
+
+<p>``` xml
+&lt;FrameLayout</p>
+
+<pre><code>style="?android:attr/buttonStyle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" &gt;
+
+&lt;TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:gravity="center"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></FrameLayout>
+```</p>
+
+<p><img class="center" src="/images/try2.png"></p>
+
+<p>Almost there, but the text has a wrong size and color. There is something called <code>textAppearanceButton</code>, but apparently it&rsquo;s not what the <code>Button</code>s use:</p>
+
+<p><img class="center" src="/images/try3.png"></p>
+
+<p>OK, so let&rsquo;s use the buttonStyle again, this time on <code>TextView</code>:</p>
+
+<p><img class="center" src="/images/try4.png"></p>
+
+<p>Now we need to get rid of the extra background, reset minimum height and width and make it not focusable and not clickable (otherwise tapping the caption won&rsquo;t have any effect):</p>
+
+<p>``` xml
+&lt;FrameLayout</p>
+
+<pre><code>style="?android:attr/buttonStyle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" &gt;
+
+&lt;TextView
+    style="?android:attr/buttonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@null"
+    android:clickable="false"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:focusable="false"
+    android:gravity="center"
+    android:minHeight="0dp"
+    android:minWidth="0dp"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></FrameLayout>
+```</p>
+
+<p>Lo and behold, it works!</p>
+
+<p><img class="center" src="/images/challenge.png"></p>
+
+<p>We&rsquo;d really like to use is something like <code>textAppearance="?android:attr/buttonStyle.textAppearance"</code>, but there is no such syntax. How about extracting all the attributes from <code>TextView</code> into some <code>buttonCaption</code> style with <code>?android:attr/buttonStyle</code> parent? No can do either: you can only inherit your style from the concrete <code>@style</code>, not from the styleable attribute.</p>
+
+<p>But what we can do is to use <code>Button</code> and create a style with no parent: Android will use the default button style and apply our captionOnly style:</p>
+
+<p>``` xml</p>
+
+
+
+<p>&lt;FrameLayout</p>
+
+<pre><code>style="?android:attr/buttonStyle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" &gt;
+
+&lt;Button
+    style="@style/captionOnly"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:gravity="center"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></FrameLayout>
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android Gets Nested Fragments]]></title>
+    <link href="http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments/"/>
+    <updated>2012-11-13T21:31:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments</id>
+    <content type="html"><![CDATA[<p>Most of the items in the <a href="http://developer.android.com/about/versions/android-4.2.html">Android 4.2 APIs list</a> are kind of &ldquo;meh&rdquo; to me, but there is one item that&rsquo;s make me very happy: <a href="http://developer.android.com/about/versions/android-4.2.html#NestedFragments">nested fragments</a>. Fragments were supposed to be reusable UI components, but for some unfathomable reason the initial release of the fragments API didn&rsquo;t allow composing a fragment from other fragments. Even during the 2012 Google I/O one of the Google developers said that they have discussed this idea, but they&rsquo;re not sure if it&rsquo;s a good one, which is an absolute surprise to me, because I don&rsquo;t think anyone sane would consider making the <a href="http://developer.android.com/reference/android/view/ViewGroup.html"><code>ViewGroup</code></a> which isn&rsquo;t a subclass of a <a href="http://developer.android.com/reference/android/view/View.html"><code>View</code></a>.</p>
+
+<p>Fragment nesting was a topic I kept on my topic list for a day when I feel I need to bitch about something, but now I&rsquo;m happy to remove it and write this ecstatic post. So now launch your SDK managers and download the r11 of support package! (or wait for half a year and hope it will be added to <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.google.android%22%20AND%20a%3A%22support-v4%22">Maven Central</a>)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android Font Metrics for Dummies]]></title>
+    <link href="http://chalup.github.io/blog/2012/10/09/android-font-metrics-for-dummies/"/>
+    <updated>2012-10-09T22:59:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/10/09/android-font-metrics-for-dummies</id>
+    <content type="html"><![CDATA[<p>Recently I was working on a custom View with overridden <a href="http://developer.android.com/reference/android/view/View.html#onDraw%28android.graphics.Canvas%29"><code>onDraw()</code></a> method and at some point I needed to center some text vertically. Unfortunately <a href="http://developer.android.com/reference/android/graphics/Paint.html#setTextAlign%28android.graphics.Paint.Align%29"><code>Paint.setTextAlign()</code></a> supports only horizontal orientation, so I tried calculating the y-coordinate of the origin myself, but I couldn&rsquo;t get it exactly right. After two failed attempts I decided that I need a program which visualizes the available font metrics, because it seems that I do not understand the <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> documentation, or the aforementioned class and it&rsquo;s documentation sucks.</p>
+
+<p>You can find the <a href="https://github.com/chalup/android-fontmetricstest">source code on my GitHub</a>, and here&rsquo;s the screenshot for other typographically challenged programmers:</p>
+
+<p><img class="center" src="/images/fontsfordummies.png"></p>
+
+<p>(BTW: the word &ldquo;Żyłę&rdquo; used there is not a complete gibberish, it&rsquo;s an accusative case of word &ldquo;vein&rdquo; in Polish; it&rsquo;s nice, because it&rsquo;s short, but it covers all cases of the metrics class).</p>
+
+<p>Let&rsquo;s get back to vertical alignment. In general you should center text vertically either on <a href="http://en.wikipedia.org/wiki/X-height">x-height</a> or on half the <a href="http://en.wikipedia.org/wiki/Cap_height">cap height</a> above the <a href="http://en.wikipedia.org/wiki/Baseline_%28typography%29">baseline</a> (at least that&rsquo;s the info I found). Neither metric is directly available in <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> class, but you can approximate the cap height as a <code>textSize - descent</code> or calculate x-height yourself using Rect height returned by <a href="http://developer.android.com/reference/android/graphics/Paint.html#getTextBounds%28java.lang.String,%20int,%20int,%20android.graphics.Rect%29"><code>Paint.getTextBounds</code></a> for string &ldquo;x&rdquo;.</p>
+]]></content>
+  </entry>
+  
+</feed>

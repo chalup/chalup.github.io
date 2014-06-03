@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Nokia Store | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/nokia-store/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Screen Orientation and QT Applications on Symbian Belle]]></title>
+    <link href="http://chalup.github.io/blog/2012/09/12/screen-orientation-and-qt-applications/"/>
+    <updated>2012-09-12T22:05:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/09/12/screen-orientation-and-qt-applications</id>
+    <content type="html"><![CDATA[<p>Let&rsquo;s take a break from <a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android">Android</a> <a href="/blog/2012/09/05/android-sharedpreferences-gotcha">gotchas</a> and do some mobile necrophilia, i.e. let&rsquo;s talk about Symbian.</p>
+
+<p>Recently I received an email from Nokians saying that they are testing Nokia Store content with new firmware update and <a href="http://store.ovi.com/content/219800">my app</a> won&rsquo;t work after update. After few quick email exchanges we narrowed down the problem to <a href="/blog/2012/05/30/qml-applications-on-nokia-belle">screen orientation locking code I wrote about some time ago</a>. It turns out that things can be done much simpler:</p>
+
+<p>``` js
+Window {</p>
+
+<pre><code>Rectangle {
+    id: root
+    anchors.fill: parent
+
+    Component.onCompleted: {
+        screen.allowedOrientations = Screen.Landscape
+    }
+
+    // more stuff
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>``` c++
+int main(int argc, char *argv[])
+{</p>
+
+<pre><code>QScopedPointer&lt;QApplication&gt; app(createApplication(argc, argv));
+
+QmlApplicationViewer viewer;
+viewer.setMainQmlFile(QLatin1String("qml/nupagadi/GameArea.qml"));
+viewer.setOrientation(QmlApplicationViewer::ScreenOrientationLockLandscape);
+viewer.setResizeMode(QDeclarativeView::SizeRootObjectToView);
+viewer.showExpanded();
+
+return app-&gt;exec();
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Less code, no need to comment it as a gotcha/workaround, and it&rsquo;s supposedly futureproof.</p>
+
+<p>I&rsquo;m very positively surprised with Nokians' approach, responsiveness and this whole experience. Of course I wouldn&rsquo;t be me if I didn&rsquo;t bitch a little bit, namely: why did I have this problem in the first place? I mean, locking the screen orientation is not a rocket science and should be well documented. It should, but unfortunately it&rsquo;s not, like so many things about QML.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA["Nu, Pogodi!" Bought by Over 2000 Users]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/"/>
+    <updated>2012-02-24T22:53:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users</id>
+    <content type="html"><![CDATA[<p>This week my <a href="http://store.ovi.com/content/219800">&ldquo;Nu, Pogodi!&rdquo;</a> game reached the 2000 downloads from Nokia Store. It might not be a lot if you compare it to the number of Angry Birds downloads, but considering that a) the game is paid, i.e. those 2000 Nokia phone users actually spent their money on my game, and b) it took about two weeks total to program it, I think it&rsquo;s a very good result.</p>
+
+<p>Despite the fact that the game is very simple, <a href="/blog/2012/01/22/how-not-to-test-your-qml-application">I&rsquo;ve learned</a> <a href="/blog/2012/01/31/updating-qt-applications-in-nokia-store/">a lot</a> <a href="/blog/2012/02/01/handling-qml-errors-101">while writing</a> <a href="/blog/2012/02/23/nokia-belle-update-and-content">and publishing it</a>, which makes me very excited about the next, more complex programs I&rsquo;m going to release and gives me enormous motivation boost. Now I just need to get to keep working before it wears off.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Nokia Belle Update and Content Published in Nokia Store]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/23/nokia-belle-update-and-content/"/>
+    <updated>2012-02-23T16:22:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/23/nokia-belle-update-and-content</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve received an email from &ldquo;Nu, Pogodi!&rdquo; customer, saying that he cannot <a href="http://store.ovi.com/content/219800">download my game from Nokia Store</a> after updating his N8 phone firmware to Symbian Belle. After quick investigation in turned out that the N8 Belle device was listed as &ldquo;Not compatible&rdquo; in content distribution details.</p>
+
+<p>When I published my game in November, the only devices running with Belle firmware were Nokia 603, 700 and 701. When the Belle update for various phones was released, the new firmwares were added to the list as &ldquo;Not compatible&rdquo;, because that&rsquo;s the only reasonable default. It&rsquo;s prudent to prevent users from downloading application that might not work, because it&rsquo;s very likely that in case of any errors they&rsquo;ll post a negative review, and it&rsquo;s very hard to bump your rating from 1 or 2 stars average. I verified that everything works fine and updated the distribution metadata.</p>
+
+<p>So here&rsquo;s the piece of advice for anyone who published some content in Nokia Store: periodically check if there are new firmwares available and update your content distribution.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Updating Qt Applications in Nokia Store]]></title>
+    <link href="http://chalup.github.io/blog/2012/01/31/updating-qt-applications-in-nokia-store/"/>
+    <updated>2012-01-31T21:10:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/01/31/updating-qt-applications-in-nokia-store</id>
+    <content type="html"><![CDATA[<p>Every Symbian Qt application in Nokia Store consists of two parts: metadata and content files. Metadata is the information about the application visible in Nokia Store, and content files are applications binaries, i.e. sis file. Both parts are separate entities, can be updated independently and have separate Quality Assurance process. It stands to reason: why would anyone have to verify the application binary when you correct a typo in applications  description?</p>
+
+<p>But sometimes you might want to change the description and the binary at the same time. For example I screwed up testing of the first version of my <a href="/blog/2012/01/20/introducing-nu-pogodi/">&ldquo;Nu, Pogodi!&rdquo;</a> game and first few reviews were negative with &ldquo;Doesn&rsquo;t work, shows only black screen&rdquo; comment. I fixed the issue, published new binary and added &ldquo;Version 1.0.1 fixes the black screen issue.&rdquo; text to description. The metadata QA finished earlier, but still the old, malfunctioning binaries were served. Guess what happened &ndash; the next review was also negative, this time with &ldquo;Black screen, cannot download version 1.0.1&rdquo; text. Joy.</p>
+
+<p>So the point is, currently there is no way to update both parts of content at the same time. The solution recommended by Nokia Publish Support is to publish the binaries first, because the QA for that part is longer than for metadata and update the metadata when binaries pass QA.</p>
+]]></content>
+  </entry>
+  
+</feed>

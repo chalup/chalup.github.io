@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Guava | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/guava/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Use minSdkVersion=10 for Libraries]]></title>
+    <link href="http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries/"/>
+    <updated>2014-02-25T21:42:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve pushed new versions of <a href="https://github.com/chalup/microorm">microorm</a> and <a href="https://github.com/chalup/thneed">thneed</a> to Maven Central today. The most notable change for both libraries is dropping the support for Android 2.2 and earlier versions. The same change was applied to all Android libraries open sourced by <a href="https://github.com/orgs/futuresimple/">Base</a>. Why? <a href="https://plus.google.com/104992412719307414985">+Jeff Gilfelt</a> summed it up nicely:</p>
+
+<blockquote class="twitter-tweet" lang="en"><p>Because it is 2014 <a href="https://t.co/UCMaZOB6Sl">https://t.co/UCMaZOB6Sl</a></p>&mdash; Jeff Gilfelt (@readyState) <a href="https://twitter.com/readyState/statuses/435419373852184576">February 17, 2014</a></blockquote>
+
+
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+<p>This tweet is a good laugh (and an excellent example of what happens if you limit the discussion to 140 characters), but there are poor souls who might need an answer they can use as an objective argument. For them, here is my take on this one: you should drop support for Froyo because sizeable chunk of Java 1.6 APIs were missing from API level 8. I&rsquo;m not talking about some dark corners of java packages, I&rsquo;m talking about stuff like <a href="http://developer.android.com/reference/java/lang/String.html#isEmpty%28%29"><code>String.isEmpty()</code></a>, <a href="http://developer.android.com/reference/java/util/Deque.html"><code>Deque</code></a>, <a href="http://developer.android.com/reference/java/util/NavigableSet.html"><code>NavigableSet</code></a>, <a href="http://developer.android.com/reference/java/io/IOException.html"><code>IOException</code></a>&rsquo;s constructors with cause parameter, <a href="http://developer.android.com/sdk/api_diff/9/changes/changes-summary.html">and so on</a>.</p>
+
+<p>Your own code can (and should) be checked with Lint, but these methods and classes can also be used by the 3rd party libraries and I&rsquo;m not aware of any static analysis tool that can help you in this case. So if your app supports Froyo and uses a lot of external dependencies, you&rsquo;re probably sitting on the <a href="/blog/2013/06/26/guava-and-minsdkversion">NoClassDefFoundError bomb</a>. It might force you to use obsolete versions of libraries, the most notable example of which is Guava &ndash; on Froyo you have to use 13.0.1, a 18 months old version.</p>
+
+<p>That&rsquo;s also the reason why the libraries authors should be the first ones to move on to Android 2.3 and later. If you use obsolete library in your application, you&rsquo;re hurting only yourself. If you use it as a library dependency, you&rsquo;re hurting every user of the library.</p>
+
+<p>So move on and bump the minSdkVersion. After all, it&rsquo;s 2014.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[To Guava or Not to Guava?]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/27/to-guava-or-not-to-guava/"/>
+    <updated>2013-12-27T12:10:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/27/to-guava-or-not-to-guava</id>
+    <content type="html"><![CDATA[<p>I faced this dilemma recently, when I was preparing first release of <a href="https://github.com/chalup/cerberus">Cerberus</a> utility for Android. On one hand, in <a href="https://github.com/chalup/cerberus">Cerberus</a> I used a tiny subset of Guava features which can be trivially rewritten in vanilla Java in 15 minutes, so maybe I should not force Guava down peoples throat?  On the other hand I&rsquo;m a <a href="/blog/2013/09/21/guava-goodies">huge</a> <a href="/blog/2013/10/04/more-guava-goodies-abstractiterator">fan</a> of Guava and I think you should definitely use it in anything more complicated than &ldquo;Hello, world!&rdquo; tutorial, because it either reduces a boilerplate or replaces your handrolled utilities with better, faster and more thoroughly tested implementations.</p>
+
+<p>The &ldquo;this library bloats my apk&rdquo; argument is moot, because you can easily set up the ProGuard configuration which only strips the unused code, without doing any expensive optimizations. It&rsquo;s a good idea, because the dex input will be smaller, which speeds up the build and the apk will be smaller, which reduces time required to upload and install the app on the device.</p>
+
+<p>I found the problem though, which is a bit harder to solve. Modern versions of Guava use some <a href="http://developer.android.com/reference/java/util/NavigableSet.html">Java 1.6 APIs, which are available from API level 9</a>, so when you try to use it on Android 2.2 (API level 8), you&rsquo;ll get the <code>NoSuchMethodException</code> or some other unpleasant runtime error (side note: position #233 on my TODO list was a jar analyzer which finds this problem). <a href="/blog/2013/06/26/guava-and-minsdkversion">On Android 2.2 you&rsquo;re stuck with Guava 13.0.1.</a></p>
+
+<p>This extends also to Guava as a library dependency. If one library supports Android 2.2 and older, it forces old version of Guava as dependency. And if another library depends on more recent version of Guava, you&rsquo;re basically screwed.</p>
+
+<p>One conclusion you can draw from this blog post is that you shouldn&rsquo;t use Guava in your open source libraries to prevent dependency hell, but that&rsquo;s spilling the baby with the bathwater. The problem is not Guava or any other library, the problem are Java 1.6 methods missing from Android API level 8! <a href="http://developer.android.com/about/dashboards/index.html">The statistics from Google</a> indicates that Froyo is used by 1.6%, in case of Base CRM user base it&rsquo;s only 0.2%. So more reasonable course of action is finally <strong>bumping minSdkVersion to 10</strong> (<a href="http://dannyroa.com/2013/10/17/why-its-time-to-support-only-android-4-0-and-above/">or even 14</a>), both for your applications and all the libraries.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[More Guava Goodies - AbstractIterator]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator/"/>
+    <updated>2013-10-04T23:19:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator</id>
+    <content type="html"><![CDATA[<p>A while ago I wanted to perform a certain operation for every subsequent pair of elements in collection, i.e. for list <code>[1, 2, 3, 4, 5]</code> I wanted to do something with pairs <code>[(1, 2), (2, 3), (3, 4), (4, 5)]</code>. In Haskell that would be easy:</p>
+
+<p><code>haskell
+Prelude&gt; let frobnicate list = zip (init list) (tail list)
+Prelude&gt; frobnicate [1..5]
+[(1,2),(2,3),(3,4),(4,5)]
+</code></p>
+
+<p>The problem is, I needed this stuff in my Android app, which means Java. The easiest thing to write would be obviously:</p>
+
+<p>``` java
+List<T> list;
+for (int i = 1; i != list.size(); ++i) {
+  T left = list.get(i-1);
+  T right = list.get(i);</p>
+
+<p>  // do something useful
+}
+```</p>
+
+<p>But where&rsquo;s the fun with that? Fortunately, there is Guava. It doesn&rsquo;t have the <code>zip</code> or <code>init</code> functions, but it provides tool to write them yourself &ndash; the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/AbstractIterator.html"><code>AbstractIterator</code></a>. <strong>Tl;dr</strong> of the documentation: override one method returning an element or returning special marker from <code>endOfData()</code> method result.</p>
+
+<p>The zip implementation is pretty straightforward:</p>
+
+<p>``` java
+public static &lt;TLeft, TRight> Iterable&lt;Pair&lt;TLeft, TRight>> zip(final Iterable<TLeft> left, final Iterable<TRight> right) {
+  return new Iterable&lt;Pair&lt;TLeft, TRight>>() {</p>
+
+<pre><code>@Override
+public Iterator&lt;Pair&lt;TLeft, TRight&gt;&gt; iterator() {
+  final Iterator&lt;TLeft&gt; leftIterator = left.iterator();
+  final Iterator&lt;TRight&gt; rightIterator = right.iterator();
+
+  return new AbstractIterator&lt;Pair&lt;TLeft, TRight&gt;&gt;() {
+    @Override
+    protected Pair&lt;TLeft, TRight&gt; computeNext() {
+      if (leftIterator.hasNext() &amp;&amp; rightIterator.hasNext()) {
+        return Pair.create(leftIterator.next(), rightIterator.next());
+      } else {
+        return endOfData();
+      }
+    }
+  };
+}
+</code></pre>
+
+<p>  };
+}
+```</p>
+
+<p>The tail can be achieved simply by calling the <code>Iterables.skip</code>:</p>
+
+<p><code>java
+public static &lt;T&gt; Iterable&lt;T&gt; getTail(Iterable&lt;T&gt; iterable) {
+  Preconditions.checkArgument(iterable.iterator().hasNext(), "Iterable cannot be empty");
+  return Iterables.skip(iterable, 1);
+}
+</code></p>
+
+<p>For init you could write similar function:</p>
+
+<p><code>java
+public static &lt;T&gt; Iterable&lt;T&gt; getInit(final Iterable&lt;T&gt; iterable) {
+  Preconditions.checkArgument(iterable.iterator().hasNext(), "Iterable cannot be empty");
+  return Iterables.limit(iterable, Iterables.size(iterable));
+}
+</code></p>
+
+<p>But this will iterate through the entire iterable to count the size. We don&rsquo;t need the count however, we just need to know if there is another element in the iterable. Here is more efficient solution:</p>
+
+<p>``` java
+public static <T> Iterable<T> getInit(final Iterable<T> iterable) {
+  Preconditions.checkArgument(iterable.iterator().hasNext(), &ldquo;Iterable cannot be empty&rdquo;);</p>
+
+<p>  return new Iterable<T>() {</p>
+
+<pre><code>@Override
+public Iterator&lt;T&gt; iterator() {
+  final Iterator&lt;T&gt; iterator = iterable.iterator();
+  return new AbstractIterator&lt;T&gt;() {
+    @Override
+    protected T computeNext() {
+      if (iterator.hasNext()) {
+        T t = iterator.next();
+        if (iterator.hasNext()) {
+          return t;
+        }
+      }
+      return endOfData();
+    }
+  };
+}
+</code></pre>
+
+<p>  };
+}
+```</p>
+
+<p>All methods used together look like this:</p>
+
+<p><code>java
+List&lt;T&gt; list;
+for (Pair&lt;T, T&gt; zipped : zip(getInit(list), getTail(list))) {
+  // do something useful
+}
+</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Guava Goodies]]></title>
+    <link href="http://chalup.github.io/blog/2013/09/21/guava-goodies/"/>
+    <updated>2013-09-21T14:49:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/09/21/guava-goodies</id>
+    <content type="html"><![CDATA[<p>This is a long overdue post after my <a href="/blog/2013/02/20/guava-on-android">Guava on Android</a> post from February. Since then I&rsquo;ve been using <a href="https://code.google.com/p/guava-libraries/">Guava</a> in pretty much every Java project I was involved in and I still find new stuff that makes my code both shorter and clearer. Some random examples:</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#equal%28java.lang.Object,%20java.lang.Object%29"><code>Objects.equal()</code></a>
+``` java
+// instead of:
+boolean equal = one == null</p>
+
+<pre><code>? other == null
+: one.equals(other);
+</code></pre>
+
+<p>// Guava style:
+boolean equal = Objects.equal(one, other);
+```</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#hashCode%28java.lang.Object...%29"><code>Objects.hashcode()</code></a>
+``` java
+// instead of:
+@Override
+public int hashCode() {
+  int result = x;
+  result = 31 * result + (y != null ? Arrays.hashCode(y) : 0);
+  result = 31 * result + (z != null ? z.hashCode() : 0);
+  return result;
+}</p>
+
+<p>// Guava style:
+@Override
+public int hashCode() {
+  return Objects.hashCode(x, y, z);
+}
+```</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Joiner.html"><code>Joiner</code></a>
+``` java
+// instead of:
+StringBuilder b = new StringBuilder();
+for (int i = 0; i != a.length; ++i) {
+  b.append(a[i]);
+  if (i != a.length &ndash; 1) {</p>
+
+<pre><code>b.append(", ");
+</code></pre>
+
+<p>  }
+}
+return b.toString();</p>
+
+<p>// Guava style:
+Joiner.on(&ldquo;, &rdquo;).join(a);
+```</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a>
+``` java
+// instead of:
+@Override
+public int compareTo(Person other) {
+  int cmp = lastName.compareTo(other.lastName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  cmp = firstName.compareTo(other.firstName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  return Integer.compare(zipCode, other.zipCode);
+}</p>
+
+<p>// Guava style:
+@Override
+public int compareTo(Person other) {
+  return ComparisonChain.start()</p>
+
+<pre><code>  .compare(lastName, other.lastName)
+  .compare(firstName, other.firstName)
+  .compare(zipCode, other.zipCode)
+  .result();
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Lists, Maps and Sets classes contain bunch of newFooCollection, which effectively replace the diamond operator from JDK7, but also allow you to initialize the collection from varargs.</p>
+
+<p>Sets also contain the difference, intersection, etc. methods for common operations on sets, which a) have sane names, unlike some stuff from JDK&rsquo;s Collections, and b) doesn&rsquo;t change operands, so you don&rsquo;t have to make a defensive copy if you want to use the same set in two operations.</p>
+
+<p>Speaking of defensive copying: Guava has a set of <a href="https://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">Immutable collections</a>, which were created just for this purpose. There are few other very useful collections: <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/cache/LoadingCache.html"><code>LoadingCache</code></a>, which you can think of as a lazy map with specified generator for new items; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Multiset.html"><code>Multiset</code></a>, very handy if you need to build something like a histogram; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Table.html"><code>Table</code></a> if you need to lookup value using two keys.</p>
+
+<p>The other stuff I use very often are <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Preconditions.html"><code>Preconditions</code></a>. It&rsquo;s just a syntactic sugar for some sanity checks in your code, but it makes them more obvious, especially when you skim through some unfamiliar code. Bonus points: if you don&rsquo;t use the return values from <code>checkNotNull</code> and <code>checkPositionIndex</code>, you can remove those checks from performance critical sections using Proguard.</p>
+
+<p>On Android you have the <a href="http://developer.android.com/reference/android/util/Log.html#getStackTraceString%28java.lang.Throwable%29"><code>Log.getStackTraceString()</code></a> helper method, but in plain Java you&rsquo;d have to build one from <a href="http://developer.android.com/reference/java/lang/Throwable.html#getStackTrace%28%29"><code>Throwable.getStackTrace()</code></a>. Only you don&rsquo;t have to do this, since Guava have <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Throwables.html#getStackTraceAsString%28java.lang.Throwable%29"><code>Throwables.getStackTraceAsString()</code></a> utility method.</p>
+
+<p>Guava introduces also some functional idioms in form of <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#transform%28java.util.Collection,%20com.google.common.base.Function%29"><code>Collections2.transform</code></a> and <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#filter%28java.util.Collection,%20com.google.common.base.Predicate%29"><code>Collections2.filter</code></a>, but I have mixed feelings about them. On one hand sometimes they are life savers, but usually they make the code much uglier than the good ol' imperative for loop, so ues them with caution. They get especially ugly when you need to chain multiple transformations and filters, but for this case the Guava provides the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/FluentIterable.html"><code>FluentIterable</code></a> interface.</p>
+
+<p>None of the APIs listed above is absolutely necessary, but seriously, you want to use Guava (<a href="/blog/2013/06/26/guava-and-minsdkversion">but sometimes not the latest version</a>). Each part of it raises the abstraction level of your code a tiny bit, improving it one line at the time.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Guava and minSdkVersion]]></title>
+    <link href="http://chalup.github.io/blog/2013/06/26/guava-and-minsdkversion/"/>
+    <updated>2013-06-26T23:03:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/06/26/guava-and-minsdkversion</id>
+    <content type="html"><![CDATA[<p>A while ago <a href="/blog/2013/02/20/guava-on-android">I wrote about pre-dexing</a> feature introduced at the end of 2012, which facilitates using large Java libraries like Guava for developing Android apps. Few months later, I&rsquo;m still discovering stuff in Guava that makes my life easier (BTW: I still owe you a blog post with a list of Guava goodies). But this week, for a change, I&rsquo;ve managed to make my life harder with Guava.</p>
+
+<p>I wanted to include the javadocs and source jars for Guava, and when I opened maven central I saw the new version and decided to upgrade from 13.0.1 to 14.0.1. Everything went smoothly except for the minor Proguard hiccup: you have to include <a href="https://code.google.com/p/atinject/">the jar with the <code>@Inject</code> annotation</a>. At least it went smoothly on the first few phones I&rsquo;ve tested our app on, but on some ancient crap with Android 2.2 the app crashed with <a href="http://developer.android.com/reference/java/lang/NoClassDefFoundError.html"><code>NoClassDefFoundError</code></a>.</p>
+
+<p>The usual suspect in this case is, of course, Proguard. I&rsquo;ve also suspected the issue similar to <a href="/blog/2013/03/23/libphonenumber-crash-on-android-32">the libphonenumber crash I wrote about in March</a>. When both leads turned out to be a dead end, I decided to run the debug build and to my surprise it crashed as well. And there was a logcat message which pinpointed the issue: the <code>ImmutableSet</code> in Guava 14.0.1 depends somehow on <a href="http://developer.android.com/reference/java/util/NavigableSet.html"><code>NavigableSet</code></a> interface, which is available from API level 9. Sad as I was, I downgraded the Guava back to 13.0.1 and everything started to work again.</p>
+
+<p>So what have I learned today?</p>
+
+<ul>
+<li>Upgrading the libraries for the sake of upgrading is bad (m'kay).</li>
+<li>Before you start wrestling with Proguard, test the debug build.</li>
+<li>Android 2.2 doesn&rsquo;t support all Java 1.6 classes.</li>
+</ul>
+
+
+<p>The scary thing is, the similar thing might happen again if some other class in Guava depends on APIs unavailable on older versions of Android. Sounds like a good idea for a weekend hack project: some way to mark or check the minSdkVersion needed to use a given class or method.</p>
+]]></content>
+  </entry>
+  
+</feed>

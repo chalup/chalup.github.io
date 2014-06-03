@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Android | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/android/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Clicking Unclickable List Items]]></title>
+    <link href="http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items/"/>
+    <updated>2014-05-22T22:26:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items</id>
+    <content type="html"><![CDATA[<p>One of the UI patterns that improve lists usability is dividing items into sections. The section might be the first letter of the main text on the list item, date formatted and rounded in a specific way or whatever makes sense for your data.</p>
+
+<p>From the technical point of view you can either add the header view to every list item and show and hide them as needed or create the separate view for header and regular list item and register multiple view types in your Adapter. Both options were described in details by <a href="https://plus.google.com/118417777153109946393">+Cyril Mottier</a> in excellent <a href="http://cyrilmottier.com/2011/07/05/listview-tips-tricks-2-section-your-listview/">ListView Tips &amp; Tricks #2: Sectioning Your ListView</a> blog post.</p>
+
+<p>If you choose the second approach, you&rsquo;ll have to decide what to return from your <code>Adapter</code>&rsquo;s <code>getItem</code> and <code>getItemId</code> methods for items representing sections. If your sections are not supposed to be clickable, you might implement your <code>Adapter</code> like this:
+``` java
+@Override
+public Object getItem(int position) {
+  return getItemViewType(position) == TYPE_ITEM</p>
+
+<pre><code>  ? mItems[getCursorPosition(position)]
+  : null;
+</code></pre>
+
+<p>}</p>
+
+<p>@Override
+public long getItemId(int position) {
+  return getItemViewType(position) == TYPE_ITEM</p>
+
+<pre><code>  ? getCursorPosition(position)
+  : 0;
+</code></pre>
+
+<p>}</p>
+
+<p>@Override
+public boolean areAllItemsEnabled() {
+  return false;
+}</p>
+
+<p>@Override
+public boolean isEnabled(int position) {
+  return getItemViewType(position) == TYPE_ITEM;
+}
+```</p>
+
+<p>And your <code>onListItemClickListener</code> like this:
+``` java
+@Override
+public void onListItemClick(ListView l, View v, int position, long id) {
+  super.onListItemClick(l, v, position, id);</p>
+
+<p>  // dummy action which uses Object returned from getItem(position)
+  Log.d(&ldquo;DMFM&rdquo;, getListAdapter().getItem(position).toString());
+}
+```</p>
+
+<p>If you do so, the Android has a nasty surprise for you:</p>
+
+<p>```
+java.lang.NullPointerException</p>
+
+<pre><code>at org.chalup.dialmformonkey.app.MainFragment.onListItemClick(MainFragment.java:38)
+at android.app.ListFragment$2.onItemClick(ListFragment.java:160)
+at android.widget.AdapterView.performItemClick(AdapterView.java:298)
+at android.widget.AbsListView.performItemClick(AbsListView.java:1100)
+at android.widget.AbsListView$PerformClick.run(AbsListView.java:2749)
+at android.widget.AbsListView$1.run(AbsListView.java:3423)
+at android.os.Handler.handleCallback(Handler.java:725)
+...
+</code></pre>
+
+<p>```</p>
+
+<p>The only way this can happen is getting <code>null</code> from <code>Adapter.getItem()</code>, but this method will be called only for disabled items, right?</p>
+
+<p>``` java
+@Override
+public void onListItemClick(ListView l, View v, int position, long id) {
+  super.onListItemClick(l, v, position, id);</p>
+
+<p>  Log.d(&ldquo;DMFM&rdquo;, &ldquo;Clicked on item &rdquo; + position + &ldquo; which is &rdquo; +</p>
+
+<pre><code>    (getListAdapter().isEnabled(position) 
+        ? "enabled"
+        : "disabled")
+</code></pre>
+
+<p>  );</p>
+
+<p>  // dummy action which uses Object returned from getItem(position)
+  Log.d(&ldquo;DMFM&rdquo;, getListAdapter().getItem(position).toString());
+}
+```</p>
+
+<p>Wrong:</p>
+
+<p><code>
+D/DMFM﹕ Clicked on item 4 which is enabled
+D/DMFM﹕ Abondance
+D/DMFM﹕ Clicked on item 4 which is enabled
+D/DMFM﹕ Abondance
+D/DMFM﹕ Clicked on item 31 which is enabled
+D/DMFM﹕ Aragon
+D/DMFM﹕ Clicked on item 31 which is enabled
+D/DMFM﹕ Aragon
+D/dalvikvm﹕ GC_CONCURRENT freed 138K, 3% free 8825K/9016K, paused 0ms+0ms, total 3ms
+D/DMFM﹕ Clicked on item 28 which is disabled
+</code></p>
+
+<p>It&rsquo;s very difficult to reproduce this error manually, especially if tapping the list item does something more than writing to logcat, but I investigated this issue, because the stack traces above appeared in crash reports on Google Analytics, so several people managed to click exactly wrong area at the wrong time.</p>
+
+<p>I didn&rsquo;t investigate the issue thoroughly, but it seems there must be some disparity between checking the <code>isEnabled</code> method and getting the item. If I ever dive into <code>ListView</code> code, I&rsquo;ll definitely write about it. If you want to reproduce or investigate the issue yourself, compile <a href="https://github.com/chalup/blog-unclickable-items">this project</a> and run the monkey:</p>
+
+<p><code>
+$ adb shell monkey -p org.chalup.dialmformonkey.app -v 500
+</code></p>
+
+<p>So what can we do? First option is checking the <code>Adapter.isEnabled()</code> in your <code>onListItemClick</code> listener, which is yet another kind of boilerplate you have to add to your Android code, but it&rsquo;s super easy to add. The other option is going with the first sectioning approach, i.e. putting section as a part of the clickable list item, but it might not work for your use case (for example adapter with multiple item types).</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android App Widgets Issues]]></title>
+    <link href="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues/"/>
+    <updated>2014-05-10T15:42:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues</id>
+    <content type="html"><![CDATA[<p>This week I spend few days analyzing and fixing various issues of app widget in Base CRM application.</p>
+
+<p>This part of our codebase was created over a year ago during one of our internal hackathons and was released soon after that. Most of the times it worked. Every once in a while we received a weird crash report from Google Analytics, but it never caused much trouble. Recently though we received few complaints from customers. I happened to have few hours available for bug hunting, so I took a dive.</p>
+
+<p>The widget is really a simple todo list backed by <code>ContentProvider</code>. The code looks like it was based on the WeatherWidget from SDK samples. What can possibly go wrong?</p>
+
+<h2>Issue #1: gazillions of threads started</h2>
+
+<p>Take a look at the code of WeatherWidgetProvider:
+<code>java
+public WeatherWidgetProvider() {
+  // Start the worker thread
+  sWorkerThread = new HandlerThread("WeatherWidgetProvider-worker");
+  sWorkerThread.start();
+  sWorkerQueue = new Handler(sWorkerThread.getLooper());
+}
+</code></p>
+
+<p>The WeatherWidgetProvider is an <code>AppWidgetProvider</code> implementation, which extends a regular <code>BroadcastReceiver</code>. It means that for every action a new instance of WeatherWidgetProvider is created, and the current implementation spawns new thread which is never closed.</p>
+
+<p>The sample author obviously intended to create only one worker thread &ndash; the sWorkerThread is the static &ndash; but forgot to do the null check before creating a new thread. So let&rsquo;s fix it:
+``` java
+public WeatherWidgetProvider() {
+  if (sWorkerThread == null) {</p>
+
+<pre><code>// Start the worker thread
+sWorkerThread = new HandlerThread("WeatherWidgetProvider-worker");
+sWorkerThread.start();
+sWorkerQueue = new Handler(sWorkerThread.getLooper());
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<h2>Issue #2: no refresh after application update</h2>
+
+<p>The widget shows data from the same <code>ContentProvider</code> as the main app, so when the user creates a task inside in the main app and then goes back to homescreen, the task should be displayed on the widget. To achieve this we did the same thing the WeatherWidget sample does &ndash; we register the <code>ContentObserver</code> in <code>onEnabled</code> callback of <code>AppWidgetProvider</code>:</p>
+
+<p>``` java
+@Override
+public void onEnabled(Context context) {
+  final ContentResolver r = context.getContentResolver();
+  if (sDataObserver == null) {</p>
+
+<pre><code>final AppWidgetManager mgr = AppWidgetManager.getInstance(context);
+final ComponentName cn = new ComponentName(context, WeatherWidgetProvider.class);
+sDataObserver = new WeatherDataProviderObserver(mgr, cn, sWorkerQueue);
+r.registerContentObserver(WeatherDataProvider.CONTENT_URI, true, sDataObserver);
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The <code>onEnabled</code> callback is called when the first instance of the widget is added to homescreen, so the code looks fine. Unfortunately the callback is not called at your process startup. So if your app is updated and the process is restarted, the <code>ContentObserver</code> won&rsquo;t be registered. The same thing happens if your app crashes or is stopped by the OS to free resources.</p>
+
+<p>To solve this you have to register the <code>ContentObserver</code> in few more places. I have added registration to <code>onCreate</code> callback in <code>RemoteViewsFactory</code> and the <code>onReceive</code> part which handles our custom actions in <code>AppWidgetProvider</code>.</p>
+
+<p>WeatherWidget sample does one more thing wrong: the <code>ContentObserver</code> is never unregistered and the worker thread is never stopped. The correct place to do this is <code>onDisabled</code> callback in <code>AppWidgetProvider</code>.</p>
+
+<h2>Issue #3: <code>CursorOutOfBoundsException</code> crash</h2>
+
+<p>Ever since we introduced the tasks widget, we&rsquo;ve occasionally received the crash reports indicating that the RemoteViewsFactory requested elements outside of <code>[0, getCount)</code> range:</p>
+
+<p>```
+05-10 15:22:50.559  13781-13795/org.chalup.widgetfail.widget E/AndroidRuntime﹕ FATAL EXCEPTION: Binder_2</p>
+
+<pre><code>Process: org.chalup.widgetfail.widget, PID: 13781
+android.database.CursorIndexOutOfBoundsException: Index 1 requested, with a size of 1
+</code></pre>
+
+<p>```</p>
+
+<p>The reproduction steps for this issue are quite complicated:</p>
+
+<ul>
+<li>Tap the task on the widget to mark it was completed. Internally we set the <code>PENDING_DONE</code> flag, so the task is marked as done, but is still displayed on the list, so the user can tap it again and reset the flag.</li>
+<li>Trigger the sync</li>
+<li><code>SyncAdapter</code> syncs the Task to our backend. The task is marked as <code>DONE</code> in our database, which triggers the <code>ContentObserver</code> registered by the widget.</li>
+<li><code>ContentObserver</code> triggers <code>onDataSetChanged</code> callback in <code>RemoteViewsFactory</code>, which then calls <code>getCount</code> and <code>getViewAt</code></li>
+<li>In some rare cases <code>getViewAt</code> with position == result of <code>getCount</code> is called</li>
+</ul>
+
+
+<p>It looks like some kind of a race condition or another threading issue in Android code which populates the app widgets. I tried synchronizing the <code>RemoteViewsFactory</code> methods, but it didn&rsquo;t help. The <code>getViewAt</code> have to return a valid <code>RemoteViews</code>, so I fixed it up by returning the loading view when element outside of valid range is requested:</p>
+
+<p>``` java
+@Override
+public synchronized RemoteViews getViewAt(int position) {
+  if (position >= mCursor.getCount()) {</p>
+
+<pre><code>return getLoadingView();
+</code></pre>
+
+<p>  } else {</p>
+
+<pre><code>mCursor.moveToPosition(position);
+
+// ...
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<h2>Issue #4: no refresh when &ldquo;Don&rsquo;t keep activities&rdquo; setting is enabled</h2>
+
+<p>User can click on the tasks displayed on the widget to go to the edit screen. The activity is closed when user saves or discards changes and the homescreen with the widget is shown again. Changing the task triggers the <code>ContentObserver</code>, the <code>onDataSetChanged</code> is called on all active <code>RemoteViewsFactories</code>, but sometimes other callbacks (<code>getCount</code>, <code>getViewAt</code>, etc.) are not called.</p>
+
+<p>It turns out this happens when the Homescreen activity is recreated because of low memory condition. To easily reproduce this issue you can check the &ldquo;Don&rsquo;t keep activities&rdquo; in developers settings.</p>
+
+<p>I do not have a solution or workaround for this issue unfortunately. I&rsquo;ll file a bug report and hope for the best.</p>
+
+<h2>Recap</h2>
+
+<p>There are mutliple issues with the WeatherWidget sample and some issues with the system services responsible for populating app widgets with content. I&rsquo;ve created a simple project which reproduces the issues #3 and #4 and shows the correct way of registering <code>ContentObserver</code> for your widget. The sources are <a href="https://github.com/chalup/android-widget-fail">available on Github</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Use minSdkVersion=10 for Libraries]]></title>
+    <link href="http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries/"/>
+    <updated>2014-02-25T21:42:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve pushed new versions of <a href="https://github.com/chalup/microorm">microorm</a> and <a href="https://github.com/chalup/thneed">thneed</a> to Maven Central today. The most notable change for both libraries is dropping the support for Android 2.2 and earlier versions. The same change was applied to all Android libraries open sourced by <a href="https://github.com/orgs/futuresimple/">Base</a>. Why? <a href="https://plus.google.com/104992412719307414985">+Jeff Gilfelt</a> summed it up nicely:</p>
+
+<blockquote class="twitter-tweet" lang="en"><p>Because it is 2014 <a href="https://t.co/UCMaZOB6Sl">https://t.co/UCMaZOB6Sl</a></p>&mdash; Jeff Gilfelt (@readyState) <a href="https://twitter.com/readyState/statuses/435419373852184576">February 17, 2014</a></blockquote>
+
+
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+<p>This tweet is a good laugh (and an excellent example of what happens if you limit the discussion to 140 characters), but there are poor souls who might need an answer they can use as an objective argument. For them, here is my take on this one: you should drop support for Froyo because sizeable chunk of Java 1.6 APIs were missing from API level 8. I&rsquo;m not talking about some dark corners of java packages, I&rsquo;m talking about stuff like <a href="http://developer.android.com/reference/java/lang/String.html#isEmpty%28%29"><code>String.isEmpty()</code></a>, <a href="http://developer.android.com/reference/java/util/Deque.html"><code>Deque</code></a>, <a href="http://developer.android.com/reference/java/util/NavigableSet.html"><code>NavigableSet</code></a>, <a href="http://developer.android.com/reference/java/io/IOException.html"><code>IOException</code></a>&rsquo;s constructors with cause parameter, <a href="http://developer.android.com/sdk/api_diff/9/changes/changes-summary.html">and so on</a>.</p>
+
+<p>Your own code can (and should) be checked with Lint, but these methods and classes can also be used by the 3rd party libraries and I&rsquo;m not aware of any static analysis tool that can help you in this case. So if your app supports Froyo and uses a lot of external dependencies, you&rsquo;re probably sitting on the <a href="/blog/2013/06/26/guava-and-minsdkversion">NoClassDefFoundError bomb</a>. It might force you to use obsolete versions of libraries, the most notable example of which is Guava &ndash; on Froyo you have to use 13.0.1, a 18 months old version.</p>
+
+<p>That&rsquo;s also the reason why the libraries authors should be the first ones to move on to Android 2.3 and later. If you use obsolete library in your application, you&rsquo;re hurting only yourself. If you use it as a library dependency, you&rsquo;re hurting every user of the library.</p>
+
+<p>So move on and bump the minSdkVersion. After all, it&rsquo;s 2014.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[When Do You Absolutely Need WakefulBroadcastReceiver]]></title>
+    <link href="http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need/"/>
+    <updated>2014-02-20T10:24:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need</id>
+    <content type="html"><![CDATA[<p><a href="https://plus.google.com/108967384991768947849/posts/i6MzCp1NyzF">Yesterdays #AndroidDev #Protip</a> explains how to use <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> utility class and what problem does it solve, but it doesn&rsquo;t mention a case when using it or manually acquiring <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> is essential &ndash; using the <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a>.</p>
+
+<p>If you&rsquo;re not familiar with <code>AlarmManager</code>&rsquo;s API, here is <strong>tl;dr</strong> of the docs: it allows you to specify the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> that should be fired at some point, even if your application is in background. The common use cases for using <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a> is for example showing a <a href="http://developer.android.com/reference/android/app/Notification.html"><code>Notification</code></a> at the specified time or sending some kind of heartbeat to your backend. In both cases, your code performs potentially long running operation (in case of showing notification you might need some content from your local database), so you don&rsquo;t want to run it in the UI thread. The first thing that comes to mind is to specify an <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> as a <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> target:</p>
+
+<p>``` java
+PendingIntent intent = PendingIntent.getService(
+  context,
+  0,
+  new Intent(context, MyIntentService.class),
+  PendingIntent.FLAG_UPDATE_CURRENT
+);</p>
+
+<p>AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+alarmManager.set(
+  AlarmManager.ELAPSED_REALTIME_WAKEUP,
+  SystemClock.elapsedRealtime() + TimeUnit.MINUTES.toMillis(15)
+  intent
+);
+```</p>
+
+<p>This code won&rsquo;t always work though. While it is guaranteed that the alarm will go off and the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> will be sent, because we used a <code>_WAKEUP</code> alarm type, the device is allowed to go back to sleep before the service is started.</p>
+
+<p><img class="center" src="/images/wakelock.001.png"></p>
+
+<p>It&rsquo;s not explicitly documented, but both <a href="https://plus.google.com/105051985738280261832">+Dianne Hackborn</a> and <a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> <a href="https://groups.google.com/d/msg/android-developers/K5ggbRigGS8/B5KajJYAae4J">confirmed</a> <a href="http://stackoverflow.com/a/7444510/184953">this</a>. The workaround is to use <a href="http://developer.android.com/reference/android/app/PendingIntent.html#getBroadcast%28android.content.Context,%20int,%20android.content.Intent,%20int%29"><code>PendingIntent.getBroadcast()</code></a>, because it is guaranteed that the <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html#onReceive%28android.content.Context,%20android.content.Intent%29"><code>BroadcastReceiver.onReceive()</code></a> will be always fully executed before the CPU goes to sleep. Inside that callback you have to acquire <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> start your <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> and release the lock at the end of <a href="http://developer.android.com/reference/android/app/IntentService.html#onHandleIntent%28android.content.Intent%29"><code>onHandleIntent()</code></a> method.</p>
+
+<p><img class="center" src="/images/wakelock.002.png"></p>
+
+<p>This is where the <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> comes into play: its <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#startWakefulService%28android.content.Context,%20android.content.Intent%29"><code>startWakefulService</code></a> and <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#completeWakefulIntent%28android.content.Intent%29"><code>completeWakefulIntent</code></a> static methods encapsulate all the <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLocks</code></a> juggling, allowing you to focus on your business logic.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 3 - Old Db Schemas]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/"/>
+    <updated>2014-01-25T11:43:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old</id>
+    <content type="html"><![CDATA[<p>The <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first post in this series</a> explained the first consequence on implementing the offline mode &ndash; performing the data migrations. In <a href="/blog/2014/01/03/offline-mode-in-android-apps-part-2">second part</a> I showed a workaround for the rudimentary SQLite&rsquo;s ALTER TABLE syntax. If you have checked the link to <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationHelper</code></a> class I mentioned, you migth have noticed that it&rsquo;s just a tiny part of a <a href="https://github.com/futuresimple/android-schema-utils">larger library</a>, which allows you to define database schemas. Note the plural &ldquo;schemas&rdquo;: the whole point of this library is defining both current schema and the schemas for the older versions of your app. This post explains why do you have to do this.</p>
+
+<p>Let&rsquo;s say in the first version you have the following data structure:</p>
+
+<p><code>java
+public static class User {
+  public long id;
+  public String firstName;
+  public String lastName;
+  public String email;
+}
+</code></p>
+
+<p>And the table definition for this table in your <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper.html"><code>SQLiteOpenHelper</code></a> looks like this:</p>
+
+<p>``` java
+private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
+
+<pre><code>TABLE_USERS +
+" ( " +
+ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
+FIRST_NAME + " TEXT " + ", " +
+LAST_NAME + " TEXT " + ", " +
+EMAIL + " TEXT " +
+" ) ";
+</code></pre>
+
+<p>```</p>
+
+<p>In the next version you decide to keep only the first name in a single field, so you change your data structure accordingly and perform the data migration. In the snippet below I used the <code>MigrationHelper</code>, but you might have as well performed the migration by hand:</p>
+
+<p>``` java
+private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
+
+<pre><code>TABLE_USERS +
+" ( " +
+ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
+NAME + " TEXT " + ", " +
+EMAIL + " TEXT " +
+" ) ";
+</code></pre>
+
+<p>@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  MigrationsHelper helper = new MigrationsHelper();
+  if (oldVersion &lt; 2) {</p>
+
+<pre><code>helper.performMigrations(db, 
+    TableMigration.of(TABLE_USERS)
+        .to(CREATE_TABLE_USERS)
+        .withMapping(NAME, FIRST_NAME)
+        .build()
+);
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>Then you decide that the email field should be mandatory, so you change the schema and migrate the data again:</p>
+
+<p>``` java
+private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
+
+<pre><code>TABLE_USERS +
+" ( " +
+ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
+NAME + " TEXT " + ", " +
+EMAIL + " TEXT NOT NULL" +
+" ) ";
+</code></pre>
+
+<p>@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  MigrationsHelper helper = new MigrationsHelper();
+  if (oldVersion &lt; 2) {</p>
+
+<pre><code>helper.performMigrations(db,
+    TableMigration.of(TABLE_USERS)
+        .to(CREATE_TABLE_USERS)
+        .withMapping(NAME, FIRST_NAME)
+        .build()
+);
+</code></pre>
+
+<p>  }
+  if (oldVersion &lt; 3) {</p>
+
+<pre><code>db.execSQL("DELETE FROM " + TABLE_USERS + " WHERE " + EMAIL + " IS NULL");
+helper.performMigrations(db,
+    TableMigration.of(TABLE_USERS)
+        .to(CREATE_TABLE_USERS)
+        .build()
+);
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The code looks fine, but you have just broken migrations from v1 to v3. If there is an user with a null email field, the app will crash in line 13 above. But why, shouldn&rsquo;t the email field in v2 schema be nullable? It should, but this migration uses the constant containing the latest schema definition with different column constraint.</p>
+
+<p>The worst thing about this kind of bugs is that it might slip through your tests, because the crash happens only if you have a specific data before the application update.</p>
+
+<p>You migth be tempted to define separate migrations from every old version to the latest one (in our case migrations from v1 to v3 and from v2 to v3) and always execute only single migration, but this workaround doesn&rsquo;t scale. For each new migration you&rsquo;d have to check and potentially update every existing migration. When you publish the app twice a month, this quickly becomes a huge problem.</p>
+
+<p>The other solution is to make every migration completely independent from the others, and execute them sequentially. This way, when you define a new migration, you don&rsquo;t have to worry about the previous ones. This means that when you upgrade from v1 to v3, you first upgrade from v1 to v2 and then from v2 to v2 and after the first step the database should be in the same state it were, when the v2 was the latest version. In other words, you have to keep an old database schemas.</p>
+
+<p>As usual there are multiple ways to do this. You can copy the schema definition to another constant and append &ldquo;ver#&rdquo; suffix, but it means there will be a lot of duplicated code (although this code should never, ever change, so it&rsquo;s not as bad as the regular case of copypaste). The other way is to keep the initial database state and all the schema updates. The issue here is that you don&rsquo;t have a place in your code with current schema definition. The opposite solution is to keep the current schema and the list of downgrades. Sounds counterintuitive? Don&rsquo;t worry, that&rsquo;s because it <strong><em>is</em></strong> counterintuitive.</p>
+
+<p>In <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils</a> I&rsquo;ve chosen the third approach, because in the long run it processes less data than the upgrades solution &ndash; in case of upgrade from vN-1 to vN it has to generate only 1 additional schema instead of N-1 schemas. I&rsquo;m still not sure if the code wouldn&rsquo;t be clearer had I went with duplicated schema definitions approach, but the current approach, once you get used to it, works fine. The schema and migrations for our example would look like this:</p>
+
+<p>``` java
+private static final MigrationsHelper MIGRATIONS_HELPER = new MigrationsHelper();
+private static final Schemas SCHEMAS = Schemas.Builder</p>
+
+<pre><code>.currentSchema(3,
+    new TableDefinition(TABLE_USERS,
+        new AddColumn(ID, "INTEGER PRIMARY KEY AUTOINCREMENT"),
+        new AddColumn(NAME, "TEXT"),
+        new AddColumn(EMAIL, "TEXT NOT NULL")
+    )
+)
+.upgradeTo(3,
+    new SimpleMigration() {
+      @Override
+      public void apply(SQLiteDatabase db, Schema schema) {
+        db.execSQL("DELETE FROM " + TABLE_USERS + " WHERE " + EMAIL + " IS NULL");
+      }
+    },
+    auto()
+)
+.downgradeTo(2,
+    new TableDowngrade(TABLE_USERS, new AddColumn(EMAIL, "TEXT"))
+)
+.upgradeTo(2,
+    SimpleTableMigration.of(TABLE_USERS)
+        .withMapping(NAME, FIRST_NAME)
+        .using(MIGRATIONS_HELPER)
+    )
+.downgradeTo(1,
+    new TableDowngrade(TABLE_USERS,
+        new AddColumn(FIRST_NAME, "TEXT"),
+        new AddColumn(LAST_NAME, "TEXT"),
+        new DropColumn(EMAIL)
+    )
+)
+.build();
+</code></pre>
+
+<p>```</p>
+
+<p>There are other benefits of keeping the old schemas in a more reasonable format than raw strings. Most of the schema migrations can be deducted from comparing subsequent schema versions, so you don&rsquo;t have to do it yourself. For example in migration from v2 to v3 I didn&rsquo;t have to specify that I want to migrate the Users table &ndash; the <code>auto()</code> migration automatically handles it. If the <code>auto()</code> is the only migration for a given upgrade, you can skip the whole <code>upgradeTo()</code> block. In our case that covered about 50% migrations, but YMMV.</p>
+
+<p>If you go this way, your <code>onUpgrade</code> method, which usually is the most complex part of <code>SQLiteOpenHelper</code>, can be reduced to this:
+<code>java
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+  SCHEMAS.upgrade(oldVersion, mContext, db);
+}
+</code></p>
+
+<p>This part concludes the &ldquo;offline mode&rdquo; series. Here&rsquo;s the short recap:</p>
+
+<ul>
+<li>If you don&rsquo;t want to compromise on UX, your application should work regardless whether the user is connected to internet or not.</li>
+<li>In this case the user may end up in a situation when the application is upgraded, but not all data is synced with the server yet. You <strong><em>do not</em></strong> want to lose your users' data. You&rsquo;ll have to migrate them.</li>
+<li>If you migrate your data, you should keep the migrations separate from one another, because otherwise maintaining them becomes a nightmare.</li>
+<li>The best way to do this that I know of, is keeping the old schemas and always performing all migrations sequentially. To make things simpler, I recommend the <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils library</a>.</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

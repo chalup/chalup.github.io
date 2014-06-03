@@ -1,16 +1,1536 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[My Octopress Blog]]></title>
+  <title><![CDATA[Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-05-31T12:36:31+02:00</updated>
+  <updated>2014-06-03T21:59:22+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
-    <name><![CDATA[Your Name]]></name>
+    <name><![CDATA[Jerzy Chalupski]]></name>
     
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Clicking Unclickable List Items]]></title>
+    <link href="http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items/"/>
+    <updated>2014-05-22T22:26:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items</id>
+    <content type="html"><![CDATA[<p>One of the UI patterns that improve lists usability is dividing items into sections. The section might be the first letter of the main text on the list item, date formatted and rounded in a specific way or whatever makes sense for your data.</p>
+
+<p>From the technical point of view you can either add the header view to every list item and show and hide them as needed or create the separate view for header and regular list item and register multiple view types in your Adapter. Both options were described in details by <a href="https://plus.google.com/118417777153109946393">+Cyril Mottier</a> in excellent <a href="http://cyrilmottier.com/2011/07/05/listview-tips-tricks-2-section-your-listview/">ListView Tips &amp; Tricks #2: Sectioning Your ListView</a> blog post.</p>
+
+<p>If you choose the second approach, you&rsquo;ll have to decide what to return from your <code>Adapter</code>&rsquo;s <code>getItem</code> and <code>getItemId</code> methods for items representing sections. If your sections are not supposed to be clickable, you might implement your <code>Adapter</code> like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">Object</span> <span class="nf">getItem</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span>
+</span><span class='line'>      <span class="o">?</span> <span class="n">mItems</span><span class="o">[</span><span class="n">getCursorPosition</span><span class="o">(</span><span class="n">position</span><span class="o">)]</span>
+</span><span class='line'>      <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">long</span> <span class="nf">getItemId</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span>
+</span><span class='line'>      <span class="o">?</span> <span class="n">getCursorPosition</span><span class="o">(</span><span class="n">position</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">:</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">areAllItemsEnabled</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isEnabled</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And your <code>onListItemClickListener</code> like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onListItemClick</span><span class="o">(</span><span class="n">ListView</span> <span class="n">l</span><span class="o">,</span> <span class="n">View</span> <span class="n">v</span><span class="o">,</span> <span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="kt">long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">l</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="n">position</span><span class="o">,</span> <span class="n">id</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// dummy action which uses Object returned from getItem(position)</span>
+</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="n">getListAdapter</span><span class="o">().</span><span class="na">getItem</span><span class="o">(</span><span class="n">position</span><span class="o">).</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you do so, the Android has a nasty surprise for you:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">NullPointerException</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">dialmformonkey</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">MainFragment</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">MainFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">38</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">ListFragment</span><span class="n">$2</span><span class="o">.</span><span class="na">onItemClick</span><span class="o">(</span><span class="n">ListFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">160</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AdapterView</span><span class="o">.</span><span class="na">performItemClick</span><span class="o">(</span><span class="n">AdapterView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">298</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="o">.</span><span class="na">performItemClick</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1100</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="n">$PerformClick</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2749</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="n">$1</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">3423</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Handler</span><span class="o">.</span><span class="na">handleCallback</span><span class="o">(</span><span class="n">Handler</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">725</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The only way this can happen is getting <code>null</code> from <code>Adapter.getItem()</code>, but this method will be called only for disabled items, right?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onListItemClick</span><span class="o">(</span><span class="n">ListView</span> <span class="n">l</span><span class="o">,</span> <span class="n">View</span> <span class="n">v</span><span class="o">,</span> <span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="kt">long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">l</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="n">position</span><span class="o">,</span> <span class="n">id</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="s">&quot;Clicked on item &quot;</span> <span class="o">+</span> <span class="n">position</span> <span class="o">+</span> <span class="s">&quot; which is &quot;</span> <span class="o">+</span>
+</span><span class='line'>        <span class="o">(</span><span class="n">getListAdapter</span><span class="o">().</span><span class="na">isEnabled</span><span class="o">(</span><span class="n">position</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">?</span> <span class="s">&quot;enabled&quot;</span>
+</span><span class='line'>            <span class="o">:</span> <span class="s">&quot;disabled&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// dummy action which uses Object returned from getItem(position)</span>
+</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="n">getListAdapter</span><span class="o">().</span><span class="na">getItem</span><span class="o">(</span><span class="n">position</span><span class="o">).</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wrong:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">4</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Abondance</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">4</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Abondance</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">31</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Aragon</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">31</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Aragon</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">dalvikvm</span><span class="err">﹕</span> <span class="n">GC_CONCURRENT</span> <span class="n">freed</span> <span class="mi">138</span><span class="n">K</span><span class="o">,</span> <span class="mi">3</span><span class="o">%</span> <span class="n">free</span> <span class="mi">8825</span><span class="n">K</span><span class="o">/</span><span class="mi">9016</span><span class="n">K</span><span class="o">,</span> <span class="n">paused</span> <span class="mi">0</span><span class="n">ms</span><span class="o">+</span><span class="mi">0</span><span class="n">ms</span><span class="o">,</span> <span class="n">total</span> <span class="mi">3</span><span class="n">ms</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">28</span> <span class="n">which</span> <span class="n">is</span> <span class="n">disabled</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s very difficult to reproduce this error manually, especially if tapping the list item does something more than writing to logcat, but I investigated this issue, because the stack traces above appeared in crash reports on Google Analytics, so several people managed to click exactly wrong area at the wrong time.</p>
+
+<p>I didn&rsquo;t investigate the issue thoroughly, but it seems there must be some disparity between checking the <code>isEnabled</code> method and getting the item. If I ever dive into <code>ListView</code> code, I&rsquo;ll definitely write about it. If you want to reproduce or investigate the issue yourself, compile <a href="https://github.com/chalup/blog-unclickable-items">this project</a> and run the monkey:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">$</span> <span class="n">adb</span> <span class="n">shell</span> <span class="n">monkey</span> <span class="o">-</span><span class="n">p</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">dialmformonkey</span><span class="o">.</span><span class="na">app</span> <span class="o">-</span><span class="n">v</span> <span class="mi">500</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So what can we do? First option is checking the <code>Adapter.isEnabled()</code> in your <code>onListItemClick</code> listener, which is yet another kind of boilerplate you have to add to your Android code, but it&rsquo;s super easy to add. The other option is going with the first sectioning approach, i.e. putting section as a part of the clickable list item, but it might not work for your use case (for example adapter with multiple item types).</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android App Widgets Issues]]></title>
+    <link href="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues/"/>
+    <updated>2014-05-10T15:42:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues</id>
+    <content type="html"><![CDATA[<p>This week I spend few days analyzing and fixing various issues of app widget in Base CRM application.</p>
+
+<p>This part of our codebase was created over a year ago during one of our internal hackathons and was released soon after that. Most of the times it worked. Every once in a while we received a weird crash report from Google Analytics, but it never caused much trouble. Recently though we received few complaints from customers. I happened to have few hours available for bug hunting, so I took a dive.</p>
+
+<p>The widget is really a simple todo list backed by <code>ContentProvider</code>. The code looks like it was based on the WeatherWidget from SDK samples. What can possibly go wrong?</p>
+
+<h2>Issue #1: gazillions of threads started</h2>
+
+<p>Take a look at the code of WeatherWidgetProvider:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">WeatherWidgetProvider</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="c1">// Start the worker thread</span>
+</span><span class='line'>  <span class="n">sWorkerThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HandlerThread</span><span class="o">(</span><span class="s">&quot;WeatherWidgetProvider-worker&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">sWorkerThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span><span class='line'>  <span class="n">sWorkerQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Handler</span><span class="o">(</span><span class="n">sWorkerThread</span><span class="o">.</span><span class="na">getLooper</span><span class="o">());</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The WeatherWidgetProvider is an <code>AppWidgetProvider</code> implementation, which extends a regular <code>BroadcastReceiver</code>. It means that for every action a new instance of WeatherWidgetProvider is created, and the current implementation spawns new thread which is never closed.</p>
+
+<p>The sample author obviously intended to create only one worker thread &ndash; the sWorkerThread is the static &ndash; but forgot to do the null check before creating a new thread. So let&rsquo;s fix it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">WeatherWidgetProvider</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">sWorkerThread</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="c1">// Start the worker thread</span>
+</span><span class='line'>    <span class="n">sWorkerThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HandlerThread</span><span class="o">(</span><span class="s">&quot;WeatherWidgetProvider-worker&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">sWorkerThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span><span class='line'>    <span class="n">sWorkerQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Handler</span><span class="o">(</span><span class="n">sWorkerThread</span><span class="o">.</span><span class="na">getLooper</span><span class="o">());</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Issue #2: no refresh after application update</h2>
+
+<p>The widget shows data from the same <code>ContentProvider</code> as the main app, so when the user creates a task inside in the main app and then goes back to homescreen, the task should be displayed on the widget. To achieve this we did the same thing the WeatherWidget sample does &ndash; we register the <code>ContentObserver</code> in <code>onEnabled</code> callback of <code>AppWidgetProvider</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onEnabled</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">final</span> <span class="n">ContentResolver</span> <span class="n">r</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getContentResolver</span><span class="o">();</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">sDataObserver</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">final</span> <span class="n">AppWidgetManager</span> <span class="n">mgr</span> <span class="o">=</span> <span class="n">AppWidgetManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>    <span class="kd">final</span> <span class="n">ComponentName</span> <span class="n">cn</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ComponentName</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">WeatherWidgetProvider</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">sDataObserver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WeatherDataProviderObserver</span><span class="o">(</span><span class="n">mgr</span><span class="o">,</span> <span class="n">cn</span><span class="o">,</span> <span class="n">sWorkerQueue</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">r</span><span class="o">.</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">WeatherDataProvider</span><span class="o">.</span><span class="na">CONTENT_URI</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">sDataObserver</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>onEnabled</code> callback is called when the first instance of the widget is added to homescreen, so the code looks fine. Unfortunately the callback is not called at your process startup. So if your app is updated and the process is restarted, the <code>ContentObserver</code> won&rsquo;t be registered. The same thing happens if your app crashes or is stopped by the OS to free resources.</p>
+
+<p>To solve this you have to register the <code>ContentObserver</code> in few more places. I have added registration to <code>onCreate</code> callback in <code>RemoteViewsFactory</code> and the <code>onReceive</code> part which handles our custom actions in <code>AppWidgetProvider</code>.</p>
+
+<p>WeatherWidget sample does one more thing wrong: the <code>ContentObserver</code> is never unregistered and the worker thread is never stopped. The correct place to do this is <code>onDisabled</code> callback in <code>AppWidgetProvider</code>.</p>
+
+<h2>Issue #3: <code>CursorOutOfBoundsException</code> crash</h2>
+
+<p>Ever since we introduced the tasks widget, we&rsquo;ve occasionally received the crash reports indicating that the RemoteViewsFactory requested elements outside of <code>[0, getCount)</code> range:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="mi">05</span><span class="o">-</span><span class="mi">10</span> <span class="mi">15</span><span class="o">:</span><span class="mi">22</span><span class="o">:</span><span class="mf">50.559</span>  <span class="mi">13781</span><span class="o">-</span><span class="mi">13795</span><span class="o">/</span><span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">widgetfail</span><span class="o">.</span><span class="na">widget</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="err">﹕</span> <span class="n">FATAL</span> <span class="nl">EXCEPTION:</span> <span class="n">Binder_2</span>
+</span><span class='line'>    <span class="nl">Process:</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">widgetfail</span><span class="o">.</span><span class="na">widget</span><span class="o">,</span> <span class="nl">PID:</span> <span class="mi">13781</span>
+</span><span class='line'>    <span class="n">android</span><span class="o">.</span><span class="na">database</span><span class="o">.</span><span class="na">CursorIndexOutOfBoundsException</span><span class="o">:</span> <span class="n">Index</span> <span class="mi">1</span> <span class="n">requested</span><span class="o">,</span> <span class="n">with</span> <span class="n">a</span> <span class="n">size</span> <span class="n">of</span> <span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The reproduction steps for this issue are quite complicated:</p>
+
+<ul>
+<li>Tap the task on the widget to mark it was completed. Internally we set the <code>PENDING_DONE</code> flag, so the task is marked as done, but is still displayed on the list, so the user can tap it again and reset the flag.</li>
+<li>Trigger the sync</li>
+<li><code>SyncAdapter</code> syncs the Task to our backend. The task is marked as <code>DONE</code> in our database, which triggers the <code>ContentObserver</code> registered by the widget.</li>
+<li><code>ContentObserver</code> triggers <code>onDataSetChanged</code> callback in <code>RemoteViewsFactory</code>, which then calls <code>getCount</code> and <code>getViewAt</code></li>
+<li>In some rare cases <code>getViewAt</code> with position == result of <code>getCount</code> is called</li>
+</ul>
+
+
+<p>It looks like some kind of a race condition or another threading issue in Android code which populates the app widgets. I tried synchronizing the <code>RemoteViewsFactory</code> methods, but it didn&rsquo;t help. The <code>getViewAt</code> have to return a valid <code>RemoteViews</code>, so I fixed it up by returning the loading view when element outside of valid range is requested:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">synchronized</span> <span class="n">RemoteViews</span> <span class="nf">getViewAt</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">position</span> <span class="o">&gt;=</span> <span class="n">mCursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">getLoadingView</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mCursor</span><span class="o">.</span><span class="na">moveToPosition</span><span class="o">(</span><span class="n">position</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Issue #4: no refresh when &ldquo;Don&rsquo;t keep activities&rdquo; setting is enabled</h2>
+
+<p>User can click on the tasks displayed on the widget to go to the edit screen. The activity is closed when user saves or discards changes and the homescreen with the widget is shown again. Changing the task triggers the <code>ContentObserver</code>, the <code>onDataSetChanged</code> is called on all active <code>RemoteViewsFactories</code>, but sometimes other callbacks (<code>getCount</code>, <code>getViewAt</code>, etc.) are not called.</p>
+
+<p>It turns out this happens when the Homescreen activity is recreated because of low memory condition. To easily reproduce this issue you can check the &ldquo;Don&rsquo;t keep activities&rdquo; in developers settings.</p>
+
+<p>I do not have a solution or workaround for this issue unfortunately. I&rsquo;ll file a bug report and hope for the best.</p>
+
+<h2>Recap</h2>
+
+<p>There are mutliple issues with the WeatherWidget sample and some issues with the system services responsible for populating app widgets with content. I&rsquo;ve created a simple project which reproduces the issues #3 and #4 and shows the correct way of registering <code>ContentObserver</code> for your widget. The sources are <a href="https://github.com/chalup/android-widget-fail">available on Github</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Use minSdkVersion=10 for Libraries]]></title>
+    <link href="http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries/"/>
+    <updated>2014-02-25T21:42:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve pushed new versions of <a href="https://github.com/chalup/microorm">microorm</a> and <a href="https://github.com/chalup/thneed">thneed</a> to Maven Central today. The most notable change for both libraries is dropping the support for Android 2.2 and earlier versions. The same change was applied to all Android libraries open sourced by <a href="https://github.com/orgs/futuresimple/">Base</a>. Why? <a href="https://plus.google.com/104992412719307414985">+Jeff Gilfelt</a> summed it up nicely:</p>
+
+<blockquote class="twitter-tweet" lang="en"><p>Because it is 2014 <a href="https://t.co/UCMaZOB6Sl">https://t.co/UCMaZOB6Sl</a></p>&mdash; Jeff Gilfelt (@readyState) <a href="https://twitter.com/readyState/statuses/435419373852184576">February 17, 2014</a></blockquote>
+
+
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+<p>This tweet is a good laugh (and an excellent example of what happens if you limit the discussion to 140 characters), but there are poor souls who might need an answer they can use as an objective argument. For them, here is my take on this one: you should drop support for Froyo because sizeable chunk of Java 1.6 APIs were missing from API level 8. I&rsquo;m not talking about some dark corners of java packages, I&rsquo;m talking about stuff like <a href="http://developer.android.com/reference/java/lang/String.html#isEmpty%28%29"><code>String.isEmpty()</code></a>, <a href="http://developer.android.com/reference/java/util/Deque.html"><code>Deque</code></a>, <a href="http://developer.android.com/reference/java/util/NavigableSet.html"><code>NavigableSet</code></a>, <a href="http://developer.android.com/reference/java/io/IOException.html"><code>IOException</code></a>&rsquo;s constructors with cause parameter, <a href="http://developer.android.com/sdk/api_diff/9/changes/changes-summary.html">and so on</a>.</p>
+
+<p>Your own code can (and should) be checked with Lint, but these methods and classes can also be used by the 3rd party libraries and I&rsquo;m not aware of any static analysis tool that can help you in this case. So if your app supports Froyo and uses a lot of external dependencies, you&rsquo;re probably sitting on the <a href="http://chalup.github.io/blog/2013/06/26/guava-and-minsdkversion">NoClassDefFoundError bomb</a>. It might force you to use obsolete versions of libraries, the most notable example of which is Guava &ndash; on Froyo you have to use 13.0.1, a 18 months old version.</p>
+
+<p>That&rsquo;s also the reason why the libraries authors should be the first ones to move on to Android 2.3 and later. If you use obsolete library in your application, you&rsquo;re hurting only yourself. If you use it as a library dependency, you&rsquo;re hurting every user of the library.</p>
+
+<p>So move on and bump the minSdkVersion. After all, it&rsquo;s 2014.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[When Do You Absolutely Need WakefulBroadcastReceiver]]></title>
+    <link href="http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need/"/>
+    <updated>2014-02-20T10:24:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need</id>
+    <content type="html"><![CDATA[<p><a href="https://plus.google.com/108967384991768947849/posts/i6MzCp1NyzF">Yesterdays #AndroidDev #Protip</a> explains how to use <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> utility class and what problem does it solve, but it doesn&rsquo;t mention a case when using it or manually acquiring <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> is essential &ndash; using the <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a>.</p>
+
+<p>If you&rsquo;re not familiar with <code>AlarmManager</code>&rsquo;s API, here is <strong>tl;dr</strong> of the docs: it allows you to specify the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> that should be fired at some point, even if your application is in background. The common use cases for using <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a> is for example showing a <a href="http://developer.android.com/reference/android/app/Notification.html"><code>Notification</code></a> at the specified time or sending some kind of heartbeat to your backend. In both cases, your code performs potentially long running operation (in case of showing notification you might need some content from your local database), so you don&rsquo;t want to run it in the UI thread. The first thing that comes to mind is to specify an <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> as a <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> target:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">PendingIntent</span> <span class="n">intent</span> <span class="o">=</span> <span class="n">PendingIntent</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span>
+</span><span class='line'>  <span class="n">context</span><span class="o">,</span>
+</span><span class='line'>  <span class="mi">0</span><span class="o">,</span>
+</span><span class='line'>  <span class="k">new</span> <span class="nf">Intent</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">MyIntentService</span><span class="o">.</span><span class="na">class</span><span class="o">),</span>
+</span><span class='line'>  <span class="n">PendingIntent</span><span class="o">.</span><span class="na">FLAG_UPDATE_CURRENT</span>
+</span><span class='line'><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">AlarmManager</span> <span class="n">alarmManager</span> <span class="o">=</span> <span class="o">(</span><span class="n">AlarmManager</span><span class="o">)</span> <span class="n">context</span><span class="o">.</span><span class="na">getSystemService</span><span class="o">(</span><span class="n">Context</span><span class="o">.</span><span class="na">ALARM_SERVICE</span><span class="o">);</span>
+</span><span class='line'><span class="n">alarmManager</span><span class="o">.</span><span class="na">set</span><span class="o">(</span>
+</span><span class='line'>  <span class="n">AlarmManager</span><span class="o">.</span><span class="na">ELAPSED_REALTIME_WAKEUP</span><span class="o">,</span>
+</span><span class='line'>  <span class="n">SystemClock</span><span class="o">.</span><span class="na">elapsedRealtime</span><span class="o">()</span> <span class="o">+</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MINUTES</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="mi">15</span><span class="o">)</span>
+</span><span class='line'>  <span class="n">intent</span>
+</span><span class='line'><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This code won&rsquo;t always work though. While it is guaranteed that the alarm will go off and the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> will be sent, because we used a <code>_WAKEUP</code> alarm type, the device is allowed to go back to sleep before the service is started.</p>
+
+<p><img class="center" src="http://chalup.github.io/images/wakelock.001.png"></p>
+
+<p>It&rsquo;s not explicitly documented, but both <a href="https://plus.google.com/105051985738280261832">+Dianne Hackborn</a> and <a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> <a href="https://groups.google.com/d/msg/android-developers/K5ggbRigGS8/B5KajJYAae4J">confirmed</a> <a href="http://stackoverflow.com/a/7444510/184953">this</a>. The workaround is to use <a href="http://developer.android.com/reference/android/app/PendingIntent.html#getBroadcast%28android.content.Context,%20int,%20android.content.Intent,%20int%29"><code>PendingIntent.getBroadcast()</code></a>, because it is guaranteed that the <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html#onReceive%28android.content.Context,%20android.content.Intent%29"><code>BroadcastReceiver.onReceive()</code></a> will be always fully executed before the CPU goes to sleep. Inside that callback you have to acquire <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> start your <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> and release the lock at the end of <a href="http://developer.android.com/reference/android/app/IntentService.html#onHandleIntent%28android.content.Intent%29"><code>onHandleIntent()</code></a> method.</p>
+
+<p><img class="center" src="http://chalup.github.io/images/wakelock.002.png"></p>
+
+<p>This is where the <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> comes into play: its <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#startWakefulService%28android.content.Context,%20android.content.Intent%29"><code>startWakefulService</code></a> and <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#completeWakefulIntent%28android.content.Intent%29"><code>completeWakefulIntent</code></a> static methods encapsulate all the <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLocks</code></a> juggling, allowing you to focus on your business logic.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 3 - Old Db Schemas]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/"/>
+    <updated>2014-01-25T11:43:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old</id>
+    <content type="html"><![CDATA[<p>The <a href="http://chalup.github.io/blog/2013/12/26/offline-mode-in-android-apps-part-1">first post in this series</a> explained the first consequence on implementing the offline mode &ndash; performing the data migrations. In <a href="http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2">second part</a> I showed a workaround for the rudimentary SQLite&rsquo;s ALTER TABLE syntax. If you have checked the link to <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationHelper</code></a> class I mentioned, you migth have noticed that it&rsquo;s just a tiny part of a <a href="https://github.com/futuresimple/android-schema-utils">larger library</a>, which allows you to define database schemas. Note the plural &ldquo;schemas&rdquo;: the whole point of this library is defining both current schema and the schemas for the older versions of your app. This post explains why do you have to do this.</p>
+
+<p>Let&rsquo;s say in the first version you have the following data structure:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">long</span> <span class="n">id</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="n">firstName</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="n">lastName</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="n">email</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And the table definition for this table in your <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper.html"><code>SQLiteOpenHelper</code></a> looks like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_TABLE_USERS</span> <span class="o">=</span> <span class="s">&quot;CREATE TABLE &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">TABLE_USERS</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ( &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">ID</span> <span class="o">+</span> <span class="s">&quot; INTEGER PRIMARY KEY AUTOINCREMENT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">FIRST_NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">LAST_NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ) &quot;</span><span class="o">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the next version you decide to keep only the first name in a single field, so you change your data structure accordingly and perform the data migration. In the snippet below I used the <code>MigrationHelper</code>, but you might have as well performed the migration by hand:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_TABLE_USERS</span> <span class="o">=</span> <span class="s">&quot;CREATE TABLE &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">TABLE_USERS</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ( &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">ID</span> <span class="o">+</span> <span class="s">&quot; INTEGER PRIMARY KEY AUTOINCREMENT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ) &quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">MigrationsHelper</span> <span class="n">helper</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MigrationsHelper</span><span class="o">();</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">helper</span><span class="o">.</span><span class="na">performMigrations</span><span class="o">(</span><span class="n">db</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">TableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">to</span><span class="o">(</span><span class="n">CREATE_TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">withMapping</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">FIRST_NAME</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then you decide that the email field should be mandatory, so you change the schema and migrate the data again:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CREATE_TABLE_USERS</span> <span class="o">=</span> <span class="s">&quot;CREATE TABLE &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">TABLE_USERS</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ( &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">ID</span> <span class="o">+</span> <span class="s">&quot; INTEGER PRIMARY KEY AUTOINCREMENT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">NAME</span> <span class="o">+</span> <span class="s">&quot; TEXT &quot;</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; TEXT NOT NULL&quot;</span> <span class="o">+</span>
+</span><span class='line'>    <span class="s">&quot; ) &quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">MigrationsHelper</span> <span class="n">helper</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MigrationsHelper</span><span class="o">();</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">helper</span><span class="o">.</span><span class="na">performMigrations</span><span class="o">(</span><span class="n">db</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">TableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">to</span><span class="o">(</span><span class="n">CREATE_TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">withMapping</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">FIRST_NAME</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;DELETE FROM &quot;</span> <span class="o">+</span> <span class="n">TABLE_USERS</span> <span class="o">+</span> <span class="s">&quot; WHERE &quot;</span> <span class="o">+</span> <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; IS NULL&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">helper</span><span class="o">.</span><span class="na">performMigrations</span><span class="o">(</span><span class="n">db</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">TableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">to</span><span class="o">(</span><span class="n">CREATE_TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The code looks fine, but you have just broken migrations from v1 to v3. If there is an user with a null email field, the app will crash in line 13 above. But why, shouldn&rsquo;t the email field in v2 schema be nullable? It should, but this migration uses the constant containing the latest schema definition with different column constraint.</p>
+
+<p>The worst thing about this kind of bugs is that it might slip through your tests, because the crash happens only if you have a specific data before the application update.</p>
+
+<p>You migth be tempted to define separate migrations from every old version to the latest one (in our case migrations from v1 to v3 and from v2 to v3) and always execute only single migration, but this workaround doesn&rsquo;t scale. For each new migration you&rsquo;d have to check and potentially update every existing migration. When you publish the app twice a month, this quickly becomes a huge problem.</p>
+
+<p>The other solution is to make every migration completely independent from the others, and execute them sequentially. This way, when you define a new migration, you don&rsquo;t have to worry about the previous ones. This means that when you upgrade from v1 to v3, you first upgrade from v1 to v2 and then from v2 to v2 and after the first step the database should be in the same state it were, when the v2 was the latest version. In other words, you have to keep an old database schemas.</p>
+
+<p>As usual there are multiple ways to do this. You can copy the schema definition to another constant and append &ldquo;ver#&rdquo; suffix, but it means there will be a lot of duplicated code (although this code should never, ever change, so it&rsquo;s not as bad as the regular case of copypaste). The other way is to keep the initial database state and all the schema updates. The issue here is that you don&rsquo;t have a place in your code with current schema definition. The opposite solution is to keep the current schema and the list of downgrades. Sounds counterintuitive? Don&rsquo;t worry, that&rsquo;s because it <strong><em>is</em></strong> counterintuitive.</p>
+
+<p>In <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils</a> I&rsquo;ve chosen the third approach, because in the long run it processes less data than the upgrades solution &ndash; in case of upgrade from vN-1 to vN it has to generate only 1 additional schema instead of N-1 schemas. I&rsquo;m still not sure if the code wouldn&rsquo;t be clearer had I went with duplicated schema definitions approach, but the current approach, once you get used to it, works fine. The schema and migrations for our example would look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">MigrationsHelper</span> <span class="n">MIGRATIONS_HELPER</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MigrationsHelper</span><span class="o">();</span>
+</span><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schemas</span> <span class="n">SCHEMAS</span> <span class="o">=</span> <span class="n">Schemas</span><span class="o">.</span><span class="na">Builder</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">currentSchema</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">TableDefinition</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">,</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">ID</span><span class="o">,</span> <span class="s">&quot;INTEGER PRIMARY KEY AUTOINCREMENT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">EMAIL</span><span class="o">,</span> <span class="s">&quot;TEXT NOT NULL&quot;</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">)</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">upgradeTo</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">SimpleMigration</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="nd">@Override</span>
+</span><span class='line'>          <span class="kd">public</span> <span class="kt">void</span> <span class="nf">apply</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="n">Schema</span> <span class="n">schema</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;DELETE FROM &quot;</span> <span class="o">+</span> <span class="n">TABLE_USERS</span> <span class="o">+</span> <span class="s">&quot; WHERE &quot;</span> <span class="o">+</span> <span class="n">EMAIL</span> <span class="o">+</span> <span class="s">&quot; IS NULL&quot;</span><span class="o">);</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>        <span class="o">},</span>
+</span><span class='line'>        <span class="n">auto</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">downgradeTo</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">TableDowngrade</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">,</span> <span class="k">new</span> <span class="n">AddColumn</span><span class="o">(</span><span class="n">EMAIL</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">))</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">upgradeTo</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">SimpleTableMigration</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">withMapping</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">FIRST_NAME</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">using</span><span class="o">(</span><span class="n">MIGRATIONS_HELPER</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">downgradeTo</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span>
+</span><span class='line'>        <span class="k">new</span> <span class="nf">TableDowngrade</span><span class="o">(</span><span class="n">TABLE_USERS</span><span class="o">,</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">FIRST_NAME</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">AddColumn</span><span class="o">(</span><span class="n">LAST_NAME</span><span class="o">,</span> <span class="s">&quot;TEXT&quot;</span><span class="o">),</span>
+</span><span class='line'>            <span class="k">new</span> <span class="nf">DropColumn</span><span class="o">(</span><span class="n">EMAIL</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">)</span>
+</span><span class='line'>    <span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are other benefits of keeping the old schemas in a more reasonable format than raw strings. Most of the schema migrations can be deducted from comparing subsequent schema versions, so you don&rsquo;t have to do it yourself. For example in migration from v2 to v3 I didn&rsquo;t have to specify that I want to migrate the Users table &ndash; the <code>auto()</code> migration automatically handles it. If the <code>auto()</code> is the only migration for a given upgrade, you can skip the whole <code>upgradeTo()</code> block. In our case that covered about 50% migrations, but YMMV.</p>
+
+<p>If you go this way, your <code>onUpgrade</code> method, which usually is the most complex part of <code>SQLiteOpenHelper</code>, can be reduced to this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">SCHEMAS</span><span class="o">.</span><span class="na">upgrade</span><span class="o">(</span><span class="n">oldVersion</span><span class="o">,</span> <span class="n">mContext</span><span class="o">,</span> <span class="n">db</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This part concludes the &ldquo;offline mode&rdquo; series. Here&rsquo;s the short recap:</p>
+
+<ul>
+<li>If you don&rsquo;t want to compromise on UX, your application should work regardless whether the user is connected to internet or not.</li>
+<li>In this case the user may end up in a situation when the application is upgraded, but not all data is synced with the server yet. You <strong><em>do not</em></strong> want to lose your users&#8217; data. You&rsquo;ll have to migrate them.</li>
+<li>If you migrate your data, you should keep the migrations separate from one another, because otherwise maintaining them becomes a nightmare.</li>
+<li>The best way to do this that I know of, is keeping the old schemas and always performing all migrations sequentially. To make things simpler, I recommend the <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils library</a>.</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android SQLiteDatabase Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/12/android-sqlitedatabase-gotcha/"/>
+    <updated>2014-01-12T22:15:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/12/android-sqlitedatabase-gotcha</id>
+    <content type="html"><![CDATA[<p>In my <a href="http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2">previous post</a> I mentioned a nasty <code>SQLiteDatabase</code> gotcha and recommended using the <code>MigrationHelper</code> utility I wrote. If you have checked this <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java">class&rsquo;s sources</a>, you might have noticed a weird code. Before getting the list of columns the table is renamed to the temporary name and then renamed back:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">final</span> <span class="n">String</span> <span class="n">tempTable</span> <span class="o">=</span> <span class="s">&quot;tmp_&quot;</span> <span class="o">+</span> <span class="n">tempTableIndex</span><span class="o">++;</span>
+</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">tempTable</span><span class="o">);</span>
+</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">oldColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">tempTable</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="n">migration</span><span class="o">.</span><span class="na">createTableStatement</span><span class="o">);</span>
+</span><span class='line'><span class="kd">final</span> <span class="n">String</span> <span class="n">tempNewTable</span> <span class="o">=</span> <span class="s">&quot;tmp_&quot;</span> <span class="o">+</span> <span class="n">tempTableIndex</span><span class="o">++;</span>
+</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">tempNewTable</span><span class="o">);</span>
+</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">newColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">tempNewTable</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">tempNewTable</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">getColumns</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="n">String</span> <span class="n">table</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">Cursor</span> <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="n">table</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s">&quot;0&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">ImmutableSet</span><span class="o">.</span><span class="na">copyOf</span><span class="o">(</span><span class="n">cursor</span><span class="o">.</span><span class="na">getColumnNames</span><span class="o">());</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">cursor</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">ImmutableSet</span><span class="o">.</span><span class="na">of</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Initially the <code>MigrationHelper</code>&rsquo;s code looked like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TEMP_TABLE</span> <span class="o">=</span> <span class="s">&quot;tmp&quot;</span><span class="o">;</span>
+</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">TEMP_TABLE</span><span class="o">);</span>
+</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">oldColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">TEMP_TABLE</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="n">migration</span><span class="o">.</span><span class="na">createTableStatement</span><span class="o">);</span>
+</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">newColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It worked for a single migration, but didn&rsquo;t work for multiple migrations &ndash; the helper method for getting the column set always returned the columns of first table. Since the query was always the same, I suspected the results are cached somewhere. To verify this hypothesis I added to the temporary table name an index incremented with every migration. It worked, but then I realized I need to do the same for getting the columns of the new schema &ndash; otherwise the helper wouldn&rsquo;t work if the same table were migrated twice. This way the weird code was born.</p>
+
+<p>But the same thing could happen outside of <code>MigrationHelper</code> operations, for example if you need to iterate through rows of the same table in two different migrations:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="kd">final</span> <span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;=</span> <span class="mi">1500</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">Cursor</span> <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;some_table&quot;</span><span class="o">,</span> <span class="cm">/* null, null, null... */</span><span class="o">);</span>
+</span><span class='line'>    <span class="c1">// use Cursor c</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// other migrations, including ones that change the some_table table&#39;s columns</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;=</span> <span class="mi">2900</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">Cursor</span> <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;some_table&quot;</span><span class="o">,</span> <span class="cm">/* null, null, null... */</span><span class="o">);</span>
+</span><span class='line'>    <span class="c1">// try to use Cursor c and crash terribly</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So I checked the AOSP code for the suspected cache to see how the entries can be evicted or if the cache can be disabled. There are no methods for this, so you can&rsquo;t do it with straightforward call, but maybe you can exploit the implementation details?</p>
+
+<p>On ICS the cache is implemented as <a href="http://developer.android.com/reference/android/util/LruCache.html"><code>LruCache</code></a>, so theoretically you could evict old entries by filling the cache with new ones, but there is one hiccup &ndash; you don&rsquo;t know the cache size, so you&rsquo;d always have to go with <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html#MAX_SQL_CACHE_SIZE"><code>MAX_SQL_CACHE_SIZE</code></a>.</p>
+
+<p>Before ICS you couldn&rsquo;t do even that &ndash; the implementation of this &ldquo;cache&rdquo; is just a fixed size buffer for <code>SQLiteStatements</code>. Once that buffer is full, no more statements are cached. This also has one more consequence &ndash; your app might work much slower on Android 2.x after upgrade from old version than after fresh install, because the db cache will be filled with queries used in migrations.</p>
+
+<p>Fortunately the keys of this cache are raw SQL strings, so we can disable cache for migration queries by adding <code>WHERE n==n</code> clause with n incremented for every query (note that you musn&rsquo;t pass n as a bound parameter &ndash; the whole point of adding this selection is to make the queries different and force <code>SQLiteDatabase</code> to compile another statement).</p>
+
+<p>The question you should ask yourself is why do I have to know and care about all this. Isn&rsquo;t SQLite smart enough to see that I&rsquo;m trying to access the database using prepared statement compiled against old schema? It turns out the SQLite detects this issues and raises <code>SQLITE_SCHEMA</code> error (commented with &ldquo;The database schema changed&rdquo;), but Android&rsquo;s <code>SQLiteDatabase</code> wrapper drops this error and happily uses the old, invalid statements. Bad Android.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[C# Feature I Miss in Java: Extension Methods]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension/"/>
+    <updated>2014-01-09T00:12:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m primarily an Android developer, so when I checked the <a href="http://openjdk.java.net/projects/jdk8/features">Java 8 features list</a> I thought there is a lot of cool stuff, by sadly I won&rsquo;t be able to use them anytime soon. It&rsquo;s the same case as <a href="http://developer.android.com/reference/java/lang/AutoCloseable.html"><code>AutoCloseable</code></a> interface from Java 7. It&rsquo;s available from API lvl 19, and seeing how long it takes Android community to unanimously drop the support for Froyo, Gingerbread and Honeycomb, I think won&rsquo;t be able to use it before 2017. Anyways, good stuff is added to Java, but there is one cool feature from C# I do not see there: extension methods.</p>
+
+<p>Let me explain to you what they are in case you haven&rsquo;t wrote any C# code. In almost every code base there are simple utility methods which operate on a single object.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">CollectionsUtils</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">filter</span><span class="o">(</span><span class="n">Collection</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">unfiltered</span><span class="o">,</span> <span class="n">Predicate</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">E</span><span class="o">&gt;</span> <span class="n">predicate</span><span class="o">)</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">};</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">F</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">transform</span><span class="o">(</span><span class="n">Collection</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;</span> <span class="n">fromCollection</span><span class="o">,</span> <span class="n">Function</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">F</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">function</span><span class="o">)</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">};</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// usage</span>
+</span><span class='line'><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">list</span><span class="o">,</span> <span class="n">IS_NOT_NULL</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Things get ugly when you want to call multiple utility methods:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">transform</span><span class="o">(</span><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">list</span><span class="o">,</span> <span class="n">IS_NOT_NULL</span><span class="o">),</span> <span class="n">TO_STRING</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>C# allows you to add &ldquo;this&rdquo; modifier to the first parameter of static method, which basically tells the compiler to pretend that the objects of that type have a method with the same signature as our static method, sans the &ldquo;this&rdquo; parameter. Underneath it&rsquo;s treated exactly as the ugly nested calls above, but it allows you to write the code this way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">list</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">IS_NOT_NULL</span><span class="o">).</span><span class="na">transform</span><span class="o">(</span><span class="n">TO_STRING</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Syntactic sugar, but it goes a long way. I&rsquo;ve intentionally choose the methods for this examples &ndash; whole LINQ-to-objects interface is based on extension methods.</p>
+
+<p>Java 8 introduces a feature with similar name but completely different functionality: virtual extension methods. Simply put it allows merging the Foo interface and AbstractFoo abstract class with a reasonable implementation of some of Foo&rsquo;s methods. For example if your interface has <code>size()</code> method you can add the <code>isEmpty()</code> virtual extension method with default implementation returning true when <code>size()</code> returns 0. So it&rsquo;s a nice feature, but IMO less powerful than C# solution. Both solutions allow adding new methods with default implementation to interfaces you wrote without having to worry about backwards compatibility, but C# extension methods allows you also to extend 3rd party or even <code>java.lang</code> intefaces and classes to make their API cleaner or better suited to your particular problem.</p>
+
+<p>I wonder why the C#-style extension methods weren&rsquo;t added to Java 8. Maybe there are some implementation issues I do not see, maybe there is a conflict with another language features, maybe the powers that be think it would be inconsistent with the language philosophy. Do let me know if you have such information.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 2 - SQLite's ALTER TABLE]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2/"/>
+    <updated>2014-01-03T20:29:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2</id>
+    <content type="html"><![CDATA[<p>In <a href="http://chalup.github.io/blog/2013/12/26/offline-mode-in-android-apps-part-1">first part of this series</a> I showed that to implement offline mode in your Android app you have to implement data migrations. If you&rsquo;re using SQLite database, it means you&rsquo;ll have to use (or rather work around) it&rsquo;s ALTER TABLE syntax:</p>
+
+<p><a href="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"><img class="center" src="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"></a></p>
+
+<p>So all you can do with it is adding the column or renaming the table, but in reality you probably need to alter a single column, remove column or change the table constraints. You can achieve this by doing the following operation:</p>
+
+<ol>
+<li>Rename the table T with old schema to old_T.</li>
+<li>Create the table T with new schema.</li>
+<li>Use &ldquo;INSERT INTO T (new_columns) SELECT old_columns FROM old_T&rdquo; query to populate the table T with the data from the renamed table old_T.</li>
+<li>Drop old_T.</li>
+</ol>
+
+
+<p>Doing it manually is quite error prone though: for every migration you have to specify the new_columns and old_columns list. What&rsquo;s worse, in 95% of cases you just want to list the columns common for old and new schema. Fortunately we can automate such trivial migrations by executing <code>SELECT</code> with <code>LIMIT 0</code> (or <code>PRAGMA TABLE_INFO</code>) for both tables, getting the columns set using <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnNames%28%29"><code>Cursor.getColumnNames()</code></a>, and calculating these columns sets intersection.</p>
+
+<p>You can write a nice wrapper for this yourself, but a) I already did it, so you don&rsquo;t have to and b) there is a <a href="http://chalup.github.io/blog/2014/01/12/android-sqlitedatabase-gotcha">very nasty gotcha</a> which would probably cost you few hours of teeth grinding, so do yourself a favor and check <a href="https://github.com/futuresimple/android-schema-utils">this repository</a> out, especially the <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationsHelper</code></a> class. It automates the trivial migrations and allows you to define a mappings for situations when you rename the column or add a non-nullable column in new schema.</p>
+
+<p>In the next two posts I&rsquo;ll <a href="http://chalup.github.io/blog/2014/01/12/android-sqlitedatabase-gotcha">describe the gotcha I&rsquo;ve mentioned</a> in the previous paragraph and show some other non-obvious consequences of doing data migrations.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[2013 Summary]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/03/2013-summary/"/>
+    <updated>2014-01-03T09:07:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/03/2013-summary</id>
+    <content type="html"><![CDATA[<p>One year ago <a href="http://chalup.github.io/blog/2012/12/30/2012-summary">I set myself few goals for 2013</a>. Let&rsquo;s take a look how it went:</p>
+
+<ol>
+<li>I gave <a href="https://speakerdeck.com/chalup/data-model-on-android">two</a> <a href="https://speakerdeck.com/chalup/offline-mode-in-android-apps">talks</a>.</li>
+<li>My blog was viewed over 13k times.</li>
+<li>I have <a href="http://store.ovi.com/content/387592">published another game</a> on <a href="http://store.ovi.com/publisher/Jerzy%20Chalupski/">Nokia Store</a>.</li>
+<li>I <a href="https://github.com/chalup/microorm">have</a> <a href="https://github.com/chalup/thneed">authored</a> <a href="https://github.com/futuresimple/forger">or</a> <a href="https://github.com/futuresimple/android-db-commons">contributed</a> to <a href="https://github.com/futuresimple/android-autoindexer">several</a> <a href="https://github.com/futuresimple/android-schema-utils">open</a> <a href="https://github.com/futuresimple/sqlitemaster">source</a> <a href="https://github.com/chalup/cerberus">projects</a>.</li>
+</ol>
+
+
+<p>Meeting two out of three goals and some open source bonus ain&rsquo;t that bad. The gloating part is done, let&rsquo;s move to the wishful thinking part, a.k.a. goals for 2014:</p>
+
+<ol>
+<li><strong>Keep giving the talks</strong>. I find that preparing the presentation forces me to do thorough investigation of the topic, question all my assumptions and prepare answers for potential questions. This is probably the best way to learn about something, and as a bonus you&rsquo;re sharing that knowledge afterwards.</li>
+<li>Blog more. This year for each post I wrote I have added at least one more topic to my blog todo list. The resolution for this year is clearing this backlog and generating at least <strong>25k views</strong>. BTW: when I started this blog I feared that I won&rsquo;t have enough content to write regularly. Bollocks.</li>
+<li>Publish at least <strong>one app on Google Play</strong>.</li>
+<li>Keep working on the libraries I have published this year. It might not be a perfect metric of how useful to others my work turns out to be, but I&rsquo;d like to accumulate <strong>200 Github stars total</strong> on the projects I authored or co-authored.</li>
+</ol>
+
+
+<p>The only thing left to be done is to wish you a happy New Year!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[To Guava or Not to Guava?]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/27/to-guava-or-not-to-guava/"/>
+    <updated>2013-12-27T12:10:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/27/to-guava-or-not-to-guava</id>
+    <content type="html"><![CDATA[<p>I faced this dilemma recently, when I was preparing first release of <a href="https://github.com/chalup/cerberus">Cerberus</a> utility for Android. On one hand, in <a href="https://github.com/chalup/cerberus">Cerberus</a> I used a tiny subset of Guava features which can be trivially rewritten in vanilla Java in 15 minutes, so maybe I should not force Guava down peoples throat?  On the other hand I&rsquo;m a <a href="http://chalup.github.io/blog/2013/09/21/guava-goodies">huge</a> <a href="http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator">fan</a> of Guava and I think you should definitely use it in anything more complicated than &ldquo;Hello, world!&rdquo; tutorial, because it either reduces a boilerplate or replaces your handrolled utilities with better, faster and more thoroughly tested implementations.</p>
+
+<p>The &ldquo;this library bloats my apk&rdquo; argument is moot, because you can easily set up the ProGuard configuration which only strips the unused code, without doing any expensive optimizations. It&rsquo;s a good idea, because the dex input will be smaller, which speeds up the build and the apk will be smaller, which reduces time required to upload and install the app on the device.</p>
+
+<p>I found the problem though, which is a bit harder to solve. Modern versions of Guava use some <a href="http://developer.android.com/reference/java/util/NavigableSet.html">Java 1.6 APIs, which are available from API level 9</a>, so when you try to use it on Android 2.2 (API level 8), you&rsquo;ll get the <code>NoSuchMethodException</code> or some other unpleasant runtime error (side note: position #233 on my TODO list was a jar analyzer which finds this problem). <a href="http://chalup.github.io/blog/2013/06/26/guava-and-minsdkversion">On Android 2.2 you&rsquo;re stuck with Guava 13.0.1.</a></p>
+
+<p>This extends also to Guava as a library dependency. If one library supports Android 2.2 and older, it forces old version of Guava as dependency. And if another library depends on more recent version of Guava, you&rsquo;re basically screwed.</p>
+
+<p>One conclusion you can draw from this blog post is that you shouldn&rsquo;t use Guava in your open source libraries to prevent dependency hell, but that&rsquo;s spilling the baby with the bathwater. The problem is not Guava or any other library, the problem are Java 1.6 methods missing from Android API level 8! <a href="http://developer.android.com/about/dashboards/index.html">The statistics from Google</a> indicates that Froyo is used by 1.6%, in case of Base CRM user base it&rsquo;s only 0.2%. So more reasonable course of action is finally <strong>bumping minSdkVersion to 10</strong> (<a href="http://dannyroa.com/2013/10/17/why-its-time-to-support-only-android-4-0-and-above/">or even 14</a>), both for your applications and all the libraries.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 1 - Data Migrations]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/26/offline-mode-in-android-apps-part-1/"/>
+    <updated>2013-12-26T14:05:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/26/offline-mode-in-android-apps-part-1</id>
+    <content type="html"><![CDATA[<p>This year I gave a talk on <a href="http://www.krakdroid.pl/">Krakdroid</a> conference about offline mode in Android apps. By offline mode I mean implementing the app such way that the network availability is completely transparent to the end users. The high level implementation idea is to decouple the operations changing the data from sending these changes through unreliable network by saving the changes in local database and sending them at convinient moment. We have encountered two major problems when we implemented this behavior in <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a>: data migrations and identifying entities. This blog post describes the first issue.
+It might not be obvious why do you need the data migrations, so let&rsquo;s clear this out. Let&rsquo;s say on your mobile you have some data synced with backend (green squares on left and right) and some unsynced data created locally on mobile (red squares on the left).</p>
+
+<p><img class="center" src="http://chalup.github.io/images/unsynced.png"></p>
+
+<p>Now let&rsquo;s say that we introduce new functionality to our app, which changes the schema of our data models (the squares on the backend side are changed to circles).</p>
+
+<p><img class="center" src="http://chalup.github.io/images/schemachange.png"></p>
+
+<p>The schema of the local database have to be changed as well. The naive way of handling this situation is dropping old database with old schema, creating new one with new schema and resyncing all the data from backend, but there are two issues with this approach: if there is a lot of data the resyncing might take a while, which negates the most important advantage of offline mode &ndash; that the app is fully functional all the time.</p>
+
+<p><img class="center" src="http://chalup.github.io/images/lotofdata.png"></p>
+
+<p>More serious issue is that dropping the old database means that the unsynced data will be dropped along with it.</p>
+
+<p><img class="center" src="http://chalup.github.io/images/unsynceddata.png"></p>
+
+<p>The only way to provide the optimal user experience is to perform schema migrations locally for both synced and unsynced data:</p>
+
+<p><img class="center" src="http://chalup.github.io/images/migration.png"></p>
+
+<p>Migrating the data doesn&rsquo;t sound like a challenging thing to code, but the combination of obscure SQLite and Android issues complicates the matter. Without proper tools it&rsquo;s quite easy to make your code unmaintainable in the long run. I&rsquo;ll describe this issues and our solutions in the further posts.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Krakdroid 2013]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/24/krakdroid-2013/"/>
+    <updated>2013-12-24T15:28:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/24/krakdroid-2013</id>
+    <content type="html"><![CDATA[<p>At the beginning of the December I had an opportunity to gave a talk on a <a href="http://www.krakdroid.pl/">Krakdroid conference</a>. The organizers outdid themselves this year, the venue, other speakers and the overall event atmosphere was amazing. Definitely a place to be at if you&rsquo;re in Krakow at the end of the year.</p>
+
+<p>This year I talked about the offline mode in Android apps. The talk was 30% sales pitch, 10% shameless plug and 60% describing the pitfalls one can fall into when implementing offline mode. I&rsquo;m going to describe two major problems with offline mode in details on my blog and here are the slides:</p>
+
+<p><script async="" class="speakerdeck-embed" data-id="6b523f1041750131528c42d974972a8f" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"/></p>
+
+<p>Protip on giving a public speech &ndash; take a sip of water every 2-3 slides, especially if you&rsquo;re not feeling well and you have a sore throat.</p>
+
+<p>I got an atrocious headache in the afternoon and went home, so I didn&rsquo;t see all the talks, but I&rsquo;ve seen the rare thing &ndash; a succesful live coding &ndash; by <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> who presented the <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> testing framework and incrementally turned a meh-Java code into concise Groove goodness. <a href="http://plus.google.com/102636096187402339072">+Maciej Górski</a> did the maps framework overview, and although he&rsquo;s the author of excellent <a href="https://github.com/mg6maciej/android-maps-extensions">Android Maps Extensions</a> he managed to be surprisingly objective. The first talk by <a href="http://plus.google.com/106250762035158784863">+Wojtek Kaliciński</a> triggered an internal discussion and Base about reducing the support for old Android versions. It won&rsquo;t happen overnight, but at least we&rsquo;ve moved from the dangerous &ldquo;c'mon, it&rsquo;s not that hard to support Froyo&rdquo; mindtrack. I&rsquo;ll definitely write more about this.</p>
+
+<p>To summarise, it was a great event. I&rsquo;ve learned a lot, I&rsquo;ve met some interesting people and I gave another talk, which completes <a href="http://chalup.github.io/blog/2012/12/30/2012-summary">one of the goals I set myself up for 2013</a>. Good stuff.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQLite Views Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/03/sqlite-views-gotcha/"/>
+    <updated>2013-12-03T00:13:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/03/sqlite-views-gotcha</id>
+    <content type="html"><![CDATA[<p><strong>tl;dr:</strong> don&rsquo;t left join on view, or you gonna have a bad time.</p>
+
+<p>I have investigated a performance issue of the db in Android app today. The symptoms looked like a classic case of the missing index: the performance degraded with adding more data to certain tables. However, the quick check of sqlite_master table and looking at some <code>EXPLAIN QUERY PLAN</code> queries indicated that everything is properly indexed (which is not very surprising, given that we use <a href="https://github.com/futuresimple/android-autoindexer">android-autoindexer</a>).</p>
+
+<p>I started dumping the explain query plans for every query and it turned out that some queries perform multiple table scans instead of single scan of main table + indexed searches for joined tables. It means that the indices were in place, but they weren&rsquo;t used.</p>
+
+<p>The common denominator of these queries was joining with a view. Here&rsquo;s the simplest schema which demonstrates the issue:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sqlite&gt; create table x (id integer);
+</span><span class='line'>sqlite&gt; create table y (id integer, x_id integer);
+</span><span class='line'>
+</span><span class='line'>sqlite&gt; explain query plan select * from x left join y on x.id = x_id;
+</span><span class='line'>selectid    order       from        detail
+</span><span class='line'>----------  ----------  ----------  ----------------------------------------------------------------
+</span><span class='line'>0           0           0           SCAN TABLE x (~1000000 rows)
+</span><span class='line'>0           1           1           SEARCH TABLE y USING AUTOMATIC COVERING INDEX (x_id=?) (~7 rows)
+</span><span class='line'>
+</span><span class='line'>sqlite&gt; create view yyy as select * from y;
+</span><span class='line'>
+</span><span class='line'>sqlite&gt; explain query plan select * from x left join yyy on x.id = x_id;
+</span><span class='line'>selectid    order       from        detail
+</span><span class='line'>----------  ----------  ----------  -------------------------------------------------------------------
+</span><span class='line'>1           0           0           SCAN TABLE y (~1000000 rows)
+</span><span class='line'>0           0           0           SCAN TABLE x (~1000000 rows)
+</span><span class='line'>0           1           1           SEARCH SUBQUERY 1 USING AUTOMATIC COVERING INDEX (x_id=?) (~7 rows)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Of course this behaviour is documented in the SQLite Query Planner overview (point 3 of the <a href="http://www.sqlite.org/optoverview.html#flattening">Subquery flattening</a> paragraph), and I even remember reading this docs few times, but I guess something like this has to bite me in the ass before I memorize it.</p>
+
+<p>Everything works fine if you copypaste the views selection in place of the joined view, which makes me a sad panda, because I wish SQLite could do this for me. On the other hand it&rsquo;s a very simple workaround for this issue, and, with a right library, the code might even be manageable.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQL Injection Through ContentProvider Projection]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider/"/>
+    <updated>2013-11-06T23:45:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider</id>
+    <content type="html"><![CDATA[<p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
+
+<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
+
+<p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="s1">&#39;Bobby Tables was here&#39;</span><span class="p">;</span> <span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">Students</span><span class="p">;</span> <span class="c1">--</span>
+</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">sqlite_master</span><span class="p">;</span> <span class="c1">--</span>
+</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">non_public_table_I_found_out_about_using_previous_query</span><span class="p">;</span> <span class="c1">--</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Basically it means that if you exposed a single uri without sanitizing the projection, you have exposed your entire db.</p>
+
+<p>So how do you sanitize your projections? I&rsquo;ve given it some thought and it seems that the only sensible thing to do is allowing only subsets of predefined set of columns.</p>
+
+<p>You cannot allow any expression, because you&rsquo;d allow any expressions, including SELECTs from other tables and allowing certain expressions is not a trivial task.</p>
+
+<p>You shouldn&rsquo;t ignore the provided projection and return all columns, because one of the benefits of using projections is limiting the amount of data retrieved from database. Besides, <a href="https://play.google.com/store/apps/details?id=com.google.android.gm">certain widely used Google application</a> ignores the existence of <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnIndex%28java.lang.String%29"><code>Cursor.getColumnIndex</code></a> method and assumes that the columns will be returned in the same order they were specified in projection. The other app won&rsquo;t work correctly, and the users will probably blame you.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android Drawables Stroke Inconsistency]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/05/android-drawables-stroke-inconsistency/"/>
+    <updated>2013-11-05T00:34:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/05/android-drawables-stroke-inconsistency</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve run into a funny little problem when creating custom drawables recently &ndash; some of the lines were crisp and some were blurred:</p>
+
+<p><img class="center" src="http://chalup.github.io/images/zoomed.png"></p>
+
+<p>After few debug iterations I was able to narrow down the difference to the shapes drawn using the <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawRoundRect%28android.graphics.RectF,%20float,%20float,%20android.graphics.Paint%29"><code>Canvas.drawRoundRect</code></a> and <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawPath%28android.graphics.Path,%20android.graphics.Paint%29"><code>Canvas.drawPath</code></a>. The former looked much crispier. I&rsquo;ve dug down to Skia classes and it turns out that they reach the same drawing function through slightly different code paths and I guess at some point some rounding is applied at one of them, but I haven&rsquo;t verified this.</p>
+
+<p>The minimal example which demonstrates the issue are two solid <a href="http://developer.android.com/guide/topics/resources/drawable-resource.html#Shape">XML shape drawables</a> (which are parsed into <a href="http://developer.android.com/reference/android/graphics/drawable/GradientDrawable.html"><code>GradientDrawables</code></a>), one with radius defined in radius attribute, the other one with four radii defined (can be the same).</p>
+
+<p>Besides satisfying my idle curiosity and honing my AOSP code diving skills, I have learned something useful: do not mix paths and round rects on <code>Canvas</code> and use <code>Path.addRoundRect</code> with radii array when your path contains other curved shapes.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Thneed, Notes and Db Design]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design/"/>
+    <updated>2013-11-03T18:59:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design</id>
+    <content type="html"><![CDATA[<p>We&rsquo;re starting to find more and more interesting use cases for <a href="https://github.com/chalup/thneed">Thneed</a> in Base CRM codebase. The first release using it, and <a href="https://github.com/chalup/microorm">few</a> <a href="https://github.com/futuresimple/forger">other</a> <a href="https://github.com/futuresimple/android-db-commons">libraries</a> <a href="https://github.com/futuresimple/android-autoindexer">we</a> <a href="https://github.com/futuresimple/android-schema-utils">recently</a> <a href="https://github.com/futuresimple/sqlitemaster">developed</a>, was released just before the Halloween and we haven&rsquo;t registered any critical issues related to it. All in all, the results look very promising. I won&rsquo;t recommend using <a href="https://github.com/chalup/thneed">Thneed</a> in your production builds yet, but I urge you to <a href="https://github.com/chalup/thneed/star">star the project on Github</a> and watch its progress.</p>
+
+<p>The <a href="https://github.com/chalup/thneed">Thneed</a> was created as an answer to some issues we faced when developing and maintaining <a href="https://getbase.com/">Base CRM</a>, and this fact is sometimes reflected by the API. The example of this is something we internally called PolyModels.</p>
+
+<p>Let&rsquo;s start with a scenario, where we have a some objects and we&rsquo;d like to add notes to. It&rsquo;s a classic one-to-many relationship, which I&rsquo;d model with a foreign key in notes table:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">some_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">some_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now let&rsquo;s introduce another type of objects, which also can have notes attached to it. We have few options now. The simplest thing to do is to keep these notes in a completely separate table:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_enity_notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">other_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">other_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The issue with this solution is that we have two separate schemas that need to be updated in parallel, and in 95% of cases would be exactly the same. Another approach is making the objects which contain notes sort of inherit a base class:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notables</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span> <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span> <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These two solutions work perfectly in the &ldquo;give me all notes for object X&rdquo; scenario, but it gets ugly if you want to display a single note with the simple &ldquo;Associated with object X&rdquo; info. In this case you have to query every model which can contain notes, to see if this particular association references the objects from this model. On top of that, the Noteable table approach requires some additional work to create the entry in</p>
+
+<p>You can always have a several mutually exclusive foreing keys in your notes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">some_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">some_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">other_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">other_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But this solution doesn&rsquo;t really scale well as the number of the models which can contain notes increases. Also, your DBAs will love you if you go this way.</p>
+
+<p>The solution to this problem we used in Base was to have two columns in Notes table: one holding the type of the &ldquo;noteable&rdquo; object, i.e. and the other for the id of this object:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">noteable_id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">noteable_type</span> <span class="nb">TEXT</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The glaring issue with this approach is losing the consistency guarantee &ndash; no database I know of support this kind of foreign keys. But when you have SOA on the backend and the notes are stored in a separate database than the noteable objects, this is not your top concern. On mobile apps, even though we have a single database, we use the same structure, because all the other have some implementation issues and worse performance characteristics.</p>
+
+<p>I&rsquo;m not a db expert, and I haven&rsquo;t found any discussion of similar cases, which means that a) we&rsquo;re doing something very wrong or b) we have just very specific requirements. Let me know if it&rsquo;s a former case.</p>
+
+<p>I needed to model this relationships in Thneed, which tured out to be quite tricky, but that&rsquo;s the topic for another blog post.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Mobilization 2013]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/28/mobilization-2013/"/>
+    <updated>2013-10-28T09:30:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/28/mobilization-2013</id>
+    <content type="html"><![CDATA[<p>I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at <a href="https://getbase.com/">Base CRM</a> to make the data model maintainable. Here are the slides:</p>
+
+<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+
+<p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
+
+<p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[More Guava Goodies - AbstractIterator]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator/"/>
+    <updated>2013-10-04T23:19:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator</id>
+    <content type="html"><![CDATA[<p>A while ago I wanted to perform a certain operation for every subsequent pair of elements in collection, i.e. for list <code>[1, 2, 3, 4, 5]</code> I wanted to do something with pairs <code>[(1, 2), (2, 3), (3, 4), (4, 5)]</code>. In Haskell that would be easy:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='haskell'><span class='line'><span class="kt">Prelude</span><span class="o">&gt;</span> <span class="kr">let</span> <span class="n">frobnicate</span> <span class="n">list</span> <span class="ow">=</span> <span class="n">zip</span> <span class="p">(</span><span class="n">init</span> <span class="n">list</span><span class="p">)</span> <span class="p">(</span><span class="n">tail</span> <span class="n">list</span><span class="p">)</span>
+</span><span class='line'><span class="kt">Prelude</span><span class="o">&gt;</span> <span class="n">frobnicate</span> <span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="mi">5</span><span class="p">]</span>
+</span><span class='line'><span class="p">[(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The problem is, I needed this stuff in my Android app, which means Java. The easiest thing to write would be obviously:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">list</span><span class="o">;</span>
+</span><span class='line'><span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">list</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">T</span> <span class="n">left</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">T</span> <span class="n">right</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// do something useful</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But where&rsquo;s the fun with that? Fortunately, there is Guava. It doesn&rsquo;t have the <code>zip</code> or <code>init</code> functions, but it provides tool to write them yourself &ndash; the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/AbstractIterator.html"><code>AbstractIterator</code></a>. <strong>Tl;dr</strong> of the documentation: override one method returning an element or returning special marker from <code>endOfData()</code> method result.</p>
+
+<p>The zip implementation is pretty straightforward:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;</span> <span class="n">zip</span><span class="o">(</span><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">&gt;</span> <span class="n">left</span><span class="o">,</span> <span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">TRight</span><span class="o">&gt;</span> <span class="n">right</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="k">new</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;</span> <span class="n">iterator</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>      <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">&gt;</span> <span class="n">leftIterator</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="na">iterator</span><span class="o">();</span>
+</span><span class='line'>      <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">TRight</span><span class="o">&gt;</span> <span class="n">rightIterator</span> <span class="o">=</span> <span class="n">right</span><span class="o">.</span><span class="na">iterator</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">return</span> <span class="k">new</span> <span class="n">AbstractIterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="nd">@Override</span>
+</span><span class='line'>        <span class="kd">protected</span> <span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;</span> <span class="n">computeNext</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">leftIterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">()</span> <span class="o">&amp;&amp;</span> <span class="n">rightIterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="n">Pair</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">leftIterator</span><span class="o">.</span><span class="na">next</span><span class="o">(),</span> <span class="n">rightIterator</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
+</span><span class='line'>          <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="nf">endOfData</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>      <span class="o">};</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">};</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The tail can be achieved simply by calling the <code>Iterables.skip</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">getTail</span><span class="o">(</span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterable</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">Preconditions</span><span class="o">.</span><span class="na">checkArgument</span><span class="o">(</span><span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">().</span><span class="na">hasNext</span><span class="o">(),</span> <span class="s">&quot;Iterable cannot be empty&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">Iterables</span><span class="o">.</span><span class="na">skip</span><span class="o">(</span><span class="n">iterable</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>For init you could write similar function:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">getInit</span><span class="o">(</span><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterable</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">Preconditions</span><span class="o">.</span><span class="na">checkArgument</span><span class="o">(</span><span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">().</span><span class="na">hasNext</span><span class="o">(),</span> <span class="s">&quot;Iterable cannot be empty&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">Iterables</span><span class="o">.</span><span class="na">limit</span><span class="o">(</span><span class="n">iterable</span><span class="o">,</span> <span class="n">Iterables</span><span class="o">.</span><span class="na">size</span><span class="o">(</span><span class="n">iterable</span><span class="o">));</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But this will iterate through the entire iterable to count the size. We don&rsquo;t need the count however, we just need to know if there is another element in the iterable. Here is more efficient solution:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">getInit</span><span class="o">(</span><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterable</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">Preconditions</span><span class="o">.</span><span class="na">checkArgument</span><span class="o">(</span><span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">().</span><span class="na">hasNext</span><span class="o">(),</span> <span class="s">&quot;Iterable cannot be empty&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="k">new</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">iterator</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>      <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterator</span> <span class="o">=</span> <span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">();</span>
+</span><span class='line'>      <span class="k">return</span> <span class="k">new</span> <span class="n">AbstractIterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="nd">@Override</span>
+</span><span class='line'>        <span class="kd">protected</span> <span class="n">T</span> <span class="nf">computeNext</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">iterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">T</span> <span class="n">t</span> <span class="o">=</span> <span class="n">iterator</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+</span><span class='line'>            <span class="k">if</span> <span class="o">(</span><span class="n">iterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">return</span> <span class="n">t</span><span class="o">;</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>          <span class="k">return</span> <span class="nf">endOfData</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>      <span class="o">};</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">};</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>All methods used together look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">list</span><span class="o">;</span>
+</span><span class='line'><span class="k">for</span> <span class="o">(</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">zipped</span> <span class="o">:</span> <span class="n">zip</span><span class="o">(</span><span class="n">getInit</span><span class="o">(</span><span class="n">list</span><span class="o">),</span> <span class="n">getTail</span><span class="o">(</span><span class="n">list</span><span class="o">)))</span> <span class="o">{</span>
+</span><span class='line'>  <span class="c1">// do something useful</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Mobilization 2013 and Android Tech Talks Meetup]]></title>
+    <link href="http://chalup.github.io/blog/2013/09/30/mobilization-2013-and-android-tech/"/>
+    <updated>2013-09-30T21:11:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/09/30/mobilization-2013-and-android-tech</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ll give the presentation on this years Mobiliztion conference in Łódź on October 26th:</p>
+
+<p><a href="http://2013.mobilization.pl/"><img class="center" src="http://mobilization.pl/files/baner-speaking-at.png"></a></p>
+
+<p>I&rsquo;ll talk about challenges related to <code>ContentProvider</code> and data model in general we faced during 2 years of development of Base CRM for Android. Even if this particular topic does not concern you, the <a href="http://2013.mobilization.pl/agenda/">agenda</a> is ripe with other interesting Android topics: dependency injection with Dagger, Gradle, unit testing, continuous integration. It&rsquo;s not Android specific event &ndash; there are also several presentations about other mobile platforms.</p>
+
+<p>If you already have other plans for October 26th, you want to share some war stories related to data model on Android or you just want to talk about Android with fellow geeks, I recommend you a MeetUp happening next week in Kraków: <a href="http://www.meetup.com/GDG-Krakow/events/142021512/">Android Tech Talks #3</a>. I&rsquo;ll give a short topic intro, which (I hope) will be followed by deep, insightful discussion.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Guava Goodies]]></title>
+    <link href="http://chalup.github.io/blog/2013/09/21/guava-goodies/"/>
+    <updated>2013-09-21T14:49:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/09/21/guava-goodies</id>
+    <content type="html"><![CDATA[<p>This is a long overdue post after my <a href="http://chalup.github.io/blog/2013/02/20/guava-on-android">Guava on Android</a> post from February. Since then I&rsquo;ve been using <a href="https://code.google.com/p/guava-libraries/">Guava</a> in pretty much every Java project I was involved in and I still find new stuff that makes my code both shorter and clearer. Some random examples:</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#equal%28java.lang.Object,%20java.lang.Object%29"><code>Objects.equal()</code></a></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
+</span><span class='line'><span class="kt">boolean</span> <span class="n">equal</span> <span class="o">=</span> <span class="n">one</span> <span class="o">==</span> <span class="kc">null</span>
+</span><span class='line'>    <span class="o">?</span> <span class="n">other</span> <span class="o">==</span> <span class="kc">null</span>
+</span><span class='line'>    <span class="o">:</span> <span class="n">one</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">other</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Guava style:</span>
+</span><span class='line'><span class="kt">boolean</span> <span class="n">equal</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">equal</span><span class="o">(</span><span class="n">one</span><span class="o">,</span> <span class="n">other</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#hashCode%28java.lang.Object...%29"><code>Objects.hashcode()</code></a></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">x</span><span class="o">;</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="n">y</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">hashCode</span><span class="o">(</span><span class="n">y</span><span class="o">)</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="n">z</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">z</span><span class="o">.</span><span class="na">hashCode</span><span class="o">()</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Guava style:</span>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">Objects</span><span class="o">.</span><span class="na">hashCode</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">,</span> <span class="n">z</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Joiner.html"><code>Joiner</code></a></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
+</span><span class='line'><span class="n">StringBuilder</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StringBuilder</span><span class="o">();</span>
+</span><span class='line'><span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">a</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">b</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">a</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">!=</span> <span class="n">a</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">b</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;, &quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="k">return</span> <span class="n">b</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Guava style:</span>
+</span><span class='line'><span class="n">Joiner</span><span class="o">.</span><span class="na">on</span><span class="o">(</span><span class="s">&quot;, &quot;</span><span class="o">).</span><span class="na">join</span><span class="o">(</span><span class="n">a</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">cmp</span> <span class="o">=</span> <span class="n">lastName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="n">cmp</span> <span class="o">=</span> <span class="n">firstName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">Integer</span><span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Guava style:</span>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">ComparisonChain</span><span class="o">.</span><span class="na">start</span><span class="o">()</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">lastName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">firstName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">result</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lists, Maps and Sets classes contain bunch of newFooCollection, which effectively replace the diamond operator from JDK7, but also allow you to initialize the collection from varargs.</p>
+
+<p>Sets also contain the difference, intersection, etc. methods for common operations on sets, which a) have sane names, unlike some stuff from JDK&rsquo;s Collections, and b) doesn&rsquo;t change operands, so you don&rsquo;t have to make a defensive copy if you want to use the same set in two operations.</p>
+
+<p>Speaking of defensive copying: Guava has a set of <a href="https://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">Immutable collections</a>, which were created just for this purpose. There are few other very useful collections: <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/cache/LoadingCache.html"><code>LoadingCache</code></a>, which you can think of as a lazy map with specified generator for new items; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Multiset.html"><code>Multiset</code></a>, very handy if you need to build something like a histogram; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Table.html"><code>Table</code></a> if you need to lookup value using two keys.</p>
+
+<p>The other stuff I use very often are <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Preconditions.html"><code>Preconditions</code></a>. It&rsquo;s just a syntactic sugar for some sanity checks in your code, but it makes them more obvious, especially when you skim through some unfamiliar code. Bonus points: if you don&rsquo;t use the return values from <code>checkNotNull</code> and <code>checkPositionIndex</code>, you can remove those checks from performance critical sections using Proguard.</p>
+
+<p>On Android you have the <a href="http://developer.android.com/reference/android/util/Log.html#getStackTraceString%28java.lang.Throwable%29"><code>Log.getStackTraceString()</code></a> helper method, but in plain Java you&rsquo;d have to build one from <a href="http://developer.android.com/reference/java/lang/Throwable.html#getStackTrace%28%29"><code>Throwable.getStackTrace()</code></a>. Only you don&rsquo;t have to do this, since Guava have <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Throwables.html#getStackTraceAsString%28java.lang.Throwable%29"><code>Throwables.getStackTraceAsString()</code></a> utility method.</p>
+
+<p>Guava introduces also some functional idioms in form of <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#transform%28java.util.Collection,%20com.google.common.base.Function%29"><code>Collections2.transform</code></a> and <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#filter%28java.util.Collection,%20com.google.common.base.Predicate%29"><code>Collections2.filter</code></a>, but I have mixed feelings about them. On one hand sometimes they are life savers, but usually they make the code much uglier than the good ol&#8217; imperative for loop, so ues them with caution. They get especially ugly when you need to chain multiple transformations and filters, but for this case the Guava provides the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/FluentIterable.html"><code>FluentIterable</code></a> interface.</p>
+
+<p>None of the APIs listed above is absolutely necessary, but seriously, you want to use Guava (<a href="http://chalup.github.io/blog/2013/06/26/guava-and-minsdkversion">but sometimes not the latest version</a>). Each part of it raises the abstraction level of your code a tiny bit, improving it one line at the time.</p>
+]]></content>
+  </entry>
   
 </feed>

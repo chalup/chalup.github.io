@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Symbian | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/symbian/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing: Merry Cook]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/19/introducing-merry-cook/"/>
+    <updated>2013-08-19T21:10:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/19/introducing-merry-cook</id>
+    <content type="html"><![CDATA[<p><img class="center" src="/images/ss3.png"></p>
+
+<p>After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I knew that the &ldquo;Nu, Pogodi!&rdquo; code wasn&rsquo;t my top achievement, and I had to force myself into diving into it, but I feel it was worth it. Few things I think I did right this time:</p>
+
+<ul>
+<li><strong>Do not keep <em>any</em> game logic in QML</strong>. Qt has an excellent state machine framework, which makes writing the game logic in C++ relatively easy.</li>
+<li><strong>Keep the QML/C++ interface as simple as possible</strong>. Send signals from QML to C++ when user takes some action and update the QML UI from the C++ side by changing QProperties on some context property object. I&rsquo;ve actually used two objects for that, because it made testing a bit easier.</li>
+<li><strong>Unit tests</strong>. I&rsquo;ve set up the testing harness using gmock/gtest and I&rsquo;ve used it to unit test some things. I probably would have been fine without them, since Merry Cook is a very simple but a) it forced me to divide stuff into more manageable classes and b) it gave me a sense of accomplishing something early. It&rsquo;s funny, because even though I&rsquo;m absolutely conscious of the latter fact, I think it gave me enough boost to get to the point where I had moved forward with implementation and polishing, because I really wanted to publish this game.</li>
+<li><strong>QProperty helper</strong>. I wrote an abominable macro for reducing the QProperty boilerplate:</li>
+</ul>
+
+
+<script src="https://gist.github.com/chalup/6267728.js"></script>
+
+
+<p></li></p>
+
+<p>Things still on my TODO list:</p>
+
+<ul>
+<li><strong>More tests</strong>. Besides unit tests I&rsquo;d also like to write some integration tests for the state machine setup and connections, but I didn&rsquo;t have time to think how this should be done without making too much state public just for testing. Maybe next time.</li>
+<li><strong>Refactor &ldquo;Nu, Pogodi!&rdquo;</strong>. I jumped straight into new project, but I should have started with refactoring the old crap. On the other hand, it might have sucked out all the motivation out of me, and had I done it, I wouldn&rsquo;t have been writing this post right now. So, maybe next time.</li>
+<li><strong>Passing enums to QML</strong>. I have no idea what I did wrong, but I couldn&rsquo;t get the QML to see my C++ enums. I&rsquo;ve resorted to passing them as simple ints and using magic numbers on QML side, but it&rsquo;s definitely something I should fix. Obviously not now, but next time.</li>
+</ul>
+
+
+<p>Anyways, I&rsquo;m really happy with the final results, especially with the gameplay experience, which I think mimics the original game very well. Try it yourself!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Screensaver Blocking on Symbian]]></title>
+    <link href="http://chalup.github.io/blog/2012/10/03/screensaver-blocking-on-symbian/"/>
+    <updated>2012-10-03T20:55:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/10/03/screensaver-blocking-on-symbian</id>
+    <content type="html"><![CDATA[<p>In my <a href="http://store.ovi.com/content/318428">latest game</a> the players spend significant amount of time just watching the screen and trying to figure the puzzle out. The first few levels are obvious and most players will sole them in a few seconds, but as the difficulty of the puzzles increases the players stare at the screen longer and longer. At some point the screensaver would kick in and piss the player off (fortunately my ragtag QA/betatester team found this issue before launch).</p>
+
+<p><a href="https://www.google.com/search?q=how+to+block+screensaver+symbian+qt">Google search results</a> are (as usual) helpful, but the most promising lead, the <a href="http://doc.qt.digia.com/qtmobility/qsystemscreensaver.html"><code>QSystemScreenSaver</code></a> class is not a solution. There are three problems with it:</p>
+
+<ol>
+<li>The API of the class itself is terrible.</li>
+<li>The API of the <a href="http://doc.qt.digia.com/qtmobility/qml-screensaver.html">related QML element</a> is even worse.</li>
+<li>Last, but not least, it doesn&rsquo;t work (at least not in the Qt Mobility version shipped with the Qt SDK).</li>
+</ol>
+
+
+<p>(BTW: these three points sums up pretty much every experience with Qt Mobility package I had. Qt devs should either kill this festering boil with fire or fix it and rename it, because I learned to dread everything remotely related to Qt Mobility, and I suspect I&rsquo;m not the only one).</p>
+
+<p>Anyways, let&rsquo;s get back to the core of the problem, i.e. &ldquo;how to block the screensaver&rdquo;. Qt Mobility failed, but the task doesn&rsquo;t seems like a rocket science to me. <a href="https://www.google.com/search?q=how+to+block+screensaver+s60+c%2B%2B">Slightly different Google search</a> suggested using native Symbian&rsquo;s <a href="http://library.developer.nokia.com/topic/Nokia_Belle_Developers_Library/GUID-C6E5F800-0637-419E-8FE5-1EBB40E725AA/GUID-C197C9A7-EA05-3F24-9854-542E984C612D.html#GUID-A98E1B31-00E0-3DF1-8D5A-8E815B073D81"><code>User::ResetInactivityTime()</code></a> method. Few minutes and one <code>QTimer</code> later, everything worked:</p>
+
+<p>``` c++</p>
+
+<h1>ifndef SCREENSAVERBLOCKER_H</h1>
+
+<h1>define SCREENSAVERBLOCKER_H</h1>
+
+<h1>include <QObject></h1>
+
+<h1>include <QApplication></h1>
+
+<h1>include <QTimer></h1>
+
+<p>class ScreenSaverBlocker : public QObject
+{</p>
+
+<pre><code>Q_OBJECT
+</code></pre>
+
+<p>public:</p>
+
+<pre><code>explicit ScreenSaverBlocker(QObject *parent = 0) : QObject(parent) {
+    mTimer.setInterval(1000);
+    connect(&amp;mTimer, SIGNAL(timeout()), this, SLOT(blockScreenSaver()));
+    changeScreenSaverState(QApplication::activeWindow() != 0);
+    if (qApp) {
+        qApp-&gt;installEventFilter(this);
+    }
+}
+
+void changeScreenSaverState(bool blockScreenSaver) {
+    if (blockScreenSaver &amp;&amp; !mTimer.isActive()) {
+        mTimer.start();
+    } else {
+        mTimer.stop();
+    }
+}
+</code></pre>
+
+<p>protected:</p>
+
+<pre><code>bool eventFilter(QObject *obj, QEvent *event) {
+    Q_UNUSED(obj)
+    if (event-&gt;type() == QEvent::ApplicationActivate
+     || event-&gt;type() == QEvent::ApplicationDeactivate) {
+        changeScreenSaverState(event-&gt;type() == QEvent::ApplicationActivate);
+    }
+    return false;
+}
+</code></pre>
+
+<p>private slots:</p>
+
+<pre><code>void blockScreenSaver() {
+</code></pre>
+
+<h1>ifdef Q_OS_SYMBIAN</h1>
+
+<pre><code>    User::ResetInactivityTime();
+</code></pre>
+
+<h1>endif</h1>
+
+<pre><code>}
+</code></pre>
+
+<p>private:</p>
+
+<pre><code>QTimer mTimer;
+</code></pre>
+
+<p>};</p>
+
+<h1>endif // SCREENSAVERBLOCKER_H</h1>
+
+<p>```</p>
+
+<p>The important thing in the code above is watching the <code>ApplicationActivate</code> and <code>ApplicationDeactivate</code> events &ndash; after all, when your app is in background, you shouldn&rsquo;t affect the phone behavior. I&rsquo;m not sure if the app would fail the Nokia&rsquo;s QA process without this feature, but it seemed prudent to write the code this way.</p>
+
+<p>If you want to use this object in your QML UI just register it with <a href="http://doc.qt.digia.com/4.7/qdeclarativeengine.html#qmlRegisterType"><code>qmlRegisterType</code></a> and add the registered import and QML element to your root element.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Screen Orientation and QT Applications on Symbian Belle]]></title>
+    <link href="http://chalup.github.io/blog/2012/09/12/screen-orientation-and-qt-applications/"/>
+    <updated>2012-09-12T22:05:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/09/12/screen-orientation-and-qt-applications</id>
+    <content type="html"><![CDATA[<p>Let&rsquo;s take a break from <a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android">Android</a> <a href="/blog/2012/09/05/android-sharedpreferences-gotcha">gotchas</a> and do some mobile necrophilia, i.e. let&rsquo;s talk about Symbian.</p>
+
+<p>Recently I received an email from Nokians saying that they are testing Nokia Store content with new firmware update and <a href="http://store.ovi.com/content/219800">my app</a> won&rsquo;t work after update. After few quick email exchanges we narrowed down the problem to <a href="/blog/2012/05/30/qml-applications-on-nokia-belle">screen orientation locking code I wrote about some time ago</a>. It turns out that things can be done much simpler:</p>
+
+<p>``` js
+Window {</p>
+
+<pre><code>Rectangle {
+    id: root
+    anchors.fill: parent
+
+    Component.onCompleted: {
+        screen.allowedOrientations = Screen.Landscape
+    }
+
+    // more stuff
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>``` c++
+int main(int argc, char *argv[])
+{</p>
+
+<pre><code>QScopedPointer&lt;QApplication&gt; app(createApplication(argc, argv));
+
+QmlApplicationViewer viewer;
+viewer.setMainQmlFile(QLatin1String("qml/nupagadi/GameArea.qml"));
+viewer.setOrientation(QmlApplicationViewer::ScreenOrientationLockLandscape);
+viewer.setResizeMode(QDeclarativeView::SizeRootObjectToView);
+viewer.showExpanded();
+
+return app-&gt;exec();
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Less code, no need to comment it as a gotcha/workaround, and it&rsquo;s supposedly futureproof.</p>
+
+<p>I&rsquo;m very positively surprised with Nokians' approach, responsiveness and this whole experience. Of course I wouldn&rsquo;t be me if I didn&rsquo;t bitch a little bit, namely: why did I have this problem in the first place? I mean, locking the screen orientation is not a rocket science and should be well documented. It should, but unfortunately it&rsquo;s not, like so many things about QML.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Word Judge for Symbian Available in Nokia Store]]></title>
+    <link href="http://chalup.github.io/blog/2012/03/23/word-judge-for-symbian-available-in/"/>
+    <updated>2012-03-23T23:23:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/03/23/word-judge-for-symbian-available-in</id>
+    <content type="html"><![CDATA[<p>Today I have finally pushed both versions of Word Judge through Nokia Store QA. The version with an english dictionary was available for over the week now, but I had to submit the polish version few times until it passed the Nokia tests.</p>
+
+<p>Anyways, the applications are available for free in Nokia Store. Here&rsquo;s the link for <a href="http://store.ovi.com/content/262526">english version</a> and <a href="http://store.ovi.com/content/262535">polish version</a> (might not be available in all countries &ndash; I had to add some restrictions to pass QA process).</p>
+
+<p>Stay tuned for posts about development of Symbian version and enjoy your Scrabble games.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How (Not to) Test Your QML Application for Symbian]]></title>
+    <link href="http://chalup.github.io/blog/2012/01/22/how-not-to-test-your-qml-application/"/>
+    <updated>2012-01-22T16:15:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/01/22/how-not-to-test-your-qml-application</id>
+    <content type="html"><![CDATA[<p>First of all by QML I do not mean <a href="http://sneezy.cs.nott.ac.uk/QML/">this</a>, I mean <a href="http://developer.qt.nokia.com/doc/qt-4.8/qtquick.html">this</a>: a UI module of Qt, the cross-platform framework. The gals and guys at Nokia figured out that modern user interface cannot be fully described by static layout in a XML file. Microsoft figured out that too, but they chickened out and only extended XML a bit and added an &lsquo;a&rsquo; to file extension to make it look like something new. Nokians took a step further and created new language for declarative UI based on JavaScript called QML.</p>
+
+<p>The QML UI components can be defined in two ways: it can be a QML file composed of other components (for instance that&rsquo;s the usual way to define the main UI file) or it can be a C++ extension. Both ways can be used together to create a plugin, which can be imported to your project.</p>
+
+<p>And at last we reach the intended topic of this post: testing. What happens if some QML file defining a component is missing? What happens if the whole plugin is missing or the version of this plugin is lower than the one required by application? QML files are interpreted during runtime, so of course you get the runtime error. In the best scenario it limits the functionality of your app, in the worst case it renders it completely unusable.</p>
+
+<p>But hey, you can catch most of those errors simply by clicking through your application, right? Not exactly, doing so only tells you that in works on one particular device. You might have some plugins already installed, but not included in application&rsquo;s package and your app will work only on the devices which happen to have those plugins, which is not very likely.</p>
+
+<p><img class="center" src="/images/works-on-my-machine-starburst_2.png">
+That&rsquo;s exactly the error I made when I published the first version of &ldquo;Nu, Pogodi!&rdquo;. I submitted for Q&amp;A process an application with dependencies to Qt Components 1.1, build with the latest Qt SDK. I&rsquo;ve tested it thoroughly on some devices I had access to and via <a href="http://www.developer.nokia.com/Devices/Remote_device_access/">Remote Device Access</a> service (which BTW rocks; I wish there was a similar service for Android) and everything worked fine. The application was rejected by Q&amp;A, because at the end of 2011 there was some <a href="http://support.publish.nokia.com/?p=3766&amp;type=news">technical issues with Nokia Store and latest Qt</a> and I was told to rebuild my application with old SDK, which included only Qt Components 1.0. I&rsquo;ve tested my game again and everything worked so I published it to Nokia Store. Few days later I received first reviews &ndash; all negative, along the lines &ldquo;doesn&rsquo;t work, beware&rdquo;.</p>
+
+<p>Qt Smart Installer partially prevents those errors, but you still might shoot yourself in the foot in some cases. My game had dependencies to Qt Components 1.1, but the pkg file declared dependency to version 1.0, because it was created with old SDK. When my customers installed the game, the smart installer ensured only that version 1.0 is installed, but my game needed newer version and failed during runtime. I didn&rsquo;t caught this during testing, because all of my devices had latest Qt Components installed.</p>
+
+<p>That was the &ldquo;How not to test your QML application&rdquo; part, now let&rsquo;s get to solution. It&rsquo;s really simple: downgrade all the stuff needed by your application to versions defined in pkg file. To check the current versions of Qt libraries and plugins I recommend using an excellent <a href="http://projects.developer.nokia.com/qtinfo">QtInfo tool</a>. To downgrade Qt you need the sis files distributed with <a href="ftp://ftp.qt.nokia.com/qtsdk/">old Qt SDK versions</a>.</p>
+
+<p>This simple steps should ensure that your application will work properly on all supported devices. Nevertheless, you should prepare for failure and handle all runtime errors in a user friendly way. But that&rsquo;s the topic for another post&hellip;</p>
+]]></content>
+  </entry>
+  
+</feed>

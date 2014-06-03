@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Rant | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/rant/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android UI Struggles: Making a Button With Centered Text and Icon]]></title>
+    <link href="http://chalup.github.io/blog/2013/03/23/android-ui-struggles-making-button-with/"/>
+    <updated>2013-03-23T14:04:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/03/23/android-ui-struggles-making-button-with</id>
+    <content type="html"><![CDATA[<p>Every time I work on the UI of Android app I get the feeling that there is either something terribly wrong with the Android UI framework or with my understanding of how it works. I can reason about how the app works on the higher level, but I cannot apply the same methodology to Android UI, except for the simplest designs. I have read a lot of Android source code, I have written few dozens of sample-like apps, but I still cannot just think of the views structure, type it in and be done &ndash; for complicated layouts with some optional elements (i.e. which are sometimes visible and sometimes gone) I need at least few attempts and, I confess, sometimes I&rsquo;m desperate enough to do the &ldquo;let&rsquo;s change this and see what happens&rdquo; coding. Extremely frustrating.</p>
+
+<p>I&rsquo;m going to describe my struggles with Android UI on this blog, so if I&rsquo;m doing something terribly wrong, hopefully someone will enlighten me by posting a comment; and in case something is terribly wrong with Android UI framework, I might be able to help other programmers in distress.</p>
+
+<p>Today I have a simple task for you: create a button with some text and icon to the left of the text. The contents (both icon and text) should be centered inside the button.</p>
+
+<p><img class="center" src="/images/challenge.png"></p>
+
+<p>That&rsquo;s simple right? Here&rsquo;s the XML layout which comes to mind first:</p>
+
+<p>``` xml
+&lt;LinearLayout xmlns:android=&ldquo;<a href="http://schemas.android.com/apk/res/android">http://schemas.android.com/apk/res/android</a>&rdquo;</p>
+
+<pre><code>android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="vertical" &gt;
+
+&lt;Button
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:gravity="center"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></LinearLayout>
+```</p>
+
+<p>Unfortunately, no cookie for you:</p>
+
+<p><img class="center" src="/images/try1.png"></p>
+
+<p>Someone decided that compound drawables should be always draw next to the <code>View</code>&rsquo;s padding, so we have to try something else. For example <code>TextView</code> centered inside the <code>FrameLayout</code>.</p>
+
+<p>``` xml
+&lt;FrameLayout</p>
+
+<pre><code>style="?android:attr/buttonStyle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" &gt;
+
+&lt;TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:gravity="center"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></FrameLayout>
+```</p>
+
+<p><img class="center" src="/images/try2.png"></p>
+
+<p>Almost there, but the text has a wrong size and color. There is something called <code>textAppearanceButton</code>, but apparently it&rsquo;s not what the <code>Button</code>s use:</p>
+
+<p><img class="center" src="/images/try3.png"></p>
+
+<p>OK, so let&rsquo;s use the buttonStyle again, this time on <code>TextView</code>:</p>
+
+<p><img class="center" src="/images/try4.png"></p>
+
+<p>Now we need to get rid of the extra background, reset minimum height and width and make it not focusable and not clickable (otherwise tapping the caption won&rsquo;t have any effect):</p>
+
+<p>``` xml
+&lt;FrameLayout</p>
+
+<pre><code>style="?android:attr/buttonStyle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" &gt;
+
+&lt;TextView
+    style="?android:attr/buttonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@null"
+    android:clickable="false"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:focusable="false"
+    android:gravity="center"
+    android:minHeight="0dp"
+    android:minWidth="0dp"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></FrameLayout>
+```</p>
+
+<p>Lo and behold, it works!</p>
+
+<p><img class="center" src="/images/challenge.png"></p>
+
+<p>We&rsquo;d really like to use is something like <code>textAppearance="?android:attr/buttonStyle.textAppearance"</code>, but there is no such syntax. How about extracting all the attributes from <code>TextView</code> into some <code>buttonCaption</code> style with <code>?android:attr/buttonStyle</code> parent? No can do either: you can only inherit your style from the concrete <code>@style</code>, not from the styleable attribute.</p>
+
+<p>But what we can do is to use <code>Button</code> and create a style with no parent: Android will use the default button style and apply our captionOnly style:</p>
+
+<p>``` xml</p>
+
+
+
+<p>&lt;FrameLayout</p>
+
+<pre><code>style="?android:attr/buttonStyle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" &gt;
+
+&lt;Button
+    style="@style/captionOnly"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:drawableLeft="@android:drawable/ic_delete"
+    android:gravity="center"
+    android:text="Button Challenge" /&gt;
+</code></pre>
+
+<p></FrameLayout>
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android Font Metrics for Dummies]]></title>
+    <link href="http://chalup.github.io/blog/2012/10/09/android-font-metrics-for-dummies/"/>
+    <updated>2012-10-09T22:59:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/10/09/android-font-metrics-for-dummies</id>
+    <content type="html"><![CDATA[<p>Recently I was working on a custom View with overridden <a href="http://developer.android.com/reference/android/view/View.html#onDraw%28android.graphics.Canvas%29"><code>onDraw()</code></a> method and at some point I needed to center some text vertically. Unfortunately <a href="http://developer.android.com/reference/android/graphics/Paint.html#setTextAlign%28android.graphics.Paint.Align%29"><code>Paint.setTextAlign()</code></a> supports only horizontal orientation, so I tried calculating the y-coordinate of the origin myself, but I couldn&rsquo;t get it exactly right. After two failed attempts I decided that I need a program which visualizes the available font metrics, because it seems that I do not understand the <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> documentation, or the aforementioned class and it&rsquo;s documentation sucks.</p>
+
+<p>You can find the <a href="https://github.com/chalup/android-fontmetricstest">source code on my GitHub</a>, and here&rsquo;s the screenshot for other typographically challenged programmers:</p>
+
+<p><img class="center" src="/images/fontsfordummies.png"></p>
+
+<p>(BTW: the word &ldquo;Żyłę&rdquo; used there is not a complete gibberish, it&rsquo;s an accusative case of word &ldquo;vein&rdquo; in Polish; it&rsquo;s nice, because it&rsquo;s short, but it covers all cases of the metrics class).</p>
+
+<p>Let&rsquo;s get back to vertical alignment. In general you should center text vertically either on <a href="http://en.wikipedia.org/wiki/X-height">x-height</a> or on half the <a href="http://en.wikipedia.org/wiki/Cap_height">cap height</a> above the <a href="http://en.wikipedia.org/wiki/Baseline_%28typography%29">baseline</a> (at least that&rsquo;s the info I found). Neither metric is directly available in <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> class, but you can approximate the cap height as a <code>textSize - descent</code> or calculate x-height yourself using Rect height returned by <a href="http://developer.android.com/reference/android/graphics/Paint.html#getTextBounds%28java.lang.String,%20int,%20int,%20android.graphics.Rect%29"><code>Paint.getTextBounds</code></a> for string &ldquo;x&rdquo;.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The Dark Side of LINQ: LINQ to SQL on Windows Phone]]></title>
+    <link href="http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/"/>
+    <updated>2012-04-10T08:23:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on</id>
+    <content type="html"><![CDATA[<p>In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn LINQ, you won&rsquo;t be able to work with Java collections (Guava makes them bearable, but barely) or Qt/STL containers without throwing in your mouth every now and then.</p>
+
+<p>Here&rsquo;s tl;dr for the non-enlightened: LINQ is a sane way to query and alter the data. Instead of this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>List&lt;int&gt; filtered = new List&lt;int&gt;();
+foreach (int i in unfiltered)
+    if (i % 2 == 0)
+        filtered.Add(i);
+filtered.Sort();
+foreach (int i in filtered)
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>You can just write this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>foreach (int i in unfiltered.Where(num =&gt; num % 2 == 0).OrderBy(n =&gt; n))
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This is a trivial example, but the more complicated code, the more benefit you get from using LINQ.</p>
+
+<p>I started using it for operations on collections and XML files and I immediately fell in love with it. Imagine my joy when I learned that Windows Phone 7.1 finally supports local relational database which can be queried through LINQ to SQL!</p>
+
+<p>I&rsquo;ve read the <a href="http://msdn.microsoft.com/en-us/library/hh286405(v=vs.92">tutorial</a>.aspx), thought a bit about the application I was writing at the time and decided that I need many-to-many relationship. Oops, that&rsquo;s not supported. Well, it&rsquo;s &ldquo;kinda&rdquo; supported, meaning you can create a data structure and insert some data, but when you remove the data the foreign key constraints won&rsquo;t be verified and cascade triggers won&rsquo;t work. I think I can simplify the above statement and just call it &ldquo;not supported feature&rdquo;.</p>
+
+<p>Fortunately I didn&rsquo;t absolutely had to use many-to-many relationship. It would be nicer and would allow us to relax some constraints, but the current data could be as well represented using a nested one-to-many relationships. I&rsquo;ve wrote the code based on aforementioned LINQ to SQL tutorial, wrote the tests, run them and watched in amazement as they fail. After googling a lot and experimenting I was able to make my code work, but it was quite different than the crap they posted on MSDN as tutorial. If you want to use LINQ to SQL, take a look at <a href="https://gist.github.com/1682648">this code on github</a>.</p>
+
+<p>I spent about two days reading about LINQ to SQL and experimenting with the code and in the end I didn&rsquo;t even had the data structure I wanted to. And we&rsquo;re not talking here about rocket science, the SQLite scheme I needed was something like this:</p>
+
+<p>``` sql
+create table x (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table y (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table z (id INTEGER PRIMARY KEY AUTOINCREMENT,</p>
+
+<pre><code>            x_id INTEGER NOT NULL,
+            y_id INTEGER NOT NULL,
+            FOREIGN KEY(x_id) REFERENCES x(id) ON DELETE CASCADE,
+            FOREIGN KEY(y_id) REFERENCES y(id) ON DELETE CASCADE);
+</code></pre>
+
+<p>```</p>
+
+<p>Which leads me to conclusion: LINQ to SQL for Windows Phone just doesn&rsquo;t work. Consider also the amount of boilerplate code I had to write for simple foreign key relation: in case you didn&rsquo;t looked at the github link that&rsquo;s whooping 80 lines of code for every one-to-many relationship. I don&rsquo;t know, maybe there are some tools that generate this stuff for you, but in this case why does the official tutorial even mention writing the table classes by hand? And where are those tools?</p>
+
+<p>Recently I was also playing with Django which also features an ORM for the model definition. You need the foreign key? You use something called <code>ForeignKey</code>. You need the many-to-many relationship? You use the <code>ManyToManyField</code>. Dirt simple. I&rsquo;m sure there are some dark corners you have to be aware of, but the basic stuff just works.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Background Operations on Windows Phone 7]]></title>
+    <link href="http://chalup.github.io/blog/2012/04/04/background-operations-on-windows-phone/"/>
+    <updated>2012-04-04T13:23:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/04/04/background-operations-on-windows-phone</id>
+    <content type="html"><![CDATA[<p>Few weeks ago I was complaining to another developer that Windows Phone applications cannot perform tasks in background when they are not running. That was true few months ago when I learned about Windows Phone 7.0, but he pointed me to MSDN documentation of new WP 7.1 feature: <a href="http://msdn.microsoft.com/en-us/library/hh202961(v=vs.92">Background Agents</a>.aspx).</p>
+
+<p>I clicked the link with my hopes up, but I was immediately shot down with the highlight on the first page: &ldquo;Background agents are not supported on 256-MB devices&rdquo;. I proceeded to the <a href="http://msdn.microsoft.com/en-us/library/hh202942(v=vs.92">overview page</a>.aspx) and it turned out the highlight from the first page was just the tip of the iceberg. The constraints listed there are just staggering.</p>
+
+<p>First there are the registration issues: you can register background task for the next two weeks and after that period your application have to reschedule the task. I&rsquo;m not sure why do I have to do this, and at the first glance it looks only like a minor nuisance, until you take into account two other constraints: tasks cannot reschedule themselves and there is a hard limit of scheduled periodic tasks, which can be ridiculously low. Relevant quote from MSDN:</p>
+
+<p><blockquote><p>To help maximize the battery life of the device, there is a hard limit on the number of periodic agents that can be scheduled on the phone. It varies per device configuration and can be as low as 6.</p></blockquote></p>
+
+<p>Not a minor nuisance anymore, huh?</p>
+
+<p>This limit is only imposed on periodic agents, which are intended for short, periodic tasks like polling some service or uploading a data. There are also Resource Intensive Agents which can be used for longer tasks like data synchronization, but they have their own set of constraints: the device have to be charging, the battery have to be almost fully charged and there should be a Wi-Fi or PC connection (no cellular data). I think the MSDN note summarizes it quite well:</p>
+
+<p><blockquote><p>Due to the constraints on the device that must be met for resource-intensive agents to run, it is possible that the agent will never be run on a particular device.</p></p><p><p>(&hellip;)Also, resource-intensive agents are run one at a time, so as more applications that use resource-intensive agents are installed on a device, the likelihood of an agent running becomes even less. You should consider this when designing your application.</p></blockquote></p>
+
+<p>I&rsquo;m going to add to the comment above my own observation: every application can register only one background agent, which can be both periodic agent and resource intensive agent. It means that if you need both types of agents, your resource intensive agent is also affected by the periodic agent hard limit.</p>
+
+<p>It all boils down to this: <strong>you can&rsquo;t rely on the background agents</strong>. You don&rsquo;t have the guarantee that you&rsquo;ll be able to register the agent, which means that you can&rsquo;t use them for critical functionality. So we&rsquo;re exactly where we were after 7.0 release.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[On CachePolicy, UriBuilder and Mobile .NET]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/"/>
+    <updated>2012-02-19T11:00:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile</id>
+    <content type="html"><![CDATA[<p>In the Windows Phone 7 application I was working on there was a problem with some WebRequest caching. I&rsquo;m not sure if it should have been fixed on the client side or server side, but since it&rsquo;s just a matter of setting proper CachePolicy property of WebRequest I was going to add it to mobile application.</p>
+
+<p>Imagine my surprise when I found out that CachePolicy is not supported on Windows Phone 7. The obvious workaround is adding an URI param <code>no-cache=MS_FROM_EPOCH</code> or something like that.</p>
+
+<p>Now, if you&rsquo;d ask me what is the cardinal example of stuff that shouldn&rsquo;t be done using string concatenation, but is notoriously done that way, I&rsquo;d answer: URI building. It&rsquo;s highly structured string with <a href="http://tools.ietf.org/html/rfc3986">RFC</a>, so it stands to reason to create and use a dedicated builder and parsers API to make sure everything is well-formed.</p>
+
+<p>Let&rsquo;s take a look at UriBuilder class and URIs in general. All the stuff between ? and # (VERIFY) is called query string, which contains key-value pairs separated by &amp;s. What kind of API for query string would make sense? An IDictionary&lt;String, String>! What API is presented by UriBuilder? A string! Take a look at the <a href="http://msdn.microsoft.com/en-us/library/system.uribuilder.query.aspx">documentation</a>. Here&rsquo;s the best part:</p>
+
+<p><blockquote><p><b>NOTE</b> Do not append a string directly to this property. If the length of Query is greater than 1, retrieve the property value as a string, remove the leading question mark, append the new query string, and set the property with the combined string.</p></blockquote></p>
+
+<p>Ridiculous. Seriously, MS, I don&rsquo;t care it&rsquo;s transformed to a string, it&rsquo;s a key-value dictionary, so let me treat it as such!</p>
+
+<p>Fortunately C# has this nice feature called extension methods, meaning we can &ldquo;add&rdquo; a method to a class. There are no extension properties, but we can have a method like this:</p>
+
+<p><code>c#
+UriBuilder WithQueryParam(this UriBuilder uri, String key, String value)
+</code></p>
+
+<p>But now we need to check for duplicate keys and for that we have to parse existing query string. Fortunately there is a method for this: <a href="http://msdn.microsoft.com/en-us/library/system.web.httputility.parsequerystring.aspx">HttpUtility.ParseQueryString</a>.</p>
+
+<p>Except it&rsquo;s not available on mobile .NET. Again. But why?</p>
+
+<p>The same thing irritate me when I worked on Blackberry apps and I had to put up with Java ME no String.format, no date handling methods, no generics and sane collections. But I understand that Java ME is supposed to work on wider range of devices, some of them with very limited CPU and RAM resources, so every cycle and every byte of memory matters.</p>
+
+<p>Now let&rsquo;s take a look at Windows Phone 7 <a href="http://en.wikipedia.org/wiki/Windows_Phone#System_requirements">hardware requirements for manufacturers</a>: 256MB of RAM and 800MHz CPU. I&rsquo;m not an .NET expert, but I&rsquo;d hazard a guess that supporting  full desktop .NET would not make any difference on those powerhouses. Hell, you should be able to send a man to the Moon using this hardware, so please, can I have a query string parser?</p>
+
+<p>Is it some kind of Windows Mobile 6 legacy, or just a very bad MS joke that non-MS people don&rsquo;t get?</p>
+]]></content>
+  </entry>
+  
+</feed>

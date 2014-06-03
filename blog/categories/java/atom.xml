@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Java | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/java/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[C# Feature I Miss in Java: Extension Methods]]></title>
+    <link href="http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension/"/>
+    <updated>2014-01-09T00:12:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m primarily an Android developer, so when I checked the <a href="http://openjdk.java.net/projects/jdk8/features">Java 8 features list</a> I thought there is a lot of cool stuff, by sadly I won&rsquo;t be able to use them anytime soon. It&rsquo;s the same case as <a href="http://developer.android.com/reference/java/lang/AutoCloseable.html"><code>AutoCloseable</code></a> interface from Java 7. It&rsquo;s available from API lvl 19, and seeing how long it takes Android community to unanimously drop the support for Froyo, Gingerbread and Honeycomb, I think won&rsquo;t be able to use it before 2017. Anyways, good stuff is added to Java, but there is one cool feature from C# I do not see there: extension methods.</p>
+
+<p>Let me explain to you what they are in case you haven&rsquo;t wrote any C# code. In almost every code base there are simple utility methods which operate on a single object.</p>
+
+<p>``` java
+public static final class CollectionsUtils {
+  public static <E> Collection<E> filter(Collection<E> unfiltered, Predicate&lt;? super E> predicate) { /<em> &hellip; </em>/ };
+  public static &lt;F, T> Collection<T> transform(Collection<F> fromCollection, Function&lt;? super F, T> function) { /<em> &hellip; </em>/ };
+}</p>
+
+<p>// usage
+CollectionsUtils.filter(list, IS_NOT_NULL);
+```</p>
+
+<p>Things get ugly when you want to call multiple utility methods:
+<code>java
+CollectionsUtils.transform(CollectionsUtils.filter(list, IS_NOT_NULL), TO_STRING);
+</code></p>
+
+<p>C# allows you to add &ldquo;this&rdquo; modifier to the first parameter of static method, which basically tells the compiler to pretend that the objects of that type have a method with the same signature as our static method, sans the &ldquo;this&rdquo; parameter. Underneath it&rsquo;s treated exactly as the ugly nested calls above, but it allows you to write the code this way:</p>
+
+<p><code>java
+list.filter(IS_NOT_NULL).transform(TO_STRING);
+</code></p>
+
+<p>Syntactic sugar, but it goes a long way. I&rsquo;ve intentionally choose the methods for this examples &ndash; whole LINQ-to-objects interface is based on extension methods.</p>
+
+<p>Java 8 introduces a feature with similar name but completely different functionality: virtual extension methods. Simply put it allows merging the Foo interface and AbstractFoo abstract class with a reasonable implementation of some of Foo&rsquo;s methods. For example if your interface has <code>size()</code> method you can add the <code>isEmpty()</code> virtual extension method with default implementation returning true when <code>size()</code> returns 0. So it&rsquo;s a nice feature, but IMO less powerful than C# solution. Both solutions allow adding new methods with default implementation to interfaces you wrote without having to worry about backwards compatibility, but C# extension methods allows you also to extend 3rd party or even <code>java.lang</code> intefaces and classes to make their API cleaner or better suited to your particular problem.</p>
+
+<p>I wonder why the C#-style extension methods weren&rsquo;t added to Java 8. Maybe there are some implementation issues I do not see, maybe there is a conflict with another language features, maybe the powers that be think it would be inconsistent with the language philosophy. Do let me know if you have such information.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[More Guava Goodies - AbstractIterator]]></title>
+    <link href="http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator/"/>
+    <updated>2013-10-04T23:19:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator</id>
+    <content type="html"><![CDATA[<p>A while ago I wanted to perform a certain operation for every subsequent pair of elements in collection, i.e. for list <code>[1, 2, 3, 4, 5]</code> I wanted to do something with pairs <code>[(1, 2), (2, 3), (3, 4), (4, 5)]</code>. In Haskell that would be easy:</p>
+
+<p><code>haskell
+Prelude&gt; let frobnicate list = zip (init list) (tail list)
+Prelude&gt; frobnicate [1..5]
+[(1,2),(2,3),(3,4),(4,5)]
+</code></p>
+
+<p>The problem is, I needed this stuff in my Android app, which means Java. The easiest thing to write would be obviously:</p>
+
+<p>``` java
+List<T> list;
+for (int i = 1; i != list.size(); ++i) {
+  T left = list.get(i-1);
+  T right = list.get(i);</p>
+
+<p>  // do something useful
+}
+```</p>
+
+<p>But where&rsquo;s the fun with that? Fortunately, there is Guava. It doesn&rsquo;t have the <code>zip</code> or <code>init</code> functions, but it provides tool to write them yourself &ndash; the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/AbstractIterator.html"><code>AbstractIterator</code></a>. <strong>Tl;dr</strong> of the documentation: override one method returning an element or returning special marker from <code>endOfData()</code> method result.</p>
+
+<p>The zip implementation is pretty straightforward:</p>
+
+<p>``` java
+public static &lt;TLeft, TRight> Iterable&lt;Pair&lt;TLeft, TRight>> zip(final Iterable<TLeft> left, final Iterable<TRight> right) {
+  return new Iterable&lt;Pair&lt;TLeft, TRight>>() {</p>
+
+<pre><code>@Override
+public Iterator&lt;Pair&lt;TLeft, TRight&gt;&gt; iterator() {
+  final Iterator&lt;TLeft&gt; leftIterator = left.iterator();
+  final Iterator&lt;TRight&gt; rightIterator = right.iterator();
+
+  return new AbstractIterator&lt;Pair&lt;TLeft, TRight&gt;&gt;() {
+    @Override
+    protected Pair&lt;TLeft, TRight&gt; computeNext() {
+      if (leftIterator.hasNext() &amp;&amp; rightIterator.hasNext()) {
+        return Pair.create(leftIterator.next(), rightIterator.next());
+      } else {
+        return endOfData();
+      }
+    }
+  };
+}
+</code></pre>
+
+<p>  };
+}
+```</p>
+
+<p>The tail can be achieved simply by calling the <code>Iterables.skip</code>:</p>
+
+<p><code>java
+public static &lt;T&gt; Iterable&lt;T&gt; getTail(Iterable&lt;T&gt; iterable) {
+  Preconditions.checkArgument(iterable.iterator().hasNext(), "Iterable cannot be empty");
+  return Iterables.skip(iterable, 1);
+}
+</code></p>
+
+<p>For init you could write similar function:</p>
+
+<p><code>java
+public static &lt;T&gt; Iterable&lt;T&gt; getInit(final Iterable&lt;T&gt; iterable) {
+  Preconditions.checkArgument(iterable.iterator().hasNext(), "Iterable cannot be empty");
+  return Iterables.limit(iterable, Iterables.size(iterable));
+}
+</code></p>
+
+<p>But this will iterate through the entire iterable to count the size. We don&rsquo;t need the count however, we just need to know if there is another element in the iterable. Here is more efficient solution:</p>
+
+<p>``` java
+public static <T> Iterable<T> getInit(final Iterable<T> iterable) {
+  Preconditions.checkArgument(iterable.iterator().hasNext(), &ldquo;Iterable cannot be empty&rdquo;);</p>
+
+<p>  return new Iterable<T>() {</p>
+
+<pre><code>@Override
+public Iterator&lt;T&gt; iterator() {
+  final Iterator&lt;T&gt; iterator = iterable.iterator();
+  return new AbstractIterator&lt;T&gt;() {
+    @Override
+    protected T computeNext() {
+      if (iterator.hasNext()) {
+        T t = iterator.next();
+        if (iterator.hasNext()) {
+          return t;
+        }
+      }
+      return endOfData();
+    }
+  };
+}
+</code></pre>
+
+<p>  };
+}
+```</p>
+
+<p>All methods used together look like this:</p>
+
+<p><code>java
+List&lt;T&gt; list;
+for (Pair&lt;T, T&gt; zipped : zip(getInit(list), getTail(list))) {
+  // do something useful
+}
+</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Guava Goodies]]></title>
+    <link href="http://chalup.github.io/blog/2013/09/21/guava-goodies/"/>
+    <updated>2013-09-21T14:49:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/09/21/guava-goodies</id>
+    <content type="html"><![CDATA[<p>This is a long overdue post after my <a href="/blog/2013/02/20/guava-on-android">Guava on Android</a> post from February. Since then I&rsquo;ve been using <a href="https://code.google.com/p/guava-libraries/">Guava</a> in pretty much every Java project I was involved in and I still find new stuff that makes my code both shorter and clearer. Some random examples:</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#equal%28java.lang.Object,%20java.lang.Object%29"><code>Objects.equal()</code></a>
+``` java
+// instead of:
+boolean equal = one == null</p>
+
+<pre><code>? other == null
+: one.equals(other);
+</code></pre>
+
+<p>// Guava style:
+boolean equal = Objects.equal(one, other);
+```</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#hashCode%28java.lang.Object...%29"><code>Objects.hashcode()</code></a>
+``` java
+// instead of:
+@Override
+public int hashCode() {
+  int result = x;
+  result = 31 * result + (y != null ? Arrays.hashCode(y) : 0);
+  result = 31 * result + (z != null ? z.hashCode() : 0);
+  return result;
+}</p>
+
+<p>// Guava style:
+@Override
+public int hashCode() {
+  return Objects.hashCode(x, y, z);
+}
+```</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Joiner.html"><code>Joiner</code></a>
+``` java
+// instead of:
+StringBuilder b = new StringBuilder();
+for (int i = 0; i != a.length; ++i) {
+  b.append(a[i]);
+  if (i != a.length &ndash; 1) {</p>
+
+<pre><code>b.append(", ");
+</code></pre>
+
+<p>  }
+}
+return b.toString();</p>
+
+<p>// Guava style:
+Joiner.on(&ldquo;, &rdquo;).join(a);
+```</p>
+
+<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a>
+``` java
+// instead of:
+@Override
+public int compareTo(Person other) {
+  int cmp = lastName.compareTo(other.lastName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  cmp = firstName.compareTo(other.firstName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  return Integer.compare(zipCode, other.zipCode);
+}</p>
+
+<p>// Guava style:
+@Override
+public int compareTo(Person other) {
+  return ComparisonChain.start()</p>
+
+<pre><code>  .compare(lastName, other.lastName)
+  .compare(firstName, other.firstName)
+  .compare(zipCode, other.zipCode)
+  .result();
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Lists, Maps and Sets classes contain bunch of newFooCollection, which effectively replace the diamond operator from JDK7, but also allow you to initialize the collection from varargs.</p>
+
+<p>Sets also contain the difference, intersection, etc. methods for common operations on sets, which a) have sane names, unlike some stuff from JDK&rsquo;s Collections, and b) doesn&rsquo;t change operands, so you don&rsquo;t have to make a defensive copy if you want to use the same set in two operations.</p>
+
+<p>Speaking of defensive copying: Guava has a set of <a href="https://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">Immutable collections</a>, which were created just for this purpose. There are few other very useful collections: <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/cache/LoadingCache.html"><code>LoadingCache</code></a>, which you can think of as a lazy map with specified generator for new items; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Multiset.html"><code>Multiset</code></a>, very handy if you need to build something like a histogram; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Table.html"><code>Table</code></a> if you need to lookup value using two keys.</p>
+
+<p>The other stuff I use very often are <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Preconditions.html"><code>Preconditions</code></a>. It&rsquo;s just a syntactic sugar for some sanity checks in your code, but it makes them more obvious, especially when you skim through some unfamiliar code. Bonus points: if you don&rsquo;t use the return values from <code>checkNotNull</code> and <code>checkPositionIndex</code>, you can remove those checks from performance critical sections using Proguard.</p>
+
+<p>On Android you have the <a href="http://developer.android.com/reference/android/util/Log.html#getStackTraceString%28java.lang.Throwable%29"><code>Log.getStackTraceString()</code></a> helper method, but in plain Java you&rsquo;d have to build one from <a href="http://developer.android.com/reference/java/lang/Throwable.html#getStackTrace%28%29"><code>Throwable.getStackTrace()</code></a>. Only you don&rsquo;t have to do this, since Guava have <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Throwables.html#getStackTraceAsString%28java.lang.Throwable%29"><code>Throwables.getStackTraceAsString()</code></a> utility method.</p>
+
+<p>Guava introduces also some functional idioms in form of <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#transform%28java.util.Collection,%20com.google.common.base.Function%29"><code>Collections2.transform</code></a> and <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#filter%28java.util.Collection,%20com.google.common.base.Predicate%29"><code>Collections2.filter</code></a>, but I have mixed feelings about them. On one hand sometimes they are life savers, but usually they make the code much uglier than the good ol' imperative for loop, so ues them with caution. They get especially ugly when you need to chain multiple transformations and filters, but for this case the Guava provides the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/FluentIterable.html"><code>FluentIterable</code></a> interface.</p>
+
+<p>None of the APIs listed above is absolutely necessary, but seriously, you want to use Guava (<a href="/blog/2013/06/26/guava-and-minsdkversion">but sometimes not the latest version</a>). Each part of it raises the abstraction level of your code a tiny bit, improving it one line at the time.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Forger Library]]></title>
+    <link href="http://chalup.github.io/blog/2013/09/12/forger-library/"/>
+    <updated>2013-09-12T23:19:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/09/12/forger-library</id>
+    <content type="html"><![CDATA[<p>Sometimes the code you write is hard to test, and the most likely reason for this is that you wrote a shitty code. Other times, the code is quite easy to test, but setting up the test fixture is extremely tedious. It may also mean that you wrote a shitty code, but it may also mean that you don&rsquo;t have the right tools.</p>
+
+<p>For me the most painful part of writing tests was filling the data model with some fake data. The most straightforward thing to do is to write helper methods for creating this data, but this means you&rsquo;ll have two pieces of code to maintain side by side: the data model and the helper methods. The problem gets even more complicated when you need to create a whole hierarchy of objects.</p>
+
+<p>The first step is generating a valid <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a> for your data model. You need to know the column names and the type of the data that should be generated for a given column. Note that for column data type you cannot really use the database table definitions &ndash; for example sqlite doesn&rsquo;t have boolean column type, so you&rsquo;d define your column as integer, but the valid values for this column are only 1 and 0.</p>
+
+<p>This is not enough though, because you&rsquo;d generate random values for the foreign keys, which might crash the app (if you enforce the foreign key constraints) or break some other invariants in your code. You might work around this by creating the objects in the right order and overriding generated data for foreign key columns, but this would be tedious and error prone solution.</p>
+
+<p>I have recently posted about my two side-projects: <a href="https://github.com/chalup/microorm">MicroOrm</a> and <a href="https://github.com/chalup/thneed">Thneed</a>. The former let&rsquo;s you annotate fields in POJO and handles the conversion from POJO to ContentValues and from Cursor to POJO:</p>
+
+<p>``` java
+public class Customer {
+  @Column(&ldquo;id&rdquo;)
+  public long id;</p>
+
+<p>  @Column(&ldquo;name&rdquo;)
+  public String name;
+}</p>
+
+<p>public class Order {
+  @Column(&ldquo;id&rdquo;)
+  public long id;</p>
+
+<p>  @Column(&ldquo;amount&rdquo;)
+  public int amount;</p>
+
+<p>  @Column(&ldquo;customer_id&rdquo;)
+  public long customerId;
+}
+```</p>
+
+<p>The latter allows you to define the relationships between entities in your data model:</p>
+
+<p>``` java
+ModelGraph<ModelInterface> modelGraph = ModelGraph.of(ModelInterface.class)</p>
+
+<pre><code>.identifiedByDefault().by("id")
+.where()
+.the(ORDER).references(CUSTOMER).by("customer_id")
+.build();
+</code></pre>
+
+<p>```</p>
+
+<p>See what I&rsquo;m getting at?</p>
+
+<p>The returned ModelGraph object is a data structure that can be processed by independently written processors, i.e. they are the Visitable and Visitor parts of the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. The entities in relationship definitions are not a plain marker Objects &ndash; the first builder call specifies the interface they have to implement. This interface can be used by Visitors to get useful information about the connected models and, as a type parameter of ModelGraph, ensures that you are using the correct Visitors for your ModelGraph. See <a href="/blog/2013/08/25/random-musings-on-visitor-design">my last post about Visitors</a> for more information about generifying the visitor pattern.</p>
+
+<p>In our case the interface should declare which POJO contains <a href="https://github.com/chalup/microorm">MicroOrm</a> annotations and where should the generated <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a> be inserted:</p>
+
+<p>``` java
+public interface MicroOrmModel {
+  public Class&lt;?> getModelClass();
+}</p>
+
+<p>public interface ContentResolverModel {
+  public Uri getUri();
+}</p>
+
+<p>interface ModelInterface extends ContentResolverModel, MicroOrmModel {
+}</p>
+
+<p>public static final ModelInterface CUSTOMER = new ModelInterface() {
+  @Override
+  public Uri getUri() {</p>
+
+<pre><code>return Customers.CONTENT_URI;
+</code></pre>
+
+<p>  }</p>
+
+<p>  @Override
+  public Class&lt;?> getModelClass() {</p>
+
+<pre><code>return Customer.class;
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The final step is to wrap everything in fluent API:</p>
+
+<p>``` java
+Forger<ModelInterface> forger = new Forger(modelGraph, new MicroOrm());
+Order order = forger.iNeed(Order.class).in(contentResolver);</p>
+
+<p>// note: we didn&rsquo;t created the Customer dependency of Order, but:
+assertThat(order.customer_id).isNotEqualTo(0);</p>
+
+<p>// of course we can create Customer first and then create Order for it:
+Customer customer = forger.iNeed(Customer.class).in(contentResolver);
+Order anotherOrder = forger.iNeed(Order.class).relatedTo(customer).in(contentResolver);</p>
+
+<p>assertThat(anotherOrder.customer_id).isEqualTo(customer.id);</p>
+
+<p>// or if we need multiple orders for the same customer:
+Customer anotherCustomer = forger.iNeed(Customer.class).in(contentResolver);
+Forger<ModelInterface> forgerWithContext = forger.inContextOf(anotherCustomer);</p>
+
+<p>Order orderA = forgerWithContext.iNeed(Order.class).in(contentResolver);
+Order orderB = forgerWithContext.iNeed(Order.class).in(contentResolver);</p>
+
+<p>assertThat(orderA.customer_id).isEqualTo(anotherCustomer.id);
+assertThat(orderB.customer_id).isEqualTo(anotherCustomer.id);
+```</p>
+
+<p>The most pathological case in our code base was a test with 10 lines of code calling over 100 lines of helper methods and 6 lines of the actual test logic. The <a href="https://github.com/futuresimple/forger">Forger</a> library allowed us to get rid of all the helper methods and reduce the 10 lines of setup to 1 fluent API call (it&rsquo;s quite a long call split into few lines, but it&rsquo;s much prettier than the original code).</p>
+
+<p>Check out the <a href="https://github.com/futuresimple/forger">code on github</a> and don&rsquo;t <a href="https://github.com/futuresimple/forger/star">forget to star</a> this project if you find it interesting.</p>
+
+<p>The funny thing about this project is that it&rsquo;s a byproduct of <a href="https://github.com/chalup/thneed">Thneed</a>, which I originally wrote to solve another problem. It makes me think that the whole idea of defining the relationships as a visitable structure is more flexible than I originally anticipated and it might become the cornerstone of the whole set of useful tools.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Random Musings on Visitor Design Pattern in Java]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design/"/>
+    <updated>2013-08-25T13:21:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design</id>
+    <content type="html"><![CDATA[<p>First let&rsquo;s have a quick refresher on what is the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. This pattern consists of two elements: the Visitor, which in the Gang of Four book is defined as an &ldquo;operation to be performed on the elements of an object structure&rdquo;; the second element is the structure itself.</p>
+
+<p>``` java
+public interface Visitable {
+  void accept(Visitor visitor);
+}</p>
+
+<p>public interface Visitor {
+}
+```</p>
+
+<p>The Visitor interface is for now empty, because we haven&rsquo;t declared any Visitable types. In every class implementing Visitable interface we&rsquo;ll call a different method in Visitor:</p>
+
+<p>``` java
+public interface Visitable {
+  void accept(Visitor visitor);
+}</p>
+
+<p>public static class VisitableFoo implements Visitable {
+  @Override
+  public void accept(Visitor visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar implements Visitable {
+  @Override
+  public void accept(Visitor visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor {
+  void visit(VisitableBar visitableBar);
+  void visit(VisitableFoo visitableFoo);
+}
+```</p>
+
+<p>Sounds like a lot of work, but there is a reason for it. You could achieve something similar by simply adding another method to the Visitable pattern, but this means you&rsquo;d have to be able to modify the Visitable classes. The visit/accept double dispatch allows you to write a library like <a href="https://github.com/chalup/thneed">Thneed</a>, which defines the data structure, but leaves the operations implementation to the library users.</p>
+
+<p>The classic visitor pattern requires you to keep some kind of state and to write a method for getting and clearing this state. This might be what you want, but if you want to simply process your Visitable objects one by one and return independent computations, you might want just to return a value from visit() method. So the first twist you can add to classic Visitor pattern is to return a value from visit/accept method:</p>
+
+<p>``` java
+public interface Visitable {
+  <TReturn> TReturn accept(Visitor<TReturn> visitor);
+}</p>
+
+<p>public static class VisitableFoo implements Visitable {
+  @Override
+  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
+
+<pre><code>return visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar implements Visitable {
+  @Override
+  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
+
+<pre><code>return visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<TReturn> {
+  TReturn visit(VisitableBar visitableBar);
+  TReturn visit(VisitableFoo visitableFoo);
+}
+```</p>
+
+<p>Note that only Visitor interface is parametrized with a return type. The only thing that <code>Visitable.accept()</code> do is dispatching the call to Visitor, so there is no point in generifying the whole interface, it&rsquo;s sufficient to make an accept method generic. In fact, making the TReturn type a Visitable interface type would be a design mistake, because you wouldn&rsquo;t be able to create a Visitable that could be accepted by Visitors with different return types:</p>
+
+<p><code>java
+public interface Visitable&lt;TReturn&gt; {&lt;br/&gt;  TReturn accept(Visitor&lt;TReturn&gt; visitor);&lt;br/&gt;}
+</code></p>
+
+<p>Because of type erasure you wouldn&rsquo;t be able to create a Visitable that can accept two Visitors returning a different types:</p>
+
+<p><code>java
+public static class MyVisitable implements Visitable&lt;String&gt;, Visitable&lt;Integer&gt; {
+  // Invalid! "Duplicate class Visitable" compilation error.
+}
+</code></p>
+
+<p>Another thing you can do is generifying the whole pattern. The use case for this is when your Visitables are some kind of containers or wrappers over objects (again, see the <a href="https://github.com/chalup/thneed">Thneed</a> library, where the Visitables subclasses are the different kinds of relationships between data models and are parametrized with the type representing the data models). The naive way to do this is just adding the type parameters:</p>
+
+<p>``` java
+public interface Visitable<T> {
+  void accept(Visitor<T> visitor);
+}</p>
+
+<p>public static class VisitableFoo<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor<T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor<T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<T> {
+  void visit(VisitableBar<T> visitableBar);
+  void visit(VisitableFoo<T> visitableFoo);
+}
+```</p>
+
+<p>There is a problem with the signatures of those interfaces. Let&rsquo;s say that we want our Visitor to operate on Visitables containing Numbers:</p>
+
+<p>``` java
+Visitor<Number> visitor = new Visitor<Number>() {
+  @Override
+  public void visit(VisitableBar<Number> visitableBar) {
+  }</p>
+
+<p>  @Override
+  public void visit(VisitableFoo<Number> visitableFoo) {
+  }
+};
+```</p>
+
+<p>You should think about Visitor as the method accepting the Visitable. If our Visitor can handle something that contains Number, it should also handle something that contain any Number subclass &ndash; it&rsquo;s a classic example of <a href="https://sites.google.com/site/io/effective-java-reloaded">&ldquo;consumer extends, producer super&rdquo;</a> behaviour or <a href="http://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science">covariance and contravariance</a>) in general. In the implementation above however, the strict generics types are causing compilation errors. <a href="http://docs.oracle.com/javase/tutorial/extra/generics/wildcards.html">Generics wildcards</a> to the rescue:</p>
+
+<p>``` java
+public interface Visitable<T> {
+  void accept(Visitor&lt;? super T> visitor);
+}</p>
+
+<p>public static class VisitableFoo<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor&lt;? super T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor&lt;? super T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<T> {
+  void visit(VisitableBar&lt;? extends T> visitableBar);
+  void visit(VisitableFoo&lt;? extends T> visitableFoo);
+}
+```</p>
+
+<p>Note that the change has to be symmetric, i.e. both the <code>accept()</code> and <code>visit()</code> signatures have to include the bounds. Now we can safely call:</p>
+
+<p>``` java
+VisitableBar<Integer> visitableBar = new VisitableBar<Integer>();
+Visitor<Number> visitor = new Visitor<Number>() {
+  // visit() implementations
+}</p>
+
+<p>visitableBar.accept(visitor);
+```</p>
+]]></content>
+  </entry>
+  
+</feed>

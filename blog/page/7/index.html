@@ -1,0 +1,1292 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="I&rsquo;m the first to admit that the Word Judge is booooring application. Checking if the word can be used in a word game? Meh. From a programmer &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/page/7">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/19/dawg-data-structure-in-word-judge/">DAWG Data Structure in Word Judge</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-19T14:01:00+01:00" pubdate data-updated="true">Mar 19<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/19/dawg-data-structure-in-word-judge/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/19/dawg-data-structure-in-word-judge/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;m the first to admit that the Word Judge is booooring application. Checking if the word can be used in a word game? Meh. From a programmer perspective however, there is one very interesting problem to solve &ndash; how to compress a large dictionary to reduce the size of the application package and at the same time be able to query this dictionary without using excessive amount of memory and CPU power?</p>
+
+<p>First, let&rsquo;s settle on what is a &ldquo;large dictionary&rdquo;. One of the languages supported by Word Judge is Polish, for which the valid word list has over 2 million entries and takes about 36MB after unpacking. Do we need to compress this data at all? Probably not. If you consider the average hardware spec and modern network speed, the 36MB is not much, but we can do so much better. Besides, it&rsquo;s fun!</p>
+
+<p>One the other end of the spectrum is the &ldquo;zip all the things&rdquo; approach. It&rsquo;s not a good idea though &ndash; it puts a very heavy load on the CPU and doesn&rsquo;t compress the data that well. The zipped Polish dictionary takes 4.5MB.</p>
+
+<p>The most important observation is that we&rsquo;re not compressing some random white noise, but words from real language. We can leverage this information to get a much better compression than some generic algorithm. Lot of words share the same prefix and suffix, which means they can be efficiently represented as a directed acyclic graph with shared nodes for common prefixes and suffixes. Let&rsquo;s see how the graph would look like for couple of words:</p>
+
+<p><img class="center" src="/images/dag.png"></p>
+
+<p>White letters on black background mark the nodes representing the ends of words. So the graph above represents the following words:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>abject
+</span><span class='line'>abjection
+</span><span class='line'>abjections
+</span><span class='line'>abjectly
+</span><span class='line'>abjectness
+</span><span class='line'>ablate
+</span><span class='line'>ablated
+</span><span class='line'>ablation
+</span><span class='line'>ablations</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The nodes for <code>ab</code> prefix are of course shared, the <code>ions</code>, <code>s</code> suffixes nodes as well. For obvious reasons we cannot share the <code>t</code> node: in one group it marks the end of the word, in other it does not; the child nodes for each &rsquo;t&#8217; nodes are also different. Nodes are equal, and thus can be shared, if and only if they represent the same letter, the End Of Word flag is the same for both of them, and the list of children is exactly the same.</p>
+
+<p>This type of graph contains minimal number of nodes, but each node takes quite a lot of space. We need 8 bits for the letter, 1 bit for EOW flag, 8 bits for the children list length and some kind of reference, for example node index, to each child, which is log2(n) rounded up bits, where n is a number of nodes in the graph. As you can see the major contributor to a single node size is the children list: for TWL06 dictionary the number of nodes is in the 10k-100k order of magnitude, which means we need several bits per node index.</p>
+
+<p>A guy called John Paul Adamovsky <a href="http://www.pathcom.com/~vadco/dawg.html">found a neat solution to that</a>. Instead of keeping the full list of children, we can keep children in something similar to singly-linked list: let&rsquo;s store only the index of the first child, number the nodes in such way that the children always have consecutive indices and add a End Of Children List flag to each node. This way we need exactly 1 + log2(n) bits for child list. This way we can keep the entire node in one byte. What&rsquo;s the catch? We need to introduce few more nodes.</p>
+
+<p>For example on the graph above we can no longer share the <code>i</code> node in the <code>ions</code> suffix: if it was shared it would have to have a number one greater than the number of both <code>e</code> node in <code>ablate</code> and <code>n</code> node in <code>abjectness</code> (this is, of course, assuming the <code>i</code> node is the last on the child list of both <code>t</code> nodes; but it&rsquo;s impossible for any node ordering). Our graph would look like this:</p>
+
+<p><img class="center" src="/images/dawg.png"></p>
+
+<p>The rule for node equality has to be extended: the nodes are equal if they represent the same letter, the flags are the same, the children are equal and the siblings further on the children list are equal. The last condition is a bit confusing, so I&rsquo;ll provide an example.</p>
+
+<p>Let&rsquo;s add a <code>absolution</code> and <code>absolutions</code> to our dictionary. We can certainly share the <code>ab</code> prefix and <code>ons</code> suffix, but do we need a separate <code>i</code> node as well? The <code>i</code> node in <code>absolution</code> must have a End-Of-Child-List flag set. If we arrange the child nodes in either <code>ablat-</code> or <code>abject-</code> part of graph in such way that the <code>i</code> node is the last node, we can share the <code>i</code> node between that part of graph and the newly added branch. Our graph would look like this:</p>
+
+<p><img class="center" src="/images/dawg2.png"></p>
+
+<p>This is the way we can squeeze the 36MB dictionary to 1.5MB. The structure also doesn&rsquo;t need any processing, it can be loaded to int array and used directly. If you&rsquo;re curious how to convert the dictionary into this kind of graph you can read the description of <a href="https://github.com/chalup/dawggenerator">my dawggenerator project on github</a> (C++) or the <a href="http://www.pathcom.com/~vadco/dawg.html">original description by John Paul Adamovsky</a> (pure C).</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/14/large-raw-assets-in-android-22/">Large Raw Assets in Android 2.2</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-14T07:50:00+01:00" pubdate data-updated="true">Mar 14<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/14/large-raw-assets-in-android-22/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/14/large-raw-assets-in-android-22/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>My most recent application, <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">Word Judge</a>, contains full dictionary of word valid in word games. I went to great lengths to minimize the size of this data, but for some languages it&rsquo;s still quite large. For example polish dictionary is compressed from 35MB to 1.4MB. In Android 2.2 and earlier, if you add such large file as an asset and then try to open it, you&rsquo;ll get <code>IOException</code>. The exception itself doesn&rsquo;t contain any useful information, but the following text appears in logcat:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>03-07 14:40:42.345: D/asset(301): Data exceeds UNCOMPRESS_DATA_MAX (1442144 vs 1048576)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With that information <a href="http://www.google.pl/search?sourceid=chrome&amp;ie=UTF-8&amp;q=UNCOMPRESS_DATA_MAX+site%3Astackoverflow.com">googling the workaround is easy</a>. Some folks recommend splitting the file into multiple parts, or repackaging the apk, but the simplest solution is to change the file extension of your asset to one of the extensions listed in aapt tool sources as files that are not compressed by default:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="cm">/* these formats are already compressed, or don&#39;t compress well */</span>
+</span><span class='line'><span class="kd">static</span> <span class="kd">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">kNoCompressExt</span><span class="o">[]</span> <span class="o">=</span> <span class="o">{</span>
+</span><span class='line'>    <span class="s">&quot;.jpg&quot;</span><span class="o">,</span> <span class="s">&quot;.jpeg&quot;</span><span class="o">,</span> <span class="s">&quot;.png&quot;</span><span class="o">,</span> <span class="s">&quot;.gif&quot;</span><span class="o">,</span>
+</span><span class='line'>    <span class="s">&quot;.wav&quot;</span><span class="o">,</span> <span class="s">&quot;.mp2&quot;</span><span class="o">,</span> <span class="s">&quot;.mp3&quot;</span><span class="o">,</span> <span class="s">&quot;.ogg&quot;</span><span class="o">,</span> <span class="s">&quot;.aac&quot;</span><span class="o">,</span>
+</span><span class='line'>    <span class="s">&quot;.mpg&quot;</span><span class="o">,</span> <span class="s">&quot;.mpeg&quot;</span><span class="o">,</span> <span class="s">&quot;.mid&quot;</span><span class="o">,</span> <span class="s">&quot;.midi&quot;</span><span class="o">,</span> <span class="s">&quot;.smf&quot;</span><span class="o">,</span> <span class="s">&quot;.jet&quot;</span><span class="o">,</span>
+</span><span class='line'>    <span class="s">&quot;.rtttl&quot;</span><span class="o">,</span> <span class="s">&quot;.imy&quot;</span><span class="o">,</span> <span class="s">&quot;.xmf&quot;</span><span class="o">,</span> <span class="s">&quot;.mp4&quot;</span><span class="o">,</span> <span class="s">&quot;.m4a&quot;</span><span class="o">,</span>
+</span><span class='line'>    <span class="s">&quot;.m4v&quot;</span><span class="o">,</span> <span class="s">&quot;.3gp&quot;</span><span class="o">,</span> <span class="s">&quot;.3gpp&quot;</span><span class="o">,</span> <span class="s">&quot;.3g2&quot;</span><span class="o">,</span> <span class="s">&quot;.3gpp2&quot;</span><span class="o">,</span>
+</span><span class='line'>    <span class="s">&quot;.amr&quot;</span><span class="o">,</span> <span class="s">&quot;.awb&quot;</span><span class="o">,</span> <span class="s">&quot;.wma&quot;</span><span class="o">,</span> <span class="s">&quot;.wmv&quot;</span>
+</span><span class='line'><span class="o">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Of course if you target API level 9 or newer, you don&rsquo;t have to worry about this gotcha.</p>
+
+<p>There is one more thing worth mentioning: the speed of IO operations in debug mode is atrocious. Loading the 1.4MB dictionary to memory takes over 10 seconds. Fortunately when the program is running without debugger attached, the loading time decreases to less than 1 second.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/10/introducing-word-judge/">Introducing: Word Judge</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-10T11:17:00+01:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/10/introducing-word-judge/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/10/introducing-word-judge/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I enjoy playing Scrabble and other word games like WordSquared of Word with Friends and I think I&rsquo;m quite good at them for an amateur &ndash; my average score in 2-player Scrabble game is around 330 points. I do not have a tournament aspirations, because memorizing word lists or best stems doesn&rsquo;t fit my definition of fun, but I&rsquo;m always in for a casual game.</p>
+
+<p>The only thing that bothers me during these casual games are occasional, but unpleasant arguments &ndash; how do you spell given word or what is some 3 letter combination an obscure word or gibberish. Polish language have both <a href="http://en.wikipedia.org/wiki/Declension">declension</a> and <a href="http://en.wikipedia.org/wiki/Conjugation">conjugation</a> with a lot of irregularities, so there are plenty of things to argue about.</p>
+
+<p>Most of the times we sort things out simply by checking the word spelling on the Internet, but there are situations when you can&rsquo;t do that, for example when you&rsquo;re abroad and don&rsquo;t have wi-fi access and roaming data access price is extraorbitant, or you&rsquo;re in the middle of the outback with no connectivity whatsoever. Without that possibility you have to find a compromise, and boy, that&rsquo;s not easy when you challenge someones 7-letter word on two triple-word bonus tiles.</p>
+
+<p>That&rsquo;s why I created Word Judge &ndash; an ultimate way to settle all word-related disputes. The application contains full dictionary of valid words and short word list with definitions. Dictionary is shipped with the application, so you don&rsquo;t need internet connectivity to check if the word can be used in a word game. Currently the application is available only for Android devices, but I&rsquo;m going to release Symbian (and maybe Harmattan?) version soon.</p>
+
+<table class="separator" style="clear: both; text-align: center;"><tbody><tr><td><img class="center" src="/images/screenshot1.png"></td><td><img class="center" src="/images/screenshot2.png"></td><td><img class="center" src="/images/screenshot3.png"></td></tr></tbody></table>
+
+
+<p>Unlike many other word game helpers, Word Judge doesn&rsquo;t contain anagrammer tool. It&rsquo;s not an oversight, it didn&rsquo;t add it for two reasons. First of all I don&rsquo;t think that such functionality should be bundled with the application, which is basically a dictionary. You use a dictionary to check the spelling, not to cheat. The second reason is more prosaic &ndash; I don&rsquo;t like the UI of any anagrammer tools I found. It&rsquo;s usually a jumble of checkboxes and radio buttons and two fields for board and rack tiles. Even if you figure out what all those controls do, these tools don&rsquo;t really solve the problem, which is finding the best move. It&rsquo;s not an easy problem, even if you find a convenient way to import current game state to the application (<a href="http://en.wikipedia.org/wiki/Augmented_reality">AR</a> maybe?). It&rsquo;s certainly a good idea for a separate application, but not for a part of a dictionary app.</p>
+
+<p>I released one version of my application for every supported language (currently only <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">English</a> and <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgePL">Polish</a>). I considered setting up a service with downloadable dictionaries, but I decided against it, because it would needlessly complicate the application and I think that using multiple dictionaries is quite rare use case. Let me know if I&rsquo;m wrong, I might change my mind. Also, if you like the idea of my application and want me to create a Word Judge for your language, <a href="mailto:jerzy.chalupski@gmail.com">send me an email</a>. Unfortunately, since the app is free I cannot offer you anything more than a mention in application description and &ldquo;About&rdquo; window.</p>
+
+<p>I was sure from the start that I won&rsquo;t charge money for this app, but I pondered for quite a long time if I should use ads. On one hand they are visually displeasing and take scarce screen real estate. On the other hand, I want to see for myself how much revenue they generate &ndash; the testimonies of other developers vary from ecstatic to disappointed. In the end I decided to add a small banner as an experiment.</p>
+
+<p>This post is already getting too long, so let me just mention that in the next week or so I&rsquo;m going to write about stuff I learned while working on this application. I hope you&rsquo;ll enjoy the reading. Meanwhile, dust of your Scrabble board, <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">download my app</a> and enjoy an argument-free game!</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/08/customizing-ui-controls-on-android/">Customizing UI Controls on Android</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-08T15:09:00+01:00" pubdate data-updated="true">Mar 8<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/08/customizing-ui-controls-on-android/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/08/customizing-ui-controls-on-android/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>By customizing I mean &ldquo;Oh, and can we have buttons with pink background and neon green text&rdquo; requests you get from your customers. It turns out that such simple requests are in fact not simple. Take a look at the following screenshots taken on HTC Desire phone:</p>
+
+<p><img class="center" src="/images/customizingUIcontrols.png"></p>
+
+<p>The &ldquo;Nexus&rdquo; button uses custom background selector copied from Android sources, so it looks exactly like a buttons on Nexus phones. The &ldquo;HTC&rdquo; button is using default background selector for HTC phones. As you can see there are few differences: highlight, corner rounding and slightly different padding. Other vendors also customize default look of UI controls: Motorola uses red highlight, and Samsung tablets use light blue highlight and there are probably some minor differences in padding and rounding as well.</p>
+
+<p>Let&rsquo;s get back to the original problem, i.e. using pink background and neon green text. Obviously we cannot change just the text color, because it would be unreadable on HTC devices. Changing the background is also tricky, because you cannot reuse highlight graphics built into the platform resources: the different padding and corner rounding force you to use custom graphics for every state. Using layer list drawable to add some decoration is also out of the question, because of the differences in padding &ndash; most likely your decoration would be off by few pixels on some devices.</p>
+
+<p>But now you have one completely custom UI control, which stands apart of built in controls. So for me it&rsquo;s rather &ldquo;all or nothing&rdquo; approach &ndash; either you customize all your UI controls (which might be very time consuming) or you use default controls.</p>
+
+<p>I found one exception to this unfortunate situation: it&rsquo;s possible to create a ListView items with custom &ldquo;normal&rdquo; background and default highlight. Just use the following selector for list item background:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+</span><span class='line'><span class="nt">&lt;selector</span> <span class="na">xmlns:android=</span><span class="s">&quot;http://schemas.android.com/apk/res/android&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:state_selected=</span><span class="s">&quot;true&quot;</span> <span class="na">android:drawable=</span><span class="s">&quot;@android:color/transparent&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:state_focused=</span><span class="s">&quot;true&quot;</span> <span class="na">android:drawable=</span><span class="s">&quot;@android:color/transparent&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:state_pressed=</span><span class="s">&quot;true&quot;</span> <span class="na">android:drawable=</span><span class="s">&quot;@android:color/transparent&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:drawable=</span><span class="s">&quot;@drawable/list_item&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/selector&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/02/dip-on-blackberry/">DIP on BlackBerry</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-02T21:35:00+01:00" pubdate data-updated="true">Mar 2<span>nd</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/02/dip-on-blackberry/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/02/dip-on-blackberry/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Android has this nice notion of <a href="http://developer.android.com/guide/practices/screens_support.html#density-independence">density-independent pixel</a> &ndash; a measurement unit which ensures the widgets have the same physical size on the devices with different screen size and different resolution. Basically 1dp is 1px on a device with 160dpi and is scaled appropriately on devices with different dpi.</p>
+
+<p>Why is it important? Because if you design your UI in px on high resolution device and then run it on low resolution device, you&rsquo;ll end up with gigantic buttons which take 50% of the screen. If you do the opposite, you&rsquo;ll end up with button, which are too small to click on high res device.</p>
+
+<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png"><img class="center" src="http://developer.android.com/images/screens_support/density-test-bad.png"></a></p>
+
+<p>Unfortunately the BlackBerry doesn&rsquo;t support this concept out of the box. By default you specify the size and position of UI controls in regular pixels. The <a href="http://docs.blackberry.com/en/developers/deliverables/29251/Developing_apps_for_different_screen_sizes_1579421_11.jsp">BlackBerry documentation</a> suggests using this nugget of a code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kt">boolean</span> <span class="n">lowRes</span> <span class="o">=</span> <span class="n">Display</span><span class="o">.</span><span class="na">getWidth</span><span class="o">()</span> <span class="o">&lt;=</span> <span class="mi">320</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="o">(</span><span class="n">lowRes</span><span class="o">)</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>    <span class="c1">// The device has a low resolution screen size</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="k">else</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>    <span class="c1">// The device has a high resolution screen size</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But I think there is a better way.</p>
+
+<p>The net.rim.device.api.ui.Ui contains the static method convertSize that can be used, as you might have guessed, for size conversion between different measurement units. We&rsquo;ll of course convert our measurements to pixels, because that&rsquo;s the unit expected by most drawing methods. But what unit will we convert from?</p>
+
+<p>Points are nice, because you probably use them for your font size already, but they are to coarse to be used for all components. Fortunately there is no need to write a wrapper for your own unit, because you can use built-in unit called centipoints. 100 centipoints = 1 point, so this unit should provide enough precision to layout elements just the way you want.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/28/wp7-webrequest-oddity/">WP7 WebRequest Oddity</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-28T09:50:00+01:00" pubdate data-updated="true">Feb 28<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/28/wp7-webrequest-oddity/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/28/wp7-webrequest-oddity/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>During testing of a Windows Phone 7 application I write during my day job I noticed strange thing: when I disabled network connection, I received 404 NotFound error. More precisely, the WebRequest threw WebException with Status = UnknownError, Response.Uri = {} and Response.StatusCode = NotFound.</p>
+
+<p><img class="center" src="/images/no+connection.jpg"></p>
+
+<p>So you get 404 in two cases: when either connection endpoint is down or when server actually responds with 404 NotFound. It would be nice to separate those two cases though, for example to display to the user the message that actually helps them fix the problem.</p>
+
+<p><img class="center" src="/images/wrong+url.jpg"></p>
+
+<p>Fortunately you can tell those two situations apart by checking WebException.Response.ResponseUri &ndash; in case of connection failure it contains empty Uri object (not null, just empty). Here&rsquo;s the extension method I use to convert the exception to the one that makes more sense to me:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">WebResponse</span> <span class="nf">SaneEndGetResponse</span><span class="p">(</span><span class="k">this</span> <span class="n">WebRequest</span> <span class="n">request</span><span class="p">,</span> <span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">try</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">request</span><span class="p">.</span><span class="n">EndGetResponse</span><span class="p">(</span><span class="n">asyncResult</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">catch</span> <span class="p">(</span><span class="n">WebException</span> <span class="n">wex</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">wex</span><span class="p">.</span><span class="n">Response</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>            <span class="p">((</span><span class="n">HttpWebResponse</span><span class="p">)</span><span class="n">wex</span><span class="p">.</span><span class="n">Response</span><span class="p">).</span><span class="n">StatusCode</span> <span class="p">==</span> <span class="n">HttpStatusCode</span><span class="p">.</span><span class="n">NotFound</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>            <span class="n">wex</span><span class="p">.</span><span class="n">Response</span><span class="p">.</span><span class="n">ResponseUri</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>            <span class="n">String</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">wex</span><span class="p">.</span><span class="n">Response</span><span class="p">.</span><span class="n">ResponseUri</span><span class="p">.</span><span class="n">ToString</span><span class="p">()))</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="k">throw</span> <span class="k">new</span> <span class="nf">WebException</span><span class="p">(</span><span class="s">&quot;Network error&quot;</span><span class="p">,</span> <span class="n">WebExceptionStatus</span><span class="p">.</span><span class="n">ConnectFailure</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">throw</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/">&#8220;Nu, Pogodi!&#8221; Bought by Over 2000 Users</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-24T22:53:00+01:00" pubdate data-updated="true">Feb 24<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>This week my <a href="http://store.ovi.com/content/219800">&ldquo;Nu, Pogodi!&rdquo;</a> game reached the 2000 downloads from Nokia Store. It might not be a lot if you compare it to the number of Angry Birds downloads, but considering that a) the game is paid, i.e. those 2000 Nokia phone users actually spent their money on my game, and b) it took about two weeks total to program it, I think it&rsquo;s a very good result.</p>
+
+<p>Despite the fact that the game is very simple, <a href="/blog/2012/01/22/how-not-to-test-your-qml-application">I&rsquo;ve learned</a> <a href="/blog/2012/01/31/updating-qt-applications-in-nokia-store/">a lot</a> <a href="/blog/2012/02/01/handling-qml-errors-101">while writing</a> <a href="/blog/2012/02/23/nokia-belle-update-and-content">and publishing it</a>, which makes me very excited about the next, more complex programs I&rsquo;m going to release and gives me enormous motivation boost. Now I just need to get to keep working before it wears off.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/23/nokia-belle-update-and-content/">Nokia Belle Update and Content Published in Nokia Store</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-23T16:22:00+01:00" pubdate data-updated="true">Feb 23<span>rd</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/23/nokia-belle-update-and-content/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/23/nokia-belle-update-and-content/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;ve received an email from &ldquo;Nu, Pogodi!&rdquo; customer, saying that he cannot <a href="http://store.ovi.com/content/219800">download my game from Nokia Store</a> after updating his N8 phone firmware to Symbian Belle. After quick investigation in turned out that the N8 Belle device was listed as &ldquo;Not compatible&rdquo; in content distribution details.</p>
+
+<p>When I published my game in November, the only devices running with Belle firmware were Nokia 603, 700 and 701. When the Belle update for various phones was released, the new firmwares were added to the list as &ldquo;Not compatible&rdquo;, because that&rsquo;s the only reasonable default. It&rsquo;s prudent to prevent users from downloading application that might not work, because it&rsquo;s very likely that in case of any errors they&rsquo;ll post a negative review, and it&rsquo;s very hard to bump your rating from 1 or 2 stars average. I verified that everything works fine and updated the distribution metadata.</p>
+
+<p>So here&rsquo;s the piece of advice for anyone who published some content in Nokia Store: periodically check if there are new firmwares available and update your content distribution.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/22/android-layoutinflater-gotcha/">Android LayoutInflater Gotcha</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-22T09:26:00+01:00" pubdate data-updated="true">Feb 22<span>nd</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/22/android-layoutinflater-gotcha/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/22/android-layoutinflater-gotcha/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Many custom Adapter tutorials contain subtle error which can be hard to find and fix. Even <a href="http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/view/List14.html">efficient list adapter sample from Android SDK</a> contains this bug. If you compile and run the sample without any changes you should see something like this:</p>
+
+<p><img class="center" src="/images/original.png"></p>
+
+<p>There&rsquo;s nothing wrong with the list on this screenshot, as long as that&rsquo;s the look you want. But what if you want the list items to be wider? Let&rsquo;s change the list item layout:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+</span><span class='line'><span class="c">&lt;!-- Copyright (C) 2007 The Android Open Source Project</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+</span><span class='line'><span class="c">     you may not use this file except in compliance with the License.</span>
+</span><span class='line'><span class="c">     You may obtain a copy of the License at</span>
+</span><span class='line'><span class="c">  </span>
+</span><span class='line'><span class="c">          http://www.apache.org/licenses/LICENSE-2.0</span>
+</span><span class='line'><span class="c">  </span>
+</span><span class='line'><span class="c">     Unless required by applicable law or agreed to in writing, software</span>
+</span><span class='line'><span class="c">     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+</span><span class='line'><span class="c">     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+</span><span class='line'><span class="c">     See the License for the specific language governing permissions and</span>
+</span><span class='line'><span class="c">     limitations under the License.</span>
+</span><span class='line'><span class="c">--&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;LinearLayout</span> <span class="na">xmlns:android=</span><span class="s">&quot;http://schemas.android.com/apk/res/android&quot;</span>
+</span><span class='line'>    <span class="na">android:orientation=</span><span class="s">&quot;horizontal&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
+</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;150dip&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;ImageView</span> <span class="na">android:id=</span><span class="s">&quot;@+id/icon&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;48dip&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;48dip&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;TextView</span> <span class="na">android:id=</span><span class="s">&quot;@+id/text&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center_vertical&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;0dip&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_weight=</span><span class="s">&quot;1.0&quot;</span>
+</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;/LinearLayout&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>What&rsquo;s changed? Nothing, nada, zilch, zip. No changes whatsoever:</p>
+
+<p><img class="center" src="/images/changed.png"></p>
+
+<p>You can use hierarchy viewer tool to verify that the list item height was not set correctly.</p>
+
+<p><img class="center" src="/images/hierarchy.png"></p>
+
+<p>There&rsquo;s obviously nothing wrong with the layout xml, so let&rsquo;s take a look at the code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm"> * Copyright (C) 2008 The Android Open Source Project</span>
+</span><span class='line'><span class="cm"> *</span>
+</span><span class='line'><span class="cm"> * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+</span><span class='line'><span class="cm"> * you may not use this file except in compliance with the License.</span>
+</span><span class='line'><span class="cm"> * You may obtain a copy of the License at</span>
+</span><span class='line'><span class="cm"> *</span>
+</span><span class='line'><span class="cm"> *      http://www.apache.org/licenses/LICENSE-2.0</span>
+</span><span class='line'><span class="cm"> *</span>
+</span><span class='line'><span class="cm"> * Unless required by applicable law or agreed to in writing, software</span>
+</span><span class='line'><span class="cm"> * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+</span><span class='line'><span class="cm"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+</span><span class='line'><span class="cm"> * See the License for the specific language governing permissions and</span>
+</span><span class='line'><span class="cm"> * limitations under the License.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">apis</span><span class="o">.</span><span class="na">view</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.app.ListActivity</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.content.Context</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.os.Bundle</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.view.LayoutInflater</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.view.View</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.view.ViewGroup</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.BaseAdapter</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.TextView</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.ImageView</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.graphics.BitmapFactory</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.graphics.Bitmap</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.example.android.apis.R</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Demonstrates how to write an efficient list adapter. The adapter used in this example binds</span>
+</span><span class='line'><span class="cm"> * to an ImageView and to a TextView for each row in the list.</span>
+</span><span class='line'><span class="cm"> *</span>
+</span><span class='line'><span class="cm"> * To work efficiently the adapter implemented here uses two techniques:</span>
+</span><span class='line'><span class="cm"> * - It reuses the convertView passed to getView() to avoid inflating View when it is not necessary</span>
+</span><span class='line'><span class="cm"> * - It uses the ViewHolder pattern to avoid calling findViewById() when it is not necessary</span>
+</span><span class='line'><span class="cm"> *</span>
+</span><span class='line'><span class="cm"> * The ViewHolder pattern consists in storing a data structure in the tag of the view returned by</span>
+</span><span class='line'><span class="cm"> * getView(). This data structures contains references to the views we want to bind data to, thus</span>
+</span><span class='line'><span class="cm"> * avoiding calls to findViewById() every time getView() is invoked.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">List14</span> <span class="kd">extends</span> <span class="n">ListActivity</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">EfficientAdapter</span> <span class="kd">extends</span> <span class="n">BaseAdapter</span> <span class="o">{</span>
+</span><span class='line'>        <span class="kd">private</span> <span class="n">LayoutInflater</span> <span class="n">mInflater</span><span class="o">;</span>
+</span><span class='line'>        <span class="kd">private</span> <span class="n">Bitmap</span> <span class="n">mIcon1</span><span class="o">;</span>
+</span><span class='line'>        <span class="kd">private</span> <span class="n">Bitmap</span> <span class="n">mIcon2</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kd">public</span> <span class="nf">EfficientAdapter</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="c1">// Cache the LayoutInflate to avoid asking for a new one each time.</span>
+</span><span class='line'>            <span class="n">mInflater</span> <span class="o">=</span> <span class="n">LayoutInflater</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="c1">// Icons bound to the rows.</span>
+</span><span class='line'>            <span class="n">mIcon1</span> <span class="o">=</span> <span class="n">BitmapFactory</span><span class="o">.</span><span class="na">decodeResource</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getResources</span><span class="o">(),</span> <span class="n">R</span><span class="o">.</span><span class="na">drawable</span><span class="o">.</span><span class="na">icon48x48_1</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">mIcon2</span> <span class="o">=</span> <span class="n">BitmapFactory</span><span class="o">.</span><span class="na">decodeResource</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getResources</span><span class="o">(),</span> <span class="n">R</span><span class="o">.</span><span class="na">drawable</span><span class="o">.</span><span class="na">icon48x48_2</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="cm">/**</span>
+</span><span class='line'><span class="cm">         * The number of items in the list is determined by the number of speeches</span>
+</span><span class='line'><span class="cm">         * in our array.</span>
+</span><span class='line'><span class="cm">         *</span>
+</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getCount()</span>
+</span><span class='line'><span class="cm">         */</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getCount</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="n">DATA</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="cm">/**</span>
+</span><span class='line'><span class="cm">         * Since the data comes from an array, just returning the index is</span>
+</span><span class='line'><span class="cm">         * sufficent to get at the data. If we were using a more complex data</span>
+</span><span class='line'><span class="cm">         * structure, we would return whatever object represents one row in the</span>
+</span><span class='line'><span class="cm">         * list.</span>
+</span><span class='line'><span class="cm">         *</span>
+</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getItem(int)</span>
+</span><span class='line'><span class="cm">         */</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="n">Object</span> <span class="nf">getItem</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="n">position</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="cm">/**</span>
+</span><span class='line'><span class="cm">         * Use the array index as a unique id.</span>
+</span><span class='line'><span class="cm">         *</span>
+</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getItemId(int)</span>
+</span><span class='line'><span class="cm">         */</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getItemId</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="n">position</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="cm">/**</span>
+</span><span class='line'><span class="cm">         * Make a view to hold each row.</span>
+</span><span class='line'><span class="cm">         *</span>
+</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getView(int, android.view.View,</span>
+</span><span class='line'><span class="cm">         *      android.view.ViewGroup)</span>
+</span><span class='line'><span class="cm">         */</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="n">View</span> <span class="nf">getView</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="n">View</span> <span class="n">convertView</span><span class="o">,</span> <span class="n">ViewGroup</span> <span class="n">parent</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="c1">// A ViewHolder keeps references to children views to avoid unneccessary calls</span>
+</span><span class='line'>            <span class="c1">// to findViewById() on each row.</span>
+</span><span class='line'>            <span class="n">ViewHolder</span> <span class="n">holder</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="c1">// When convertView is not null, we can reuse it directly, there is no need</span>
+</span><span class='line'>            <span class="c1">// to reinflate it. We only inflate a new View when the convertView supplied</span>
+</span><span class='line'>            <span class="c1">// by ListView is null.</span>
+</span><span class='line'>            <span class="k">if</span> <span class="o">(</span><span class="n">convertView</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">convertView</span> <span class="o">=</span> <span class="n">mInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">list_item_icon_text</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>                <span class="c1">// Creates a ViewHolder and store references to the two children views</span>
+</span><span class='line'>                <span class="c1">// we want to bind data to.</span>
+</span><span class='line'>                <span class="n">holder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ViewHolder</span><span class="o">();</span>
+</span><span class='line'>                <span class="n">holder</span><span class="o">.</span><span class="na">text</span> <span class="o">=</span> <span class="o">(</span><span class="n">TextView</span><span class="o">)</span> <span class="n">convertView</span><span class="o">.</span><span class="na">findViewById</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">id</span><span class="o">.</span><span class="na">text</span><span class="o">);</span>
+</span><span class='line'>                <span class="n">holder</span><span class="o">.</span><span class="na">icon</span> <span class="o">=</span> <span class="o">(</span><span class="n">ImageView</span><span class="o">)</span> <span class="n">convertView</span><span class="o">.</span><span class="na">findViewById</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">id</span><span class="o">.</span><span class="na">icon</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>                <span class="n">convertView</span><span class="o">.</span><span class="na">setTag</span><span class="o">(</span><span class="n">holder</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>                <span class="c1">// Get the ViewHolder back to get fast access to the TextView</span>
+</span><span class='line'>                <span class="c1">// and the ImageView.</span>
+</span><span class='line'>                <span class="n">holder</span> <span class="o">=</span> <span class="o">(</span><span class="n">ViewHolder</span><span class="o">)</span> <span class="n">convertView</span><span class="o">.</span><span class="na">getTag</span><span class="o">();</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="c1">// Bind the data efficiently with the holder.</span>
+</span><span class='line'>            <span class="n">holder</span><span class="o">.</span><span class="na">text</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">DATA</span><span class="o">[</span><span class="n">position</span><span class="o">]);</span>
+</span><span class='line'>            <span class="n">holder</span><span class="o">.</span><span class="na">icon</span><span class="o">.</span><span class="na">setImageBitmap</span><span class="o">((</span><span class="n">position</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">?</span> <span class="n">mIcon1</span> <span class="o">:</span> <span class="n">mIcon2</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="k">return</span> <span class="n">convertView</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kd">static</span> <span class="kd">class</span> <span class="nc">ViewHolder</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">TextView</span> <span class="n">text</span><span class="o">;</span>
+</span><span class='line'>            <span class="n">ImageView</span> <span class="n">icon</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">setListAdapter</span><span class="o">(</span><span class="k">new</span> <span class="n">EfficientAdapter</span><span class="o">(</span><span class="k">this</span><span class="o">));</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span><span class="o">[]</span> <span class="n">DATA</span> <span class="o">=</span> <span class="n">Cheeses</span><span class="o">.</span><span class="na">sCheeseStrings</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&rsquo;ve highlighted the problematic line. It turns out that you have to use another overload of LayoutInflater.inflate method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">convertView</span> <span class="o">=</span> <span class="n">mInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">list_item_icon_text</span><span class="o">,</span> <span class="n">parent</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We set the attachToRoot to false, because we just want to properly intialize LayoutParams for the LinearLayout of the item and let the ListView to add the inflated views wherever it needs. In fact, setting it to true causes exception to be thrown from AdapterView:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">UnsupportedOperationException</span><span class="o">:</span> <span class="n">addView</span><span class="o">(</span><span class="n">View</span><span class="o">,</span> <span class="n">LayoutParams</span><span class="o">)</span> <span class="n">is</span> <span class="n">not</span> <span class="n">supported</span> <span class="n">in</span> <span class="n">AdapterView</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AdapterView</span><span class="o">.</span><span class="na">addView</span><span class="o">(</span><span class="n">AdapterView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">461</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">LayoutInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">LayoutInflater</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">416</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">LayoutInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">LayoutInflater</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">320</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">LayoutInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">LayoutInflater</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">276</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">fu</span><span class="o">.</span><span class="na">InflaterBugActivity</span><span class="n">$EfficientAdapter</span><span class="o">.</span><span class="na">getView</span><span class="o">(</span><span class="n">InflaterBugActivity</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">77</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="o">.</span><span class="na">obtainView</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1430</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">makeAndAddView</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1745</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">fillDown</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">670</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">fillFromTop</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">727</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">layoutChildren</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1598</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1260</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">FrameLayout</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">FrameLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">338</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">LinearLayout</span><span class="o">.</span><span class="na">setChildFrame</span><span class="o">(</span><span class="n">LinearLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1254</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">LinearLayout</span><span class="o">.</span><span class="na">layoutVertical</span><span class="o">(</span><span class="n">LinearLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1130</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">LinearLayout</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">LinearLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1047</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">FrameLayout</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">FrameLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">338</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">ViewRoot</span><span class="o">.</span><span class="na">performTraversals</span><span class="o">(</span><span class="n">ViewRoot</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1140</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">ViewRoot</span><span class="o">.</span><span class="na">handleMessage</span><span class="o">(</span><span class="n">ViewRoot</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1859</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Handler</span><span class="o">.</span><span class="na">dispatchMessage</span><span class="o">(</span><span class="n">Handler</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">99</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Looper</span><span class="o">.</span><span class="na">loop</span><span class="o">(</span><span class="n">Looper</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">123</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">ActivityThread</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">ActivityThread</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">3683</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">reflect</span><span class="o">.</span><span class="na">Method</span><span class="o">.</span><span class="na">invokeNative</span><span class="o">(</span><span class="n">Native</span> <span class="n">Method</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">reflect</span><span class="o">.</span><span class="na">Method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">Method</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">507</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">internal</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">ZygoteInit</span><span class="n">$MethodAndArgsCaller</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">ZygoteInit</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">839</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">internal</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">ZygoteInit</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">ZygoteInit</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">597</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">dalvik</span><span class="o">.</span><span class="na">system</span><span class="o">.</span><span class="na">NativeStart</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">Native</span> <span class="n">Method</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here&rsquo;s the application screenshot after the change:</p>
+
+<p><img class="center" src="/images/fixed.png"></p>
+
+<p>Ugly, but that&rsquo;s exactly what we should get after setting layout height to 150dip.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/">On CachePolicy, UriBuilder and Mobile .NET</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-19T11:00:00+01:00" pubdate data-updated="true">Feb 19<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In the Windows Phone 7 application I was working on there was a problem with some WebRequest caching. I&rsquo;m not sure if it should have been fixed on the client side or server side, but since it&rsquo;s just a matter of setting proper CachePolicy property of WebRequest I was going to add it to mobile application.</p>
+
+<p>Imagine my surprise when I found out that CachePolicy is not supported on Windows Phone 7. The obvious workaround is adding an URI param <code>no-cache=MS_FROM_EPOCH</code> or something like that.</p>
+
+<p>Now, if you&rsquo;d ask me what is the cardinal example of stuff that shouldn&rsquo;t be done using string concatenation, but is notoriously done that way, I&rsquo;d answer: URI building. It&rsquo;s highly structured string with <a href="http://tools.ietf.org/html/rfc3986">RFC</a>, so it stands to reason to create and use a dedicated builder and parsers API to make sure everything is well-formed.</p>
+
+<p>Let&rsquo;s take a look at UriBuilder class and URIs in general. All the stuff between ? and # (VERIFY) is called query string, which contains key-value pairs separated by &amp;s. What kind of API for query string would make sense? An IDictionary&lt;String, String>! What API is presented by UriBuilder? A string! Take a look at the <a href="http://msdn.microsoft.com/en-us/library/system.uribuilder.query.aspx">documentation</a>. Here&rsquo;s the best part:</p>
+
+<blockquote><p><b>NOTE</b> Do not append a string directly to this property. If the length of Query is greater than 1, retrieve the property value as a string, remove the leading question mark, append the new query string, and set the property with the combined string.</p></blockquote>
+
+
+<p>Ridiculous. Seriously, MS, I don&rsquo;t care it&rsquo;s transformed to a string, it&rsquo;s a key-value dictionary, so let me treat it as such!</p>
+
+<p>Fortunately C# has this nice feature called extension methods, meaning we can &ldquo;add&rdquo; a method to a class. There are no extension properties, but we can have a method like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">UriBuilder</span> <span class="nf">WithQueryParam</span><span class="p">(</span><span class="k">this</span> <span class="n">UriBuilder</span> <span class="n">uri</span><span class="p">,</span> <span class="n">String</span> <span class="n">key</span><span class="p">,</span> <span class="n">String</span> <span class="k">value</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But now we need to check for duplicate keys and for that we have to parse existing query string. Fortunately there is a method for this: <a href="http://msdn.microsoft.com/en-us/library/system.web.httputility.parsequerystring.aspx">HttpUtility.ParseQueryString</a>.</p>
+
+<p>Except it&rsquo;s not available on mobile .NET. Again. But why?</p>
+
+<p>The same thing irritate me when I worked on Blackberry apps and I had to put up with Java ME no String.format, no date handling methods, no generics and sane collections. But I understand that Java ME is supposed to work on wider range of devices, some of them with very limited CPU and RAM resources, so every cycle and every byte of memory matters.</p>
+
+<p>Now let&rsquo;s take a look at Windows Phone 7 <a href="http://en.wikipedia.org/wiki/Windows_Phone#System_requirements">hardware requirements for manufacturers</a>: 256MB of RAM and 800MHz CPU. I&rsquo;m not an .NET expert, but I&rsquo;d hazard a guess that supporting  full desktop .NET would not make any difference on those powerhouses. Hell, you should be able to send a man to the Moon using this hardware, so please, can I have a query string parser?</p>
+
+<p>Is it some kind of Windows Mobile 6 legacy, or just a very bad MS joke that non-MS people don&rsquo;t get?</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/8/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/6/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

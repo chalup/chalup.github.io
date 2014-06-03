@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Sync | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/sync/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android: Sync Adapter Lifecycle]]></title>
+    <link href="http://chalup.github.io/blog/2013/01/30/android-sync-adapter-lifecycle/"/>
+    <updated>2013-01-30T21:46:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/01/30/android-sync-adapter-lifecycle</id>
+    <content type="html"><![CDATA[<p>In <a href="/blog/2012/09/26/android-sticky-broadcast-perils">Android sticky broadcast perils</a> I hinted that the <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>ContentResolver.isSyncActive()</code></a> might not yield the results you&rsquo;d expect. I described this issue in <a href="/blog/2012/12/18/krakdroid-aftermath">the talk I gave during the KrakDroid 2012 conference</a>, but the chances are you weren&rsquo;t there, so I decided to write a blog post about it.</p>
+
+<p><a href="http://developer.android.com/reference/android/content/ContentResolver.html"><code>ContentResolver</code></a> contains bunch of static methods with &ldquo;sync&rdquo; in their name: there is <a href="http://developer.android.com/reference/android/content/ContentResolver.html#requestSync%28android.accounts.Account,%20java.lang.String,%20android.os.Bundle%29"><code>requestSync</code></a> to start sync process, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> for polling the sync state, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#addStatusChangeListener%28int,%20android.content.SyncStatusObserver%29"><code>addStatusChangeListener</code></a> for listening for sync status and finally <a href="http://developer.android.com/reference/android/content/ContentResolver.html#cancelSync%28android.accounts.Account,%20java.lang.String%29"><code>cancelSync</code></a> for stopping the ongoing synchronization process. The list looks fine, in a sense that theoretically it&rsquo;s enough to implement the most sync-related functionality on the UI side. Let&rsquo;s see what is the relation between sync status reported by ContentResolver&rsquo;s sync methods and <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method in your <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html"><code>SyncAdapter</code></a>.</p>
+
+<p>After calling <a href="http://developer.android.com/reference/android/content/ContentResolver.html#requestSync%28android.accounts.Account,%20java.lang.String,%20android.os.Bundle%29"><code>requestSync</code></a>, the sync for a given account and authority is added to the pending list, meaning that the sync will be executed as soon as possible (for example when syncs for other authorities are finished). In this state the <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> returns true, the <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> registered with <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_PENDING"><code>SYNC_OBSERVER_TYPE_PENDING</code></a> mask will be triggered, and so on. This happens <strong>before</strong> your <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> code is executed. Nothing especially surprising yet. The key point here is, you should take into consideration that your sync request might spend a lot of time in this state, especially if many other SyncAdapters are registered in the system. For example, it&rsquo;s a good idea to indicate this state somehow in the UI, otherwise your app might seem unresponsive.</p>
+
+<p><img class="center" src="/images/sync.png"></p>
+
+<p>When there are no other pending or active sync requests, your sync operation will move to active state. The <code>onPerformSync</code> will start executing in the background thread, <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> will trigger for both <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_ACTIVE"><code>SYNC_OBSERVER_TYPE_ACTIVE</code></a> (because the sync request enters this state) and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_PENDING"><code>SYNC_OBSERVER_TYPE_PENDING</code></a> (because the sync request leaves this state) masks, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> will return false, and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return true. In the happy case, when the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method will finish normally, the <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> for <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_ACTIVE"><code>SYNC_OBSERVER_TYPE_ACTIVE</code></a> state will trigger again, and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return false again. Booring.</p>
+
+<p>The things get funny when the cancelSync is called during <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> execution. The sync thread will be interrupted and the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> method in <code>SyncAdapter</code> will be called. The <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> will trigger, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return false and so on, and&hellip; at some point the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method will finish execution.</p>
+
+<p>Say what? Wasn&rsquo;t the sync thread interrupted? It was, but not in a &ldquo;Bang, you&rsquo;re dead&rdquo; way, but in a <a href="http://www.drdobbs.com/parallel/interrupt-politely/207100682">&ldquo;polite&rdquo; way as described by Herb Sutter</a>. All the stuff described in the <a href="http://developer.android.com/reference/java/lang/Thread.html#interrupt%28%29"><code>Thread.interrupt</code></a> happened, but in 99% of cases it means that the thread continues to execute as usual, except the <a href="http://developer.android.com/reference/java/lang/Thread.html#isInterrupted%28%29"><code>interrupted</code></a> flag is now set. To really support cancelling the sync thread you&rsquo;d have to define an interruption points at which you&rsquo;ll check this flag and return early from <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a>.</p>
+
+<p><a href="http://twimgs.com/ddj/images/article/2008/0804/080401hs01_f1.gif"><img class="center" src="http://twimgs.com/ddj/images/article/2008/0804/080401hs01_f1.gif"></a>
+Things get even funnier here: when I used the <a href="http://developer.android.com/reference/java/lang/Thread.html#isInterrupted%28%29"><code>isInterrupted</code></a> method for polling the state of the sync thread, I got the bad case of heisenbug. In 9 cases out of 10 everything worked as expected, but every now and then the thread continued to execute even though earlier the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> was called. I guess somewhere else the <code>InterruptedException</code> was caught and never rethrown or someone else was polling the sync thread with <a href="http://developer.android.com/reference/java/lang/Thread.html#interrupted%28%29"><code>interrupted</code></a> and cleared the flag. To pinpoint the root cause of this behavior I&rsquo;d have to read through a lot of code, so instead I implemented my own flag and set it in <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> callback. Works like a charm.</p>
+
+<p>Why is this an issue though? Can&rsquo;t we just let <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> to finish in some undefined future? In most cases that&rsquo;s exactly the right way to think about this issue, but if the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> holds a lock on some resource like database handle, you might need to ensure that this lock is released as soon as possible after user cancels the sync.</p>
+
+<p><strong>Recap</strong>: show the sync pending state in the UI and if you really have to know when the sync has ended, do not trust the <code>ContentResolver</code> sync methods.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[KrakDroid Aftermath]]></title>
+    <link href="http://chalup.github.io/blog/2012/12/18/krakdroid-aftermath/"/>
+    <updated>2012-12-18T09:03:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/12/18/krakdroid-aftermath</id>
+    <content type="html"><![CDATA[<p>I finally got some sleep after a really busy weekend. For the first time I had an opportunity to give a talk at the programming related conference. I was also responsible for a programming contest organized by the company I work at, I tried to push the new release of our product and, on top of that, I had to do some Christmas related stuff, so I didn&rsquo;t get much sleep.</p>
+
+<p>Let&rsquo;s get back to the programming. I gave the talk about standard synchronization pattern on Android (<code>SyncAdapter</code> + <code>Authenticator</code> + <code>ContentProvider</code>) during this year&rsquo;s edition of KrakDroid conference. Here are the slides:</p>
+
+<iframe allowfullscreen="" frameborder="0" height="356" marginheight="0" marginwidth="0" mozallowfullscreen="" scrolling="no" src="http://www.slideshare.net/slideshow/embed_code/15668008" style="border-width: 1px 1px 0; border: 1px solid #CCC; margin-bottom: 5px;" webkitallowfullscreen="" width="427"> </iframe>
+
+
+<p>
+<strong> <a href="http://www.slideshare.net/chalup/sync-on-android">Sync on Android</a> </strong> from <strong><a href="http://www.slideshare.net/chalup">chalup</a></strong></p>
+
+<p>The link to recorded video can be found in the slideshare content description. I won&rsquo;t bother posting it here, because a) I gave the talk in Polish, and I try to keep the content of this blog in English b) I was really tired, at one point of the talk I had to stop and ask myself &ldquo;What the hell am I trying to say&rdquo;.</p>
+
+<p>Although my talk was average and there are many things I might have done better, I&rsquo;m very happy I had an opportunity to give this talk. Public speaking is definitely outside of my comfort zone and I learned a lot. Here&rsquo;s the &ldquo;conference speaker checklist&rdquo; for my future self:</p>
+
+<ol>
+<li>Get some sleep</li>
+<li><p>Do the test run of the talk in front of the mirror</p>
+
+<p> I finished the slides for my presentation half an hour before giving it, so I didn&rsquo;t have a chance to rehearse it. There were few points during my talk when adding a slide with a summary would make things much clearer. Which brings me to the next point:</p></li>
+<li><p>Recap</p>
+
+<p> I&rsquo;m not sure how much the listeners who didn&rsquo;t knew anything about sync will remember from my talk. The recaps could help them remember at least some keywords they would be able to google later.</p></li>
+<li><p>Do the test run of the talk in front of other people</p>
+
+<p> But not any other people &ndash; you want your audience to be critical and at least a bit familiar with the topic. You want someone who will tell you that this part of the talk is boring or that part is not clear.</p></li>
+<li><p>Get more sleep</p></li>
+</ol>
+
+
+<p>And finally, do not freak out &ndash; the hardest part is saying &ldquo;Hello, my name is&hellip;&rdquo;, the rest will pour out of you.</p>
+]]></content>
+  </entry>
+  
+</feed>

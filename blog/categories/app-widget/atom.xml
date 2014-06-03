@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: App Widget | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/app-widget/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android App Widgets Issues]]></title>
+    <link href="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues/"/>
+    <updated>2014-05-10T15:42:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues</id>
+    <content type="html"><![CDATA[<p>This week I spend few days analyzing and fixing various issues of app widget in Base CRM application.</p>
+
+<p>This part of our codebase was created over a year ago during one of our internal hackathons and was released soon after that. Most of the times it worked. Every once in a while we received a weird crash report from Google Analytics, but it never caused much trouble. Recently though we received few complaints from customers. I happened to have few hours available for bug hunting, so I took a dive.</p>
+
+<p>The widget is really a simple todo list backed by <code>ContentProvider</code>. The code looks like it was based on the WeatherWidget from SDK samples. What can possibly go wrong?</p>
+
+<h2>Issue #1: gazillions of threads started</h2>
+
+<p>Take a look at the code of WeatherWidgetProvider:
+<code>java
+public WeatherWidgetProvider() {
+  // Start the worker thread
+  sWorkerThread = new HandlerThread("WeatherWidgetProvider-worker");
+  sWorkerThread.start();
+  sWorkerQueue = new Handler(sWorkerThread.getLooper());
+}
+</code></p>
+
+<p>The WeatherWidgetProvider is an <code>AppWidgetProvider</code> implementation, which extends a regular <code>BroadcastReceiver</code>. It means that for every action a new instance of WeatherWidgetProvider is created, and the current implementation spawns new thread which is never closed.</p>
+
+<p>The sample author obviously intended to create only one worker thread &ndash; the sWorkerThread is the static &ndash; but forgot to do the null check before creating a new thread. So let&rsquo;s fix it:
+``` java
+public WeatherWidgetProvider() {
+  if (sWorkerThread == null) {</p>
+
+<pre><code>// Start the worker thread
+sWorkerThread = new HandlerThread("WeatherWidgetProvider-worker");
+sWorkerThread.start();
+sWorkerQueue = new Handler(sWorkerThread.getLooper());
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<h2>Issue #2: no refresh after application update</h2>
+
+<p>The widget shows data from the same <code>ContentProvider</code> as the main app, so when the user creates a task inside in the main app and then goes back to homescreen, the task should be displayed on the widget. To achieve this we did the same thing the WeatherWidget sample does &ndash; we register the <code>ContentObserver</code> in <code>onEnabled</code> callback of <code>AppWidgetProvider</code>:</p>
+
+<p>``` java
+@Override
+public void onEnabled(Context context) {
+  final ContentResolver r = context.getContentResolver();
+  if (sDataObserver == null) {</p>
+
+<pre><code>final AppWidgetManager mgr = AppWidgetManager.getInstance(context);
+final ComponentName cn = new ComponentName(context, WeatherWidgetProvider.class);
+sDataObserver = new WeatherDataProviderObserver(mgr, cn, sWorkerQueue);
+r.registerContentObserver(WeatherDataProvider.CONTENT_URI, true, sDataObserver);
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The <code>onEnabled</code> callback is called when the first instance of the widget is added to homescreen, so the code looks fine. Unfortunately the callback is not called at your process startup. So if your app is updated and the process is restarted, the <code>ContentObserver</code> won&rsquo;t be registered. The same thing happens if your app crashes or is stopped by the OS to free resources.</p>
+
+<p>To solve this you have to register the <code>ContentObserver</code> in few more places. I have added registration to <code>onCreate</code> callback in <code>RemoteViewsFactory</code> and the <code>onReceive</code> part which handles our custom actions in <code>AppWidgetProvider</code>.</p>
+
+<p>WeatherWidget sample does one more thing wrong: the <code>ContentObserver</code> is never unregistered and the worker thread is never stopped. The correct place to do this is <code>onDisabled</code> callback in <code>AppWidgetProvider</code>.</p>
+
+<h2>Issue #3: <code>CursorOutOfBoundsException</code> crash</h2>
+
+<p>Ever since we introduced the tasks widget, we&rsquo;ve occasionally received the crash reports indicating that the RemoteViewsFactory requested elements outside of <code>[0, getCount)</code> range:</p>
+
+<p>```
+05-10 15:22:50.559  13781-13795/org.chalup.widgetfail.widget E/AndroidRuntime﹕ FATAL EXCEPTION: Binder_2</p>
+
+<pre><code>Process: org.chalup.widgetfail.widget, PID: 13781
+android.database.CursorIndexOutOfBoundsException: Index 1 requested, with a size of 1
+</code></pre>
+
+<p>```</p>
+
+<p>The reproduction steps for this issue are quite complicated:</p>
+
+<ul>
+<li>Tap the task on the widget to mark it was completed. Internally we set the <code>PENDING_DONE</code> flag, so the task is marked as done, but is still displayed on the list, so the user can tap it again and reset the flag.</li>
+<li>Trigger the sync</li>
+<li><code>SyncAdapter</code> syncs the Task to our backend. The task is marked as <code>DONE</code> in our database, which triggers the <code>ContentObserver</code> registered by the widget.</li>
+<li><code>ContentObserver</code> triggers <code>onDataSetChanged</code> callback in <code>RemoteViewsFactory</code>, which then calls <code>getCount</code> and <code>getViewAt</code></li>
+<li>In some rare cases <code>getViewAt</code> with position == result of <code>getCount</code> is called</li>
+</ul>
+
+
+<p>It looks like some kind of a race condition or another threading issue in Android code which populates the app widgets. I tried synchronizing the <code>RemoteViewsFactory</code> methods, but it didn&rsquo;t help. The <code>getViewAt</code> have to return a valid <code>RemoteViews</code>, so I fixed it up by returning the loading view when element outside of valid range is requested:</p>
+
+<p>``` java
+@Override
+public synchronized RemoteViews getViewAt(int position) {
+  if (position >= mCursor.getCount()) {</p>
+
+<pre><code>return getLoadingView();
+</code></pre>
+
+<p>  } else {</p>
+
+<pre><code>mCursor.moveToPosition(position);
+
+// ...
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<h2>Issue #4: no refresh when &ldquo;Don&rsquo;t keep activities&rdquo; setting is enabled</h2>
+
+<p>User can click on the tasks displayed on the widget to go to the edit screen. The activity is closed when user saves or discards changes and the homescreen with the widget is shown again. Changing the task triggers the <code>ContentObserver</code>, the <code>onDataSetChanged</code> is called on all active <code>RemoteViewsFactories</code>, but sometimes other callbacks (<code>getCount</code>, <code>getViewAt</code>, etc.) are not called.</p>
+
+<p>It turns out this happens when the Homescreen activity is recreated because of low memory condition. To easily reproduce this issue you can check the &ldquo;Don&rsquo;t keep activities&rdquo; in developers settings.</p>
+
+<p>I do not have a solution or workaround for this issue unfortunately. I&rsquo;ll file a bug report and hope for the best.</p>
+
+<h2>Recap</h2>
+
+<p>There are mutliple issues with the WeatherWidget sample and some issues with the system services responsible for populating app widgets with content. I&rsquo;ve created a simple project which reproduces the issues #3 and #4 and shows the correct way of registering <code>ContentObserver</code> for your widget. The sources are <a href="https://github.com/chalup/android-widget-fail">available on Github</a>.</p>
+]]></content>
+  </entry>
+  
+</feed>

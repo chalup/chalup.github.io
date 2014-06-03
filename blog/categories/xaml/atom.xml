@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Xaml | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/xaml/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[The Quest for Paramerized Converter for Windows Phone 7]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/16/quest-for-paramerized-converter-for/"/>
+    <updated>2012-02-16T13:16:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/16/quest-for-paramerized-converter-for</id>
+    <content type="html"><![CDATA[<p><strong>Warning:</strong> this is going to be a long post, because I want to provide full background for the issues I found. Also, none of the code posted here works in 100% of cases.</p>
+
+<p>Recently I was involved in refactoring a program written by interns, which included an over engineered and messed up solution for application settings. I had plenty of time and, despite of the messed up implementation, the original idea might be useful for any form filled by user, so instead of scraping the whole thing I decided to clean it up.</p>
+
+<p>Every type of setting is represented by different class derived from common base. The model of settings consist of a collection of base class objects. That collection is bound to ItemsSource property of ListBox and instead of single data template I use template selector, which creates different UI controls for different setting type.</p>
+
+<p>There is a BooleanSetting, which is represented by a single ToggleSwitch from <a href="http://silverlight.codeplex.com/">Silverlight from Windows Phone Toolkit</a>. There is a ClosedListSetting, represented by ListPicker, which is used for a setting where user can choose one of many options from a predefined list (hence the name). Finally there is a OpenListSetting, which is just like a ClosedListSetting, except there is the &ldquo;Other&rdquo; option which allows user to enter any value. On web forms such field is usually represented as a radio button group with an input box beside the &ldquo;Other&rdquo; option.</p>
+
+<p>For UI consistency I wanted to represent the OpenListSetting using ListPicker, and when the user would select the &ldquo;Other&rdquo; option, additional entry field will appear. It seemed really easy, I thought I&rsquo;ll just bind the visibility of the custom entry field to ListPicker&rsquo;s SelectedIndex property with a value converter.</p>
+
+<p>The first complication is that the position of custom option might be different for a different settings &ndash; usually it&rsquo;s the last one, so it depends on the number of predefined options; for maximum flexibility it should be possible to have many custom options in one OpenListSetting. The obvious solution is to bind some value to converter&rsquo;s parameter property.</p>
+
+<p>Quick search on Google reveals the major flaw in that plan, to wit, you cannot use the binding for converter parameter. There is a Multibinding, which sounds like a likely solution (after all I want to bind visibility to two properties and an operation between those properties), but apparently it&rsquo;s not available in Silverlight for Windows Phone 7. Yay, it&rsquo;s Java ME crap all over again!</p>
+
+<p>The suggested workaround is creating a converter as a non-visual FrameworkElement, with parameter as a dependency property, which can be used in binding. I created a base class:</p>
+
+<p>``` c#
+public abstract class ConverterWithBindingParameter&lt;T, TConverter> : FrameworkElement, IValueConverter
+{</p>
+
+<pre><code>public static readonly DependencyProperty ParameterProperty = DependencyProperty.Register(
+    "BindingParameter",
+    typeof(T),
+    typeof(TConverter),
+    null);
+
+public T BindingParameter
+{
+    get { return (T)GetValue(ParameterProperty); }
+    set { SetValue(ParameterProperty, value); }
+}
+
+abstract public object Convert(object value, Type targetType, object parameter, CultureInfo culture);
+abstract public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>And then derived the concrete converter for a problem at hand:</p>
+
+<p>``` c#
+public class EqualToVisibilityConverter : ConverterWithBindingParameter&lt;int, EqualToVisibilityConverter>
+{</p>
+
+<pre><code>override public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    return (value.Equals(BindingParameter)) ? Visibility.Visible : Visibility.Collapsed;
+}
+
+override public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    throw new NotImplementedException();
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Edit XAML, rebuild, run, kaboom:</p>
+
+<p>``` c#
+System.ArgumentException was unhandled</p>
+
+<pre><code>StackTrace:
+at System.Reflection.RuntimeMethodInfo.InternalInvoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture, StackCrawlMark&amp; stackMark)
+at System.Reflection.RuntimePropertyInfo.InternalSetValue(PropertyInfo thisProperty, Object obj, Object value, Object[] index, StackCrawlMark&amp; stackMark)
+at System.Reflection.RuntimePropertyInfo.SetValue(Object obj, Object value, Object[] index)
+at MS.Internal.XamlMemberInfo.SetValue(Object target, Object value)
+at MS.Internal.XamlManagedRuntimeRPInvokes.SetValue(XamlTypeToken inType, XamlQualifiedObject&amp; inObj, XamlPropertyToken inProperty, XamlQualifiedObject&amp; inValue)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.Measure_WithDesiredSizeNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.UIElement_Measure_WithDesiredSize(UIElement element, Size availableSize)
+at System.Windows.UIElement.Measure_WithDesiredSize(Size availableSize)
+at System.Windows.Controls.VirtualizingStackPanel.MeasureChild(UIElement child, Size layoutSlotSize)
+at System.Windows.Controls.VirtualizingStackPanel.MeasureOverride(Size constraint)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.Controls.ScrollContentPresenter.MeasureOverride(Size constraint)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureNative(IntPtr element, Single inWidth, Single inHeight)
+at MS.Internal.XcpImports.UIElement_Measure(UIElement element, Size availableSize)
+at System.Windows.UIElement.Measure(Size availableSize)
+at System.Windows.Controls.ScrollViewer.MeasureOverride(Size constraint)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+</code></pre>
+
+<p>```</p>
+
+<p>On a hunch I created non-generic version of my converter and it seemed to work. Oh, so I can&rsquo;t use generic base for UI controls? Nice job MS.</p>
+
+<p>``` c#
+public class EqualToVisibilityConverter : FrameworkElement, IValueConverter
+{</p>
+
+<pre><code>public static readonly DependencyProperty ParameterProperty = DependencyProperty.RegisterAttached(
+    "BindingParameter",
+    typeof(int),
+    typeof(EqualToVisibilityConverter),
+    new PropertyMetadata(0));
+
+private static void OnBindingParameterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+{
+}
+
+public int BindingParameter
+{
+    get { return (int)GetValue(ParameterProperty); }
+    set { SetValue(ParameterProperty, value); }
+}
+
+public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    int bp = BindingParameter;
+    return (value.Equals(BindingParameter)) ? Visibility.Visible : Visibility.Collapsed;
+}
+
+public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    throw new NotImplementedException();
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Note that I wrote &ldquo;seemed to work&rdquo;. It means only that the code didn&rsquo;t explode in my face, but it didn&rsquo;t work quite as I expected. Here&rsquo;s the quick breakdown: when the visibility converter is called for the first time, the bound parameter is null. Then the dependency value is changed (at least the callback is called; curiously, the setter is not) and the bound parameter is initialized with a proper value, but there is no way to invalidate the conversion result.</p>
+
+<p>That gave me another idea: why use IValueConverter interface at all? Let&rsquo;s create an UI element with 2 dependency properties for arguments and one property for result of binary operation:</p>
+
+<p>``` c#
+public class EqualToVisibilityConverter : FrameworkElement, INotifyPropertyChanged
+{</p>
+
+<pre><code>public static readonly DependencyProperty LeftArgumentProperty = DependencyProperty.Register(
+    "LeftArgument",
+    typeof(int),
+    typeof(EqualToVisibilityConverter),
+    new PropertyMetadata(OnArgumentChanged)
+    );
+
+public static readonly DependencyProperty RightArgumentProperty = DependencyProperty.Register(
+    "RightArgument",
+    typeof(Visibility),
+    typeof(EqualToVisibilityConverter),
+    new PropertyMetadata(OnArgumentChanged)
+    );
+
+private static void OnArgumentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+{
+    EqualToVisibilityConverter converter = d as EqualToVisibilityConverter;
+    converter.Result = (converter.LeftArgument == converter.RightArgument) ? Visibility.Visible : Visibility.Collapsed;
+}
+
+public int LeftArgument
+{
+    get { return (int)GetValue(LeftArgumentProperty); }
+    set { SetValue(LeftArgumentProperty, value); }
+}
+
+public int RightArgument
+{
+    get { return (int)GetValue(RightArgumentProperty); }
+    set { SetValue(RightArgumentProperty, value); }
+}
+
+private Visibility _result;
+public Visibility Result
+{
+    get { return _result; }
+    set
+    {
+        if (value != _result)
+        {
+            _result = value;
+            OnPropertyChanged("Result");
+        }
+    }
+}
+
+public event PropertyChangedEventHandler PropertyChanged;
+protected void OnPropertyChanged(string propertyName)
+{
+    if (null != PropertyChanged)
+    {
+        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Now the callbacks of dependency properties can trigger the result recalculation and everything will be fine and dandy. Edit XAML, rebuild, run, KABOOM! This time application blew up, but I didn&rsquo;t even get a call stack, it just closed without any message.</p>
+
+<p>This. Is. Fucking. Ridiculous.</p>
+
+<p>At this moment I decided I already lost enough time on this crap, so I just said &ldquo;screw it&rdquo; and added additional property to OpenListSetting class.</p>
+
+<p>This is when I finally got why the MVVM pattern got so much traction with XAML developers. I always assumed that it&rsquo;s supposed to be used for big model adaptations, and all minor stuff should be done in binding converters. However it seems that you have to use ViewModel for anything remotely useful. Don&rsquo;t get me wrong: I agree that preventing pollution of Model by stuff needed by View is a Good Thing TM, but I think a separation of View into View and ViewModel is necessary only because of limitations of XAML.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[X:name Binding Crash on Windows Phone 7.1]]></title>
+    <link href="http://chalup.github.io/blog/2012/01/27/xname-binding-crash-on-windows-phone-71/"/>
+    <updated>2012-01-27T11:29:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/01/27/xname-binding-crash-on-windows-phone-71</id>
+    <content type="html"><![CDATA[<p>Recently I&rsquo;ve started working on the new version of Windows Phone application originally written by interns in my company. One of the first tasks was to migrate from WP 7.0 to 7.1, a.k.a. &ldquo;Windows Phone 7.5&rdquo; (because 7.5 sounds sooooo much better than 7.1), a.k.a. &ldquo;Windows Phone Mango&rdquo;. The transition was generally smooth and it seems we&rsquo;ll be able to clean up some 7.0 specific workarounds, but there was one crash that was quite tricky to track down:</p>
+
+<p>``` c#
+Null Reference Exception:</p>
+
+<pre><code>at MS.Internal.XcpImports.CheckHResult(UInt32 hr)
+at MS.Internal.XcpImports.UIElement_Measure_WithDesiredSize(UIElement element, Size availableSize)
+at System.Windows.UIElement.Measure_WithDesiredSize(Size availableSize)
+at System.Windows.Controls.VirtualizingStackPanel.MeasureChild(UIElement child, Size layoutSlotSize)
+at System.Windows.Controls.VirtualizingStackPanel.MeasureOverride(Size constraint)
+...
+</code></pre>
+
+<p>```</p>
+
+<p>Our code wasn&rsquo;t even in a call stack! It turns out that the following code worked on 7.0, but crashed on newer version:</p>
+
+<p>``` xml
+&lt;validationcontrol:validationcontrol</p>
+
+<pre><code>grid.row="1"
+inputscope="Number"
+lostfocus="OnCustomValueChanged"
+text="{Binding Custom}"
+width="420"
+x:name="{Binding Key}"/&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>I&rsquo;m not sure if using binding for a control name and relying on that information in code behind is a good idea, but I&rsquo;m damn sure it shouldn&rsquo;t crash. And even if it crashes, it should provide some useful information instead of throwing NRE from seemingly random place.</p>
+
+<p>What&rsquo;s the fix for it? Use x:Tag instead of x:Name.</p>
+]]></content>
+  </entry>
+  
+</feed>

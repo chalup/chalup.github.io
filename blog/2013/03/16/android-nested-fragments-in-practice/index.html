@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Android Nested Fragments in Practice - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="Last November I wrote about the new feature in rev11 of Android support package &ndash; Fragments nesting. Recently I had an opportunity to use this &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Android Nested Fragments in Practice</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-16T22:03:00+01:00" pubdate data-updated="true">Mar 16<span>th</span>, 2013</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Last November I wrote about the new feature in rev11 of Android support package &ndash; <a href="/blog/2012/11/13/android-gets-nested-fragments">Fragments nesting</a>. Recently I had an opportunity to use this feature in practice and I&rsquo;d like to share my experience with it.</p>
+
+<p>The basics are simple: each <a href="http://developer.android.com/reference/android/support/v4/app/FragmentActivity.html"><code>FragmentActivity</code></a> and each <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html"><code>Fragment</code></a> has it&rsquo;s own <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html"><code>FragmentManager</code></a>. Inside the Fragment you may call <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getFragmentManager%28%29"><code>getFragmentManager()</code></a> to get the <code>FragmentManager</code> this <code>Fragment</code> was added to, or <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getChildFragmentManager%28%29"><code>getChildFragmentManager()</code></a> to get the <code>FragmentManager</code> which can be used to nest <code>Fragments</code> inside this <code>Fragment</code>. This basic flow works fine, but I have found two issues.</p>
+
+<p>If you have a <code>Fragment</code> with nested <code>Fragments</code> and you save its state with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#saveFragmentInstanceState%28android.support.v4.app.Fragment%29"><code>saveFragmentInstanceState()</code></a> and try to use it in <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#setInitialSavedState%28android.support.v4.app.Fragment.SavedState%29"><code>setInitialSavedState()</code></a> on another instance of this <code>Fragment</code>, you&rsquo;ll get the <code>BadParcelableException</code> from <code>onCreate</code>. Fortunately it&rsquo;s an obvious bug which is easy to fix: you just need to set the correct <code>ClassLoader</code> for a <code>Bundle</code> containing this <code>Fragment</code>&rsquo;s state. There is a <a href="https://android-review.googlesource.com/#/c/40760/">patch for it in support library project Gerrit</a>, and if you need this fix ASAP you may use <a href="https://github.com/futuresimple/android-support-v4">this fork of support lib on Github</a>.</p>
+
+<p>The second issue is related with the <code>Fragments</code> backstack. Inside each <code>FragmentManager</code> you may build stack of <code>Fragments</code> with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentTransaction.html#addToBackStack%28java.lang.String%29"><code>FragmentTransaction.addToBackStack()</code></a> and later on use <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#popBackStack%28%29"><code>popBackStack()</code></a> to go back to the previous state. Pressing hardware back key is also supposed to pop the <code>Fragments</code> from the back stack, but it doesn&rsquo;t take into account any nested <code>Fragments</code>, only <code>Fragments</code> added to the <code>Activity</code>&rsquo;s <code>FragmentManager</code>. This is not so easy to fix, but you may use the following workaround:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">String</span> <span class="n">FAKE_BACKSTACK_ENTRY</span> <span class="o">=</span> <span class="s">&quot;fakeBackstackEntry&quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">getFragmentManager</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>    <span class="c1">// call replace/add</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">setTransition</span><span class="o">(</span><span class="n">FragmentTransaction</span><span class="o">.</span><span class="na">TRANSIT_FRAGMENT_OPEN</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">final</span> <span class="n">FragmentManager</span> <span class="n">rootFragmentManager</span> <span class="o">=</span> <span class="n">getActivity</span><span class="o">().</span><span class="na">getSupportFragmentManager</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">rootFragmentManager</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Fragment</span><span class="o">(),</span> <span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">addOnBackStackChangedListener</span><span class="o">(</span><span class="k">new</span> <span class="n">OnBackStackChangedListener</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onBackStackChanged</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">findFragmentByTag</span><span class="o">(</span><span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">getFragmentManager</span><span class="o">().</span><span class="na">popBackStack</span><span class="o">();</span>
+</span><span class='line'>      <span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">removeOnBackStackChangedListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Quick explanation: together with the actual backstack entry we want to add, we also add the fake backstack entry with empty <code>Fragment</code> to top level <code>FragmentManager</code> and set up <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.OnBackStackChangedListener.html"><code>OnBackStackChangedListener</code></a>. When user presses hardware back button, the fake backstack entry is popped, the backstack listener is triggered and our implementation pops the backstack inside our <code>Fragment</code>. The backstack listeners are not persisted throughout the orientation change, so we need to setup it again inside <code>onCreate()</code>.</p>
+
+<p>Note that there are two issues with this workaround: it allows adding only one backstack entry and this setup won&rsquo;t be automatically recreated from state saved by <code>saveFragmentInstanceState()</code> (fortunately it does work with orientation change). Both issues probably can be solved by some additional hacks, but writing workarounds for workarounds is not something I do unless I really have to, and in this case I neither issue affected me.</p>
+
+<p>Besides those bumps the nested <code>Fragments</code> are a real blessing which allows much more cleaner and reusable code.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-16T22:03:00+01:00" pubdate data-updated="true">Mar 16<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/fragments/'>Fragments</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/03/05/weekend-hack-viewing-markdown/" title="Previous Post:  Weekend hack: viewing markdown attachments in GMail on Android">&laquo;  Weekend hack: viewing markdown attachments in GMail on Android</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/03/23/android-ui-struggles-making-button-with/" title="Next Post: Android UI struggles: making a button with centered text and icon">Android UI struggles: making a button with centered text and icon &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/jerzy.chalupski?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

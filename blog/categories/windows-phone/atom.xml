@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Windows Phone | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/windows-phone/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[The Dark Side of LINQ: LINQ to SQL on Windows Phone]]></title>
+    <link href="http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/"/>
+    <updated>2012-04-10T08:23:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on</id>
+    <content type="html"><![CDATA[<p>In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn LINQ, you won&rsquo;t be able to work with Java collections (Guava makes them bearable, but barely) or Qt/STL containers without throwing in your mouth every now and then.</p>
+
+<p>Here&rsquo;s tl;dr for the non-enlightened: LINQ is a sane way to query and alter the data. Instead of this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>List&lt;int&gt; filtered = new List&lt;int&gt;();
+foreach (int i in unfiltered)
+    if (i % 2 == 0)
+        filtered.Add(i);
+filtered.Sort();
+foreach (int i in filtered)
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>You can just write this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>foreach (int i in unfiltered.Where(num =&gt; num % 2 == 0).OrderBy(n =&gt; n))
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This is a trivial example, but the more complicated code, the more benefit you get from using LINQ.</p>
+
+<p>I started using it for operations on collections and XML files and I immediately fell in love with it. Imagine my joy when I learned that Windows Phone 7.1 finally supports local relational database which can be queried through LINQ to SQL!</p>
+
+<p>I&rsquo;ve read the <a href="http://msdn.microsoft.com/en-us/library/hh286405(v=vs.92">tutorial</a>.aspx), thought a bit about the application I was writing at the time and decided that I need many-to-many relationship. Oops, that&rsquo;s not supported. Well, it&rsquo;s &ldquo;kinda&rdquo; supported, meaning you can create a data structure and insert some data, but when you remove the data the foreign key constraints won&rsquo;t be verified and cascade triggers won&rsquo;t work. I think I can simplify the above statement and just call it &ldquo;not supported feature&rdquo;.</p>
+
+<p>Fortunately I didn&rsquo;t absolutely had to use many-to-many relationship. It would be nicer and would allow us to relax some constraints, but the current data could be as well represented using a nested one-to-many relationships. I&rsquo;ve wrote the code based on aforementioned LINQ to SQL tutorial, wrote the tests, run them and watched in amazement as they fail. After googling a lot and experimenting I was able to make my code work, but it was quite different than the crap they posted on MSDN as tutorial. If you want to use LINQ to SQL, take a look at <a href="https://gist.github.com/1682648">this code on github</a>.</p>
+
+<p>I spent about two days reading about LINQ to SQL and experimenting with the code and in the end I didn&rsquo;t even had the data structure I wanted to. And we&rsquo;re not talking here about rocket science, the SQLite scheme I needed was something like this:</p>
+
+<p>``` sql
+create table x (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table y (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table z (id INTEGER PRIMARY KEY AUTOINCREMENT,</p>
+
+<pre><code>            x_id INTEGER NOT NULL,
+            y_id INTEGER NOT NULL,
+            FOREIGN KEY(x_id) REFERENCES x(id) ON DELETE CASCADE,
+            FOREIGN KEY(y_id) REFERENCES y(id) ON DELETE CASCADE);
+</code></pre>
+
+<p>```</p>
+
+<p>Which leads me to conclusion: LINQ to SQL for Windows Phone just doesn&rsquo;t work. Consider also the amount of boilerplate code I had to write for simple foreign key relation: in case you didn&rsquo;t looked at the github link that&rsquo;s whooping 80 lines of code for every one-to-many relationship. I don&rsquo;t know, maybe there are some tools that generate this stuff for you, but in this case why does the official tutorial even mention writing the table classes by hand? And where are those tools?</p>
+
+<p>Recently I was also playing with Django which also features an ORM for the model definition. You need the foreign key? You use something called <code>ForeignKey</code>. You need the many-to-many relationship? You use the <code>ManyToManyField</code>. Dirt simple. I&rsquo;m sure there are some dark corners you have to be aware of, but the basic stuff just works.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Background Operations on Windows Phone 7]]></title>
+    <link href="http://chalup.github.io/blog/2012/04/04/background-operations-on-windows-phone/"/>
+    <updated>2012-04-04T13:23:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/04/04/background-operations-on-windows-phone</id>
+    <content type="html"><![CDATA[<p>Few weeks ago I was complaining to another developer that Windows Phone applications cannot perform tasks in background when they are not running. That was true few months ago when I learned about Windows Phone 7.0, but he pointed me to MSDN documentation of new WP 7.1 feature: <a href="http://msdn.microsoft.com/en-us/library/hh202961(v=vs.92">Background Agents</a>.aspx).</p>
+
+<p>I clicked the link with my hopes up, but I was immediately shot down with the highlight on the first page: &ldquo;Background agents are not supported on 256-MB devices&rdquo;. I proceeded to the <a href="http://msdn.microsoft.com/en-us/library/hh202942(v=vs.92">overview page</a>.aspx) and it turned out the highlight from the first page was just the tip of the iceberg. The constraints listed there are just staggering.</p>
+
+<p>First there are the registration issues: you can register background task for the next two weeks and after that period your application have to reschedule the task. I&rsquo;m not sure why do I have to do this, and at the first glance it looks only like a minor nuisance, until you take into account two other constraints: tasks cannot reschedule themselves and there is a hard limit of scheduled periodic tasks, which can be ridiculously low. Relevant quote from MSDN:</p>
+
+<p><blockquote><p>To help maximize the battery life of the device, there is a hard limit on the number of periodic agents that can be scheduled on the phone. It varies per device configuration and can be as low as 6.</p></blockquote></p>
+
+<p>Not a minor nuisance anymore, huh?</p>
+
+<p>This limit is only imposed on periodic agents, which are intended for short, periodic tasks like polling some service or uploading a data. There are also Resource Intensive Agents which can be used for longer tasks like data synchronization, but they have their own set of constraints: the device have to be charging, the battery have to be almost fully charged and there should be a Wi-Fi or PC connection (no cellular data). I think the MSDN note summarizes it quite well:</p>
+
+<p><blockquote><p>Due to the constraints on the device that must be met for resource-intensive agents to run, it is possible that the agent will never be run on a particular device.</p></p><p><p>(&hellip;)Also, resource-intensive agents are run one at a time, so as more applications that use resource-intensive agents are installed on a device, the likelihood of an agent running becomes even less. You should consider this when designing your application.</p></blockquote></p>
+
+<p>I&rsquo;m going to add to the comment above my own observation: every application can register only one background agent, which can be both periodic agent and resource intensive agent. It means that if you need both types of agents, your resource intensive agent is also affected by the periodic agent hard limit.</p>
+
+<p>It all boils down to this: <strong>you can&rsquo;t rely on the background agents</strong>. You don&rsquo;t have the guarantee that you&rsquo;ll be able to register the agent, which means that you can&rsquo;t use them for critical functionality. So we&rsquo;re exactly where we were after 7.0 release.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[WP7 WebRequest Oddity]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/28/wp7-webrequest-oddity/"/>
+    <updated>2012-02-28T09:50:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/28/wp7-webrequest-oddity</id>
+    <content type="html"><![CDATA[<p>During testing of a Windows Phone 7 application I write during my day job I noticed strange thing: when I disabled network connection, I received 404 NotFound error. More precisely, the WebRequest threw WebException with Status = UnknownError, Response.Uri = {} and Response.StatusCode = NotFound.</p>
+
+<p><img class="center" src="/images/no+connection.jpg"></p>
+
+<p>So you get 404 in two cases: when either connection endpoint is down or when server actually responds with 404 NotFound. It would be nice to separate those two cases though, for example to display to the user the message that actually helps them fix the problem.</p>
+
+<p><img class="center" src="/images/wrong+url.jpg"></p>
+
+<p>Fortunately you can tell those two situations apart by checking WebException.Response.ResponseUri &ndash; in case of connection failure it contains empty Uri object (not null, just empty). Here&rsquo;s the extension method I use to convert the exception to the one that makes more sense to me:</p>
+
+<p>``` c#
+public static WebResponse SaneEndGetResponse(this WebRequest request, IAsyncResult asyncResult)
+{</p>
+
+<pre><code>try
+{
+    return request.EndGetResponse(asyncResult);
+}
+catch (WebException wex)
+{
+    if (wex.Response != null &amp;&amp;
+        ((HttpWebResponse)wex.Response).StatusCode == HttpStatusCode.NotFound &amp;&amp;
+        wex.Response.ResponseUri != null &amp;&amp;
+        String.IsNullOrEmpty(wex.Response.ResponseUri.ToString()))
+    {
+        throw new WebException("Network error", WebExceptionStatus.ConnectFailure);
+    }
+    throw;
+}
+</code></pre>
+
+<p>}
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[On CachePolicy, UriBuilder and Mobile .NET]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/"/>
+    <updated>2012-02-19T11:00:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile</id>
+    <content type="html"><![CDATA[<p>In the Windows Phone 7 application I was working on there was a problem with some WebRequest caching. I&rsquo;m not sure if it should have been fixed on the client side or server side, but since it&rsquo;s just a matter of setting proper CachePolicy property of WebRequest I was going to add it to mobile application.</p>
+
+<p>Imagine my surprise when I found out that CachePolicy is not supported on Windows Phone 7. The obvious workaround is adding an URI param <code>no-cache=MS_FROM_EPOCH</code> or something like that.</p>
+
+<p>Now, if you&rsquo;d ask me what is the cardinal example of stuff that shouldn&rsquo;t be done using string concatenation, but is notoriously done that way, I&rsquo;d answer: URI building. It&rsquo;s highly structured string with <a href="http://tools.ietf.org/html/rfc3986">RFC</a>, so it stands to reason to create and use a dedicated builder and parsers API to make sure everything is well-formed.</p>
+
+<p>Let&rsquo;s take a look at UriBuilder class and URIs in general. All the stuff between ? and # (VERIFY) is called query string, which contains key-value pairs separated by &amp;s. What kind of API for query string would make sense? An IDictionary&lt;String, String>! What API is presented by UriBuilder? A string! Take a look at the <a href="http://msdn.microsoft.com/en-us/library/system.uribuilder.query.aspx">documentation</a>. Here&rsquo;s the best part:</p>
+
+<p><blockquote><p><b>NOTE</b> Do not append a string directly to this property. If the length of Query is greater than 1, retrieve the property value as a string, remove the leading question mark, append the new query string, and set the property with the combined string.</p></blockquote></p>
+
+<p>Ridiculous. Seriously, MS, I don&rsquo;t care it&rsquo;s transformed to a string, it&rsquo;s a key-value dictionary, so let me treat it as such!</p>
+
+<p>Fortunately C# has this nice feature called extension methods, meaning we can &ldquo;add&rdquo; a method to a class. There are no extension properties, but we can have a method like this:</p>
+
+<p><code>c#
+UriBuilder WithQueryParam(this UriBuilder uri, String key, String value)
+</code></p>
+
+<p>But now we need to check for duplicate keys and for that we have to parse existing query string. Fortunately there is a method for this: <a href="http://msdn.microsoft.com/en-us/library/system.web.httputility.parsequerystring.aspx">HttpUtility.ParseQueryString</a>.</p>
+
+<p>Except it&rsquo;s not available on mobile .NET. Again. But why?</p>
+
+<p>The same thing irritate me when I worked on Blackberry apps and I had to put up with Java ME no String.format, no date handling methods, no generics and sane collections. But I understand that Java ME is supposed to work on wider range of devices, some of them with very limited CPU and RAM resources, so every cycle and every byte of memory matters.</p>
+
+<p>Now let&rsquo;s take a look at Windows Phone 7 <a href="http://en.wikipedia.org/wiki/Windows_Phone#System_requirements">hardware requirements for manufacturers</a>: 256MB of RAM and 800MHz CPU. I&rsquo;m not an .NET expert, but I&rsquo;d hazard a guess that supporting  full desktop .NET would not make any difference on those powerhouses. Hell, you should be able to send a man to the Moon using this hardware, so please, can I have a query string parser?</p>
+
+<p>Is it some kind of Windows Mobile 6 legacy, or just a very bad MS joke that non-MS people don&rsquo;t get?</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The Quest for Paramerized Converter for Windows Phone 7]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/16/quest-for-paramerized-converter-for/"/>
+    <updated>2012-02-16T13:16:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/16/quest-for-paramerized-converter-for</id>
+    <content type="html"><![CDATA[<p><strong>Warning:</strong> this is going to be a long post, because I want to provide full background for the issues I found. Also, none of the code posted here works in 100% of cases.</p>
+
+<p>Recently I was involved in refactoring a program written by interns, which included an over engineered and messed up solution for application settings. I had plenty of time and, despite of the messed up implementation, the original idea might be useful for any form filled by user, so instead of scraping the whole thing I decided to clean it up.</p>
+
+<p>Every type of setting is represented by different class derived from common base. The model of settings consist of a collection of base class objects. That collection is bound to ItemsSource property of ListBox and instead of single data template I use template selector, which creates different UI controls for different setting type.</p>
+
+<p>There is a BooleanSetting, which is represented by a single ToggleSwitch from <a href="http://silverlight.codeplex.com/">Silverlight from Windows Phone Toolkit</a>. There is a ClosedListSetting, represented by ListPicker, which is used for a setting where user can choose one of many options from a predefined list (hence the name). Finally there is a OpenListSetting, which is just like a ClosedListSetting, except there is the &ldquo;Other&rdquo; option which allows user to enter any value. On web forms such field is usually represented as a radio button group with an input box beside the &ldquo;Other&rdquo; option.</p>
+
+<p>For UI consistency I wanted to represent the OpenListSetting using ListPicker, and when the user would select the &ldquo;Other&rdquo; option, additional entry field will appear. It seemed really easy, I thought I&rsquo;ll just bind the visibility of the custom entry field to ListPicker&rsquo;s SelectedIndex property with a value converter.</p>
+
+<p>The first complication is that the position of custom option might be different for a different settings &ndash; usually it&rsquo;s the last one, so it depends on the number of predefined options; for maximum flexibility it should be possible to have many custom options in one OpenListSetting. The obvious solution is to bind some value to converter&rsquo;s parameter property.</p>
+
+<p>Quick search on Google reveals the major flaw in that plan, to wit, you cannot use the binding for converter parameter. There is a Multibinding, which sounds like a likely solution (after all I want to bind visibility to two properties and an operation between those properties), but apparently it&rsquo;s not available in Silverlight for Windows Phone 7. Yay, it&rsquo;s Java ME crap all over again!</p>
+
+<p>The suggested workaround is creating a converter as a non-visual FrameworkElement, with parameter as a dependency property, which can be used in binding. I created a base class:</p>
+
+<p>``` c#
+public abstract class ConverterWithBindingParameter&lt;T, TConverter> : FrameworkElement, IValueConverter
+{</p>
+
+<pre><code>public static readonly DependencyProperty ParameterProperty = DependencyProperty.Register(
+    "BindingParameter",
+    typeof(T),
+    typeof(TConverter),
+    null);
+
+public T BindingParameter
+{
+    get { return (T)GetValue(ParameterProperty); }
+    set { SetValue(ParameterProperty, value); }
+}
+
+abstract public object Convert(object value, Type targetType, object parameter, CultureInfo culture);
+abstract public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>And then derived the concrete converter for a problem at hand:</p>
+
+<p>``` c#
+public class EqualToVisibilityConverter : ConverterWithBindingParameter&lt;int, EqualToVisibilityConverter>
+{</p>
+
+<pre><code>override public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    return (value.Equals(BindingParameter)) ? Visibility.Visible : Visibility.Collapsed;
+}
+
+override public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    throw new NotImplementedException();
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Edit XAML, rebuild, run, kaboom:</p>
+
+<p>``` c#
+System.ArgumentException was unhandled</p>
+
+<pre><code>StackTrace:
+at System.Reflection.RuntimeMethodInfo.InternalInvoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture, StackCrawlMark&amp; stackMark)
+at System.Reflection.RuntimePropertyInfo.InternalSetValue(PropertyInfo thisProperty, Object obj, Object value, Object[] index, StackCrawlMark&amp; stackMark)
+at System.Reflection.RuntimePropertyInfo.SetValue(Object obj, Object value, Object[] index)
+at MS.Internal.XamlMemberInfo.SetValue(Object target, Object value)
+at MS.Internal.XamlManagedRuntimeRPInvokes.SetValue(XamlTypeToken inType, XamlQualifiedObject&amp; inObj, XamlPropertyToken inProperty, XamlQualifiedObject&amp; inValue)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.Measure_WithDesiredSizeNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.UIElement_Measure_WithDesiredSize(UIElement element, Size availableSize)
+at System.Windows.UIElement.Measure_WithDesiredSize(Size availableSize)
+at System.Windows.Controls.VirtualizingStackPanel.MeasureChild(UIElement child, Size layoutSlotSize)
+at System.Windows.Controls.VirtualizingStackPanel.MeasureOverride(Size constraint)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.Controls.ScrollContentPresenter.MeasureOverride(Size constraint)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureNative(IntPtr element, Single inWidth, Single inHeight)
+at MS.Internal.XcpImports.UIElement_Measure(UIElement element, Size availableSize)
+at System.Windows.UIElement.Measure(Size availableSize)
+at System.Windows.Controls.ScrollViewer.MeasureOverride(Size constraint)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+at MS.Internal.XcpImports.MeasureOverrideNative(IntPtr element, Single inWidth, Single inHeight, Single&amp; outWidth, Single&amp; outHeight)
+at MS.Internal.XcpImports.FrameworkElement_MeasureOverride(FrameworkElement element, Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(Size availableSize)
+at System.Windows.FrameworkElement.MeasureOverride(IntPtr nativeTarget, Double inWidth, Double inHeight, Double&amp; outWidth, Double&amp; outHeight)
+</code></pre>
+
+<p>```</p>
+
+<p>On a hunch I created non-generic version of my converter and it seemed to work. Oh, so I can&rsquo;t use generic base for UI controls? Nice job MS.</p>
+
+<p>``` c#
+public class EqualToVisibilityConverter : FrameworkElement, IValueConverter
+{</p>
+
+<pre><code>public static readonly DependencyProperty ParameterProperty = DependencyProperty.RegisterAttached(
+    "BindingParameter",
+    typeof(int),
+    typeof(EqualToVisibilityConverter),
+    new PropertyMetadata(0));
+
+private static void OnBindingParameterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+{
+}
+
+public int BindingParameter
+{
+    get { return (int)GetValue(ParameterProperty); }
+    set { SetValue(ParameterProperty, value); }
+}
+
+public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    int bp = BindingParameter;
+    return (value.Equals(BindingParameter)) ? Visibility.Visible : Visibility.Collapsed;
+}
+
+public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+{
+    throw new NotImplementedException();
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Note that I wrote &ldquo;seemed to work&rdquo;. It means only that the code didn&rsquo;t explode in my face, but it didn&rsquo;t work quite as I expected. Here&rsquo;s the quick breakdown: when the visibility converter is called for the first time, the bound parameter is null. Then the dependency value is changed (at least the callback is called; curiously, the setter is not) and the bound parameter is initialized with a proper value, but there is no way to invalidate the conversion result.</p>
+
+<p>That gave me another idea: why use IValueConverter interface at all? Let&rsquo;s create an UI element with 2 dependency properties for arguments and one property for result of binary operation:</p>
+
+<p>``` c#
+public class EqualToVisibilityConverter : FrameworkElement, INotifyPropertyChanged
+{</p>
+
+<pre><code>public static readonly DependencyProperty LeftArgumentProperty = DependencyProperty.Register(
+    "LeftArgument",
+    typeof(int),
+    typeof(EqualToVisibilityConverter),
+    new PropertyMetadata(OnArgumentChanged)
+    );
+
+public static readonly DependencyProperty RightArgumentProperty = DependencyProperty.Register(
+    "RightArgument",
+    typeof(Visibility),
+    typeof(EqualToVisibilityConverter),
+    new PropertyMetadata(OnArgumentChanged)
+    );
+
+private static void OnArgumentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+{
+    EqualToVisibilityConverter converter = d as EqualToVisibilityConverter;
+    converter.Result = (converter.LeftArgument == converter.RightArgument) ? Visibility.Visible : Visibility.Collapsed;
+}
+
+public int LeftArgument
+{
+    get { return (int)GetValue(LeftArgumentProperty); }
+    set { SetValue(LeftArgumentProperty, value); }
+}
+
+public int RightArgument
+{
+    get { return (int)GetValue(RightArgumentProperty); }
+    set { SetValue(RightArgumentProperty, value); }
+}
+
+private Visibility _result;
+public Visibility Result
+{
+    get { return _result; }
+    set
+    {
+        if (value != _result)
+        {
+            _result = value;
+            OnPropertyChanged("Result");
+        }
+    }
+}
+
+public event PropertyChangedEventHandler PropertyChanged;
+protected void OnPropertyChanged(string propertyName)
+{
+    if (null != PropertyChanged)
+    {
+        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Now the callbacks of dependency properties can trigger the result recalculation and everything will be fine and dandy. Edit XAML, rebuild, run, KABOOM! This time application blew up, but I didn&rsquo;t even get a call stack, it just closed without any message.</p>
+
+<p>This. Is. Fucking. Ridiculous.</p>
+
+<p>At this moment I decided I already lost enough time on this crap, so I just said &ldquo;screw it&rdquo; and added additional property to OpenListSetting class.</p>
+
+<p>This is when I finally got why the MVVM pattern got so much traction with XAML developers. I always assumed that it&rsquo;s supposed to be used for big model adaptations, and all minor stuff should be done in binding converters. However it seems that you have to use ViewModel for anything remotely useful. Don&rsquo;t get me wrong: I agree that preventing pollution of Model by stuff needed by View is a Good Thing TM, but I think a separation of View into View and ViewModel is necessary only because of limitations of XAML.</p>
+]]></content>
+  </entry>
+  
+</feed>

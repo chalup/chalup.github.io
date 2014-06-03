@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Thneed | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/thneed/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Use minSdkVersion=10 for Libraries]]></title>
+    <link href="http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries/"/>
+    <updated>2014-02-25T21:42:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve pushed new versions of <a href="https://github.com/chalup/microorm">microorm</a> and <a href="https://github.com/chalup/thneed">thneed</a> to Maven Central today. The most notable change for both libraries is dropping the support for Android 2.2 and earlier versions. The same change was applied to all Android libraries open sourced by <a href="https://github.com/orgs/futuresimple/">Base</a>. Why? <a href="https://plus.google.com/104992412719307414985">+Jeff Gilfelt</a> summed it up nicely:</p>
+
+<blockquote class="twitter-tweet" lang="en"><p>Because it is 2014 <a href="https://t.co/UCMaZOB6Sl">https://t.co/UCMaZOB6Sl</a></p>&mdash; Jeff Gilfelt (@readyState) <a href="https://twitter.com/readyState/statuses/435419373852184576">February 17, 2014</a></blockquote>
+
+
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+<p>This tweet is a good laugh (and an excellent example of what happens if you limit the discussion to 140 characters), but there are poor souls who might need an answer they can use as an objective argument. For them, here is my take on this one: you should drop support for Froyo because sizeable chunk of Java 1.6 APIs were missing from API level 8. I&rsquo;m not talking about some dark corners of java packages, I&rsquo;m talking about stuff like <a href="http://developer.android.com/reference/java/lang/String.html#isEmpty%28%29"><code>String.isEmpty()</code></a>, <a href="http://developer.android.com/reference/java/util/Deque.html"><code>Deque</code></a>, <a href="http://developer.android.com/reference/java/util/NavigableSet.html"><code>NavigableSet</code></a>, <a href="http://developer.android.com/reference/java/io/IOException.html"><code>IOException</code></a>&rsquo;s constructors with cause parameter, <a href="http://developer.android.com/sdk/api_diff/9/changes/changes-summary.html">and so on</a>.</p>
+
+<p>Your own code can (and should) be checked with Lint, but these methods and classes can also be used by the 3rd party libraries and I&rsquo;m not aware of any static analysis tool that can help you in this case. So if your app supports Froyo and uses a lot of external dependencies, you&rsquo;re probably sitting on the <a href="/blog/2013/06/26/guava-and-minsdkversion">NoClassDefFoundError bomb</a>. It might force you to use obsolete versions of libraries, the most notable example of which is Guava &ndash; on Froyo you have to use 13.0.1, a 18 months old version.</p>
+
+<p>That&rsquo;s also the reason why the libraries authors should be the first ones to move on to Android 2.3 and later. If you use obsolete library in your application, you&rsquo;re hurting only yourself. If you use it as a library dependency, you&rsquo;re hurting every user of the library.</p>
+
+<p>So move on and bump the minSdkVersion. After all, it&rsquo;s 2014.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Thneed, Notes and Db Design]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design/"/>
+    <updated>2013-11-03T18:59:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design</id>
+    <content type="html"><![CDATA[<p>We&rsquo;re starting to find more and more interesting use cases for <a href="https://github.com/chalup/thneed">Thneed</a> in Base CRM codebase. The first release using it, and <a href="https://github.com/chalup/microorm">few</a> <a href="https://github.com/futuresimple/forger">other</a> <a href="https://github.com/futuresimple/android-db-commons">libraries</a> <a href="https://github.com/futuresimple/android-autoindexer">we</a> <a href="https://github.com/futuresimple/android-schema-utils">recently</a> <a href="https://github.com/futuresimple/sqlitemaster">developed</a>, was released just before the Halloween and we haven&rsquo;t registered any critical issues related to it. All in all, the results look very promising. I won&rsquo;t recommend using <a href="https://github.com/chalup/thneed">Thneed</a> in your production builds yet, but I urge you to <a href="https://github.com/chalup/thneed/star">star the project on Github</a> and watch its progress.</p>
+
+<p>The <a href="https://github.com/chalup/thneed">Thneed</a> was created as an answer to some issues we faced when developing and maintaining <a href="https://getbase.com/">Base CRM</a>, and this fact is sometimes reflected by the API. The example of this is something we internally called PolyModels.</p>
+
+<p>Let&rsquo;s start with a scenario, where we have a some objects and we&rsquo;d like to add notes to. It&rsquo;s a classic one-to-many relationship, which I&rsquo;d model with a foreign key in notes table:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+some_entity_id INTEGER REFERENCES some_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>Now let&rsquo;s introduce another type of objects, which also can have notes attached to it. We have few options now. The simplest thing to do is to keep these notes in a completely separate table:</p>
+
+<p>``` sql
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE other_enity_notes (</p>
+
+<pre><code>id INTEGER, 
+other_entity_id INTEGER REFERENCES other_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>The issue with this solution is that we have two separate schemas that need to be updated in parallel, and in 95% of cases would be exactly the same. Another approach is making the objects which contain notes sort of inherit a base class:</p>
+
+<p>``` sql
+CREATE TABLE notables (id INTEGER);
+CREATE TABLE some_entity (id INTEGER, notable_id INTEGER REFERENCES notables(id));
+CREATE TABLE other_entity (id INTEGER, notable_id INTEGER REFERENCES notables(id));
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+notable_id INTEGER REFERENCES notables(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>These two solutions work perfectly in the &ldquo;give me all notes for object X&rdquo; scenario, but it gets ugly if you want to display a single note with the simple &ldquo;Associated with object X&rdquo; info. In this case you have to query every model which can contain notes, to see if this particular association references the objects from this model. On top of that, the Noteable table approach requires some additional work to create the entry in</p>
+
+<p>You can always have a several mutually exclusive foreing keys in your notes:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+some_entity_id INTEGER REFERENCES some_entity(id), 
+other_entity_id INTEGER REFERENCES other_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>But this solution doesn&rsquo;t really scale well as the number of the models which can contain notes increases. Also, your DBAs will love you if you go this way.</p>
+
+<p>The solution to this problem we used in Base was to have two columns in Notes table: one holding the type of the &ldquo;noteable&rdquo; object, i.e. and the other for the id of this object:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+noteable_id INTEGER, 
+noteable_type TEXT, 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>The glaring issue with this approach is losing the consistency guarantee &ndash; no database I know of support this kind of foreign keys. But when you have SOA on the backend and the notes are stored in a separate database than the noteable objects, this is not your top concern. On mobile apps, even though we have a single database, we use the same structure, because all the other have some implementation issues and worse performance characteristics.</p>
+
+<p>I&rsquo;m not a db expert, and I haven&rsquo;t found any discussion of similar cases, which means that a) we&rsquo;re doing something very wrong or b) we have just very specific requirements. Let me know if it&rsquo;s a former case.</p>
+
+<p>I needed to model this relationships in Thneed, which tured out to be quite tricky, but that&rsquo;s the topic for another blog post.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Forger Library]]></title>
+    <link href="http://chalup.github.io/blog/2013/09/12/forger-library/"/>
+    <updated>2013-09-12T23:19:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/09/12/forger-library</id>
+    <content type="html"><![CDATA[<p>Sometimes the code you write is hard to test, and the most likely reason for this is that you wrote a shitty code. Other times, the code is quite easy to test, but setting up the test fixture is extremely tedious. It may also mean that you wrote a shitty code, but it may also mean that you don&rsquo;t have the right tools.</p>
+
+<p>For me the most painful part of writing tests was filling the data model with some fake data. The most straightforward thing to do is to write helper methods for creating this data, but this means you&rsquo;ll have two pieces of code to maintain side by side: the data model and the helper methods. The problem gets even more complicated when you need to create a whole hierarchy of objects.</p>
+
+<p>The first step is generating a valid <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a> for your data model. You need to know the column names and the type of the data that should be generated for a given column. Note that for column data type you cannot really use the database table definitions &ndash; for example sqlite doesn&rsquo;t have boolean column type, so you&rsquo;d define your column as integer, but the valid values for this column are only 1 and 0.</p>
+
+<p>This is not enough though, because you&rsquo;d generate random values for the foreign keys, which might crash the app (if you enforce the foreign key constraints) or break some other invariants in your code. You might work around this by creating the objects in the right order and overriding generated data for foreign key columns, but this would be tedious and error prone solution.</p>
+
+<p>I have recently posted about my two side-projects: <a href="https://github.com/chalup/microorm">MicroOrm</a> and <a href="https://github.com/chalup/thneed">Thneed</a>. The former let&rsquo;s you annotate fields in POJO and handles the conversion from POJO to ContentValues and from Cursor to POJO:</p>
+
+<p>``` java
+public class Customer {
+  @Column(&ldquo;id&rdquo;)
+  public long id;</p>
+
+<p>  @Column(&ldquo;name&rdquo;)
+  public String name;
+}</p>
+
+<p>public class Order {
+  @Column(&ldquo;id&rdquo;)
+  public long id;</p>
+
+<p>  @Column(&ldquo;amount&rdquo;)
+  public int amount;</p>
+
+<p>  @Column(&ldquo;customer_id&rdquo;)
+  public long customerId;
+}
+```</p>
+
+<p>The latter allows you to define the relationships between entities in your data model:</p>
+
+<p>``` java
+ModelGraph<ModelInterface> modelGraph = ModelGraph.of(ModelInterface.class)</p>
+
+<pre><code>.identifiedByDefault().by("id")
+.where()
+.the(ORDER).references(CUSTOMER).by("customer_id")
+.build();
+</code></pre>
+
+<p>```</p>
+
+<p>See what I&rsquo;m getting at?</p>
+
+<p>The returned ModelGraph object is a data structure that can be processed by independently written processors, i.e. they are the Visitable and Visitor parts of the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. The entities in relationship definitions are not a plain marker Objects &ndash; the first builder call specifies the interface they have to implement. This interface can be used by Visitors to get useful information about the connected models and, as a type parameter of ModelGraph, ensures that you are using the correct Visitors for your ModelGraph. See <a href="/blog/2013/08/25/random-musings-on-visitor-design">my last post about Visitors</a> for more information about generifying the visitor pattern.</p>
+
+<p>In our case the interface should declare which POJO contains <a href="https://github.com/chalup/microorm">MicroOrm</a> annotations and where should the generated <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a> be inserted:</p>
+
+<p>``` java
+public interface MicroOrmModel {
+  public Class&lt;?> getModelClass();
+}</p>
+
+<p>public interface ContentResolverModel {
+  public Uri getUri();
+}</p>
+
+<p>interface ModelInterface extends ContentResolverModel, MicroOrmModel {
+}</p>
+
+<p>public static final ModelInterface CUSTOMER = new ModelInterface() {
+  @Override
+  public Uri getUri() {</p>
+
+<pre><code>return Customers.CONTENT_URI;
+</code></pre>
+
+<p>  }</p>
+
+<p>  @Override
+  public Class&lt;?> getModelClass() {</p>
+
+<pre><code>return Customer.class;
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>The final step is to wrap everything in fluent API:</p>
+
+<p>``` java
+Forger<ModelInterface> forger = new Forger(modelGraph, new MicroOrm());
+Order order = forger.iNeed(Order.class).in(contentResolver);</p>
+
+<p>// note: we didn&rsquo;t created the Customer dependency of Order, but:
+assertThat(order.customer_id).isNotEqualTo(0);</p>
+
+<p>// of course we can create Customer first and then create Order for it:
+Customer customer = forger.iNeed(Customer.class).in(contentResolver);
+Order anotherOrder = forger.iNeed(Order.class).relatedTo(customer).in(contentResolver);</p>
+
+<p>assertThat(anotherOrder.customer_id).isEqualTo(customer.id);</p>
+
+<p>// or if we need multiple orders for the same customer:
+Customer anotherCustomer = forger.iNeed(Customer.class).in(contentResolver);
+Forger<ModelInterface> forgerWithContext = forger.inContextOf(anotherCustomer);</p>
+
+<p>Order orderA = forgerWithContext.iNeed(Order.class).in(contentResolver);
+Order orderB = forgerWithContext.iNeed(Order.class).in(contentResolver);</p>
+
+<p>assertThat(orderA.customer_id).isEqualTo(anotherCustomer.id);
+assertThat(orderB.customer_id).isEqualTo(anotherCustomer.id);
+```</p>
+
+<p>The most pathological case in our code base was a test with 10 lines of code calling over 100 lines of helper methods and 6 lines of the actual test logic. The <a href="https://github.com/futuresimple/forger">Forger</a> library allowed us to get rid of all the helper methods and reduce the 10 lines of setup to 1 fluent API call (it&rsquo;s quite a long call split into few lines, but it&rsquo;s much prettier than the original code).</p>
+
+<p>Check out the <a href="https://github.com/futuresimple/forger">code on github</a> and don&rsquo;t <a href="https://github.com/futuresimple/forger/star">forget to star</a> this project if you find it interesting.</p>
+
+<p>The funny thing about this project is that it&rsquo;s a byproduct of <a href="https://github.com/chalup/thneed">Thneed</a>, which I originally wrote to solve another problem. It makes me think that the whole idea of defining the relationships as a visitable structure is more flexible than I originally anticipated and it might become the cornerstone of the whole set of useful tools.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Random Musings on Visitor Design Pattern in Java]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design/"/>
+    <updated>2013-08-25T13:21:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design</id>
+    <content type="html"><![CDATA[<p>First let&rsquo;s have a quick refresher on what is the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. This pattern consists of two elements: the Visitor, which in the Gang of Four book is defined as an &ldquo;operation to be performed on the elements of an object structure&rdquo;; the second element is the structure itself.</p>
+
+<p>``` java
+public interface Visitable {
+  void accept(Visitor visitor);
+}</p>
+
+<p>public interface Visitor {
+}
+```</p>
+
+<p>The Visitor interface is for now empty, because we haven&rsquo;t declared any Visitable types. In every class implementing Visitable interface we&rsquo;ll call a different method in Visitor:</p>
+
+<p>``` java
+public interface Visitable {
+  void accept(Visitor visitor);
+}</p>
+
+<p>public static class VisitableFoo implements Visitable {
+  @Override
+  public void accept(Visitor visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar implements Visitable {
+  @Override
+  public void accept(Visitor visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor {
+  void visit(VisitableBar visitableBar);
+  void visit(VisitableFoo visitableFoo);
+}
+```</p>
+
+<p>Sounds like a lot of work, but there is a reason for it. You could achieve something similar by simply adding another method to the Visitable pattern, but this means you&rsquo;d have to be able to modify the Visitable classes. The visit/accept double dispatch allows you to write a library like <a href="https://github.com/chalup/thneed">Thneed</a>, which defines the data structure, but leaves the operations implementation to the library users.</p>
+
+<p>The classic visitor pattern requires you to keep some kind of state and to write a method for getting and clearing this state. This might be what you want, but if you want to simply process your Visitable objects one by one and return independent computations, you might want just to return a value from visit() method. So the first twist you can add to classic Visitor pattern is to return a value from visit/accept method:</p>
+
+<p>``` java
+public interface Visitable {
+  <TReturn> TReturn accept(Visitor<TReturn> visitor);
+}</p>
+
+<p>public static class VisitableFoo implements Visitable {
+  @Override
+  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
+
+<pre><code>return visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar implements Visitable {
+  @Override
+  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
+
+<pre><code>return visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<TReturn> {
+  TReturn visit(VisitableBar visitableBar);
+  TReturn visit(VisitableFoo visitableFoo);
+}
+```</p>
+
+<p>Note that only Visitor interface is parametrized with a return type. The only thing that <code>Visitable.accept()</code> do is dispatching the call to Visitor, so there is no point in generifying the whole interface, it&rsquo;s sufficient to make an accept method generic. In fact, making the TReturn type a Visitable interface type would be a design mistake, because you wouldn&rsquo;t be able to create a Visitable that could be accepted by Visitors with different return types:</p>
+
+<p><code>java
+public interface Visitable&lt;TReturn&gt; {&lt;br/&gt;  TReturn accept(Visitor&lt;TReturn&gt; visitor);&lt;br/&gt;}
+</code></p>
+
+<p>Because of type erasure you wouldn&rsquo;t be able to create a Visitable that can accept two Visitors returning a different types:</p>
+
+<p><code>java
+public static class MyVisitable implements Visitable&lt;String&gt;, Visitable&lt;Integer&gt; {
+  // Invalid! "Duplicate class Visitable" compilation error.
+}
+</code></p>
+
+<p>Another thing you can do is generifying the whole pattern. The use case for this is when your Visitables are some kind of containers or wrappers over objects (again, see the <a href="https://github.com/chalup/thneed">Thneed</a> library, where the Visitables subclasses are the different kinds of relationships between data models and are parametrized with the type representing the data models). The naive way to do this is just adding the type parameters:</p>
+
+<p>``` java
+public interface Visitable<T> {
+  void accept(Visitor<T> visitor);
+}</p>
+
+<p>public static class VisitableFoo<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor<T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor<T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<T> {
+  void visit(VisitableBar<T> visitableBar);
+  void visit(VisitableFoo<T> visitableFoo);
+}
+```</p>
+
+<p>There is a problem with the signatures of those interfaces. Let&rsquo;s say that we want our Visitor to operate on Visitables containing Numbers:</p>
+
+<p>``` java
+Visitor<Number> visitor = new Visitor<Number>() {
+  @Override
+  public void visit(VisitableBar<Number> visitableBar) {
+  }</p>
+
+<p>  @Override
+  public void visit(VisitableFoo<Number> visitableFoo) {
+  }
+};
+```</p>
+
+<p>You should think about Visitor as the method accepting the Visitable. If our Visitor can handle something that contains Number, it should also handle something that contain any Number subclass &ndash; it&rsquo;s a classic example of <a href="https://sites.google.com/site/io/effective-java-reloaded">&ldquo;consumer extends, producer super&rdquo;</a> behaviour or <a href="http://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science">covariance and contravariance</a>) in general. In the implementation above however, the strict generics types are causing compilation errors. <a href="http://docs.oracle.com/javase/tutorial/extra/generics/wildcards.html">Generics wildcards</a> to the rescue:</p>
+
+<p>``` java
+public interface Visitable<T> {
+  void accept(Visitor&lt;? super T> visitor);
+}</p>
+
+<p>public static class VisitableFoo<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor&lt;? super T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor&lt;? super T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<T> {
+  void visit(VisitableBar&lt;? extends T> visitableBar);
+  void visit(VisitableFoo&lt;? extends T> visitableFoo);
+}
+```</p>
+
+<p>Note that the change has to be symmetric, i.e. both the <code>accept()</code> and <code>visit()</code> signatures have to include the bounds. Now we can safely call:</p>
+
+<p>``` java
+VisitableBar<Integer> visitableBar = new VisitableBar<Integer>();
+Visitor<Number> visitor = new Visitor<Number>() {
+  // visit() implementations
+}</p>
+
+<p>visitableBar.accept(visitor);
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[MicroOrm and Thneed Available on Maven Central]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/17/microorm-and-thneed-available-on-maven/"/>
+    <updated>2013-08-17T21:56:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/17/microorm-and-thneed-available-on-maven</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve uploaded my two experimental projects, <a href="https://github.com/chalup/microorm">MicroOrm</a> and <a href="https://github.com/chalup/thneed">Thneed</a>, to <a href="http://search.maven.org/#search%7Cga%7C1%7Corg.chalup">Maven Central</a>. If you want to try them out, just add the following lines to your pom.xml:</p>
+
+<p>``` xml
+<dependency>
+  <groupId>org.chalup.thneed</groupId>
+  <artifactId>thneed</artifactId>
+  <version>0.3</version>
+</dependency></p>
+
+<p><dependency>
+  <groupId>org.chalup.microorm</groupId>
+  <artifactId>microorm</artifactId>
+  <version>0.2</version>
+</dependency>
+```</p>
+
+<p>Don&rsquo;t hesitate to <a href="mailto:jerzy.chalupski@gmail.com"><code>email me</code></a>, create an issue on github or propose a pull request. Any form of feedback is welcome!</p>
+]]></content>
+  </entry>
+  
+</feed>

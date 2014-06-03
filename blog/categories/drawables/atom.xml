@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Drawables | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/drawables/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android Drawables Stroke Inconsistency]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/05/android-drawables-stroke-inconsistency/"/>
+    <updated>2013-11-05T00:34:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/05/android-drawables-stroke-inconsistency</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve run into a funny little problem when creating custom drawables recently &ndash; some of the lines were crisp and some were blurred:</p>
+
+<p><img class="center" src="/images/zoomed.png"></p>
+
+<p>After few debug iterations I was able to narrow down the difference to the shapes drawn using the <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawRoundRect%28android.graphics.RectF,%20float,%20float,%20android.graphics.Paint%29"><code>Canvas.drawRoundRect</code></a> and <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawPath%28android.graphics.Path,%20android.graphics.Paint%29"><code>Canvas.drawPath</code></a>. The former looked much crispier. I&rsquo;ve dug down to Skia classes and it turns out that they reach the same drawing function through slightly different code paths and I guess at some point some rounding is applied at one of them, but I haven&rsquo;t verified this.</p>
+
+<p>The minimal example which demonstrates the issue are two solid <a href="http://developer.android.com/guide/topics/resources/drawable-resource.html#Shape">XML shape drawables</a> (which are parsed into <a href="http://developer.android.com/reference/android/graphics/drawable/GradientDrawable.html"><code>GradientDrawables</code></a>), one with radius defined in radius attribute, the other one with four radii defined (can be the same).</p>
+
+<p>Besides satisfying my idle curiosity and honing my AOSP code diving skills, I have learned something useful: do not mix paths and round rects on <code>Canvas</code> and use <code>Path.addRoundRect</code> with radii array when your path contains other curved shapes.</p>
+]]></content>
+  </entry>
+  
+</feed>

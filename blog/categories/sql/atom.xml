@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: SQL | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/sql/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[SQLite Views Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2013/12/03/sqlite-views-gotcha/"/>
+    <updated>2013-12-03T00:13:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/12/03/sqlite-views-gotcha</id>
+    <content type="html"><![CDATA[<p><strong>tl;dr:</strong> don&rsquo;t left join on view, or you gonna have a bad time.</p>
+
+<p>I have investigated a performance issue of the db in Android app today. The symptoms looked like a classic case of the missing index: the performance degraded with adding more data to certain tables. However, the quick check of sqlite_master table and looking at some <code>EXPLAIN QUERY PLAN</code> queries indicated that everything is properly indexed (which is not very surprising, given that we use <a href="https://github.com/futuresimple/android-autoindexer">android-autoindexer</a>).</p>
+
+<p>I started dumping the explain query plans for every query and it turned out that some queries perform multiple table scans instead of single scan of main table + indexed searches for joined tables. It means that the indices were in place, but they weren&rsquo;t used.</p>
+
+<p>The common denominator of these queries was joining with a view. Here&rsquo;s the simplest schema which demonstrates the issue:</p>
+
+<p>```
+sqlite> create table x (id integer);
+sqlite> create table y (id integer, x_id integer);</p>
+
+<p>sqlite> explain query plan select * from x left join y on x.id = x_id;
+selectid    order       from        detail</p>
+
+<hr />
+
+<p>0           0           0           SCAN TABLE x (~1000000 rows)
+0           1           1           SEARCH TABLE y USING AUTOMATIC COVERING INDEX (x_id=?) (~7 rows)</p>
+
+<p>sqlite> create view yyy as select * from y;</p>
+
+<p>sqlite> explain query plan select * from x left join yyy on x.id = x_id;
+selectid    order       from        detail</p>
+
+<hr />
+
+<p>1           0           0           SCAN TABLE y (~1000000 rows)
+0           0           0           SCAN TABLE x (~1000000 rows)
+0           1           1           SEARCH SUBQUERY 1 USING AUTOMATIC COVERING INDEX (x_id=?) (~7 rows)
+```</p>
+
+<p>Of course this behaviour is documented in the SQLite Query Planner overview (point 3 of the <a href="http://www.sqlite.org/optoverview.html#flattening">Subquery flattening</a> paragraph), and I even remember reading this docs few times, but I guess something like this has to bite me in the ass before I memorize it.</p>
+
+<p>Everything works fine if you copypaste the views selection in place of the joined view, which makes me a sad panda, because I wish SQLite could do this for me. On the other hand it&rsquo;s a very simple workaround for this issue, and, with a right library, the code might even be manageable.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Thneed, Notes and Db Design]]></title>
+    <link href="http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design/"/>
+    <updated>2013-11-03T18:59:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design</id>
+    <content type="html"><![CDATA[<p>We&rsquo;re starting to find more and more interesting use cases for <a href="https://github.com/chalup/thneed">Thneed</a> in Base CRM codebase. The first release using it, and <a href="https://github.com/chalup/microorm">few</a> <a href="https://github.com/futuresimple/forger">other</a> <a href="https://github.com/futuresimple/android-db-commons">libraries</a> <a href="https://github.com/futuresimple/android-autoindexer">we</a> <a href="https://github.com/futuresimple/android-schema-utils">recently</a> <a href="https://github.com/futuresimple/sqlitemaster">developed</a>, was released just before the Halloween and we haven&rsquo;t registered any critical issues related to it. All in all, the results look very promising. I won&rsquo;t recommend using <a href="https://github.com/chalup/thneed">Thneed</a> in your production builds yet, but I urge you to <a href="https://github.com/chalup/thneed/star">star the project on Github</a> and watch its progress.</p>
+
+<p>The <a href="https://github.com/chalup/thneed">Thneed</a> was created as an answer to some issues we faced when developing and maintaining <a href="https://getbase.com/">Base CRM</a>, and this fact is sometimes reflected by the API. The example of this is something we internally called PolyModels.</p>
+
+<p>Let&rsquo;s start with a scenario, where we have a some objects and we&rsquo;d like to add notes to. It&rsquo;s a classic one-to-many relationship, which I&rsquo;d model with a foreign key in notes table:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+some_entity_id INTEGER REFERENCES some_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>Now let&rsquo;s introduce another type of objects, which also can have notes attached to it. We have few options now. The simplest thing to do is to keep these notes in a completely separate table:</p>
+
+<p>``` sql
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE other_enity_notes (</p>
+
+<pre><code>id INTEGER, 
+other_entity_id INTEGER REFERENCES other_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>The issue with this solution is that we have two separate schemas that need to be updated in parallel, and in 95% of cases would be exactly the same. Another approach is making the objects which contain notes sort of inherit a base class:</p>
+
+<p>``` sql
+CREATE TABLE notables (id INTEGER);
+CREATE TABLE some_entity (id INTEGER, notable_id INTEGER REFERENCES notables(id));
+CREATE TABLE other_entity (id INTEGER, notable_id INTEGER REFERENCES notables(id));
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+notable_id INTEGER REFERENCES notables(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>These two solutions work perfectly in the &ldquo;give me all notes for object X&rdquo; scenario, but it gets ugly if you want to display a single note with the simple &ldquo;Associated with object X&rdquo; info. In this case you have to query every model which can contain notes, to see if this particular association references the objects from this model. On top of that, the Noteable table approach requires some additional work to create the entry in</p>
+
+<p>You can always have a several mutually exclusive foreing keys in your notes:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+some_entity_id INTEGER REFERENCES some_entity(id), 
+other_entity_id INTEGER REFERENCES other_entity(id), 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>But this solution doesn&rsquo;t really scale well as the number of the models which can contain notes increases. Also, your DBAs will love you if you go this way.</p>
+
+<p>The solution to this problem we used in Base was to have two columns in Notes table: one holding the type of the &ldquo;noteable&rdquo; object, i.e. and the other for the id of this object:</p>
+
+<p>``` sql
+CREATE TABLE some_entity (id INTEGER);
+CREATE TABLE other_entity (id INTEGER);
+CREATE TABLE notes (</p>
+
+<pre><code>id INTEGER, 
+noteable_id INTEGER, 
+noteable_type TEXT, 
+content TEXT
+</code></pre>
+
+<p>);
+```</p>
+
+<p>The glaring issue with this approach is losing the consistency guarantee &ndash; no database I know of support this kind of foreign keys. But when you have SOA on the backend and the notes are stored in a separate database than the noteable objects, this is not your top concern. On mobile apps, even though we have a single database, we use the same structure, because all the other have some implementation issues and worse performance characteristics.</p>
+
+<p>I&rsquo;m not a db expert, and I haven&rsquo;t found any discussion of similar cases, which means that a) we&rsquo;re doing something very wrong or b) we have just very specific requirements. Let me know if it&rsquo;s a former case.</p>
+
+<p>I needed to model this relationships in Thneed, which tured out to be quite tricky, but that&rsquo;s the topic for another blog post.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQLite Type Affinity Strikes Back]]></title>
+    <link href="http://chalup.github.io/blog/2013/06/06/sqlite-type-affinity-strikes-back/"/>
+    <updated>2013-06-06T22:22:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/06/06/sqlite-type-affinity-strikes-back</id>
+    <content type="html"><![CDATA[<p>About a year ago I have wrote about a certain <a href="/blog/2012/06/22/sqlite-unions-gotcha">SQLite gotcha on Android</a>. <strong>tl;dr</strong>: in some cases when you create a view with unions, SQLite cannot determine a type of the column, and since Android binds all selection arguments as strings, SQLite ends up comparing X with &ldquo;X&rdquo;, concludes those are not the same thing and returns fewer rows than you&rsquo;d expect.</p>
+
+<p>Recently the same problem reared it&rsquo;s ugly head. It turns out that it&rsquo;s very easy to create in a view a column with undefined type. It might happen in case of joins, using aggregation functions, subqueries, etc. pretty much anything more fancy than simple select. Therefore I recommend checking the columns type using the <code>pragma table_info(table)</code> command for <strong>every</strong> view:</p>
+
+<p>```
+sqlite> .head on
+sqlite> .mode column
+sqlite> pragma table_info (v);</p>
+
+<p>cid         name        type        notnull     dflt_value  pk</p>
+
+<hr />
+
+<p>0           test                    0                       0
+```</p>
+
+<p>If the type of a column is undefined and you need to use this column in your selection arguments, you should add the UNION with an empty row with well defined column types:</p>
+
+<p>```
+sqlite> CREATE TABLE types (i INTEGER, t TEXT);
+sqlite> CREATE VIEW vfix AS SELECT i AS test FROM types WHERE 1=0 UNION SELECT * FROM v;
+sqlite> pragma table_info (vfix);</p>
+
+<p>cid         name        type        notnull     dflt_value  pk</p>
+
+<hr />
+
+<p>0           test        INTEGER     0                       0
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQLite Unions Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2012/06/22/sqlite-unions-gotcha/"/>
+    <updated>2012-06-22T23:03:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/06/22/sqlite-unions-gotcha</id>
+    <content type="html"><![CDATA[<p>Recently I&rsquo;ve been tracking the problem with SQLite database used in the Android application I&rsquo;m working on. The starting point of the whole story is that I&rsquo;ve noticed that the cursor created with the <code>SQLiteDatabase.query()</code> method returned smaller data set than the same query executed through sqlite3 command line interface. The query in question looked like this:</p>
+
+<p><code>sql
+SELECT * FROM some_view WHERE (column_a=1 OR column_b=1);
+</code></p>
+
+<p>Inside the Android app I was getting rows for the second part of OR clause (i.e. <code>column_b=1</code>), but no rows for the first part.</p>
+
+<p>Quick search through Android sources yielded the clue &ndash; I wasn&rsquo;t executing exactly the same query on the command line. Selection arguments are always bound as a strings, so the question marks in query string should be surrounded with quotes. So the Android app was executing the following query:</p>
+
+<p><code>sql
+SELECT * FROM some_view WHERE (column_a="1" OR column_b="1");
+</code></p>
+
+<p>So now we have another puzzle: why <code>column_b=1</code> and <code>column_b="1"</code> give the same results, but the behavior is different for <code>column_a</code>? Let&rsquo;s try to reproduce the problem:</p>
+
+<p><code>
+sqlite&gt; .mode column
+sqlite&gt; .headers on
+sqlite&gt; CREATE TABLE t (x INTEGER);
+sqlite&gt; INSERT INTO t VALUES(1);
+sqlite&gt; SELECT COUNT(*) FROM t WHERE x=1;
+1
+sqlite&gt; SELECT COUNT(*) FROM t WHERE x="1";
+1
+</code></p>
+
+<p>So far so good, no surprises. Let&rsquo;s create a view similar to the one which causes problems.</p>
+
+<p>```
+sqlite> CREATE VIEW v AS SELECT NULL AS a, x AS b FROM t UNION SELECT x, NULL FROM t;
+sqlite> SELECT * FROM v;
+a           b</p>
+
+<hr />
+
+<pre><code>        1
+</code></pre>
+
+<p>1
+```</p>
+
+<p>Now let&rsquo;s take a look at counts:</p>
+
+<p>```
+sqlite> SELECT COUNT(*) FROM v WHERE b=1;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>1
+sqlite> SELECT COUNT(*) FROM v WHERE b=&ldquo;1&rdquo;;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>1
+sqlite> SELECT COUNT(*) FROM v WHERE a=1;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>1
+sqlite> SELECT COUNT(*) FROM v WHERE a=&ldquo;1&rdquo;;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>0
+```</p>
+
+<p>Yay, we reproduced our bug. But why is this happening?</p>
+
+<p>```
+sqlite> PRAGMA TABLE_INFO(v);
+cid         name        type        notnull     dflt_value  pk</p>
+
+<hr />
+
+<p>0           a                       0                       0
+1           b           integer     0                       0
+```</p>
+
+<p>It seems that the lack of explicitly defined type of the first column prevents type conversion (please note that this is only my assumption based on the observations above; unfortunately the sqlite documentation doesn&rsquo;t cover such cases in detail). How can we work around this issue?</p>
+
+<p>```
+sqlite> CREATE VIEW vfix AS SELECT x AS a, x AS b FROM t WHERE 1=0 UNION SELECT * FROM v;
+sqlite> PRAGMA TABLE_INFO(vfix);
+cid         name        type        notnull     dflt_value  pk</p>
+
+<hr />
+
+<p>0           a           integer     0                       0
+1           b           integer     0                       0
+```</p>
+
+<p>As you can see the column types are correctly copied from the underlying table. Let&rsquo;s check the counts:</p>
+
+<p>```
+sqlite> SELECT COUNT(*) FROM vfix WHERE b=1;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>1
+sqlite> SELECT COUNT(*) FROM vfix WHERE b=&ldquo;1&rdquo;;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>1
+sqlite> SELECT COUNT(*) FROM vfix WHERE a=1;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>1
+sqlite> SELECT COUNT(*) FROM vfix WHERE a=&ldquo;1&rdquo;;</p>
+
+<h2>COUNT(*)</h2>
+
+<p>1
+```</p>
+
+<p>Looks OK. Pretty? No, but it does the job and that&rsquo;s what matters at the end of the day.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The Dark Side of LINQ: LINQ to SQL on Windows Phone]]></title>
+    <link href="http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/"/>
+    <updated>2012-04-10T08:23:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on</id>
+    <content type="html"><![CDATA[<p>In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn LINQ, you won&rsquo;t be able to work with Java collections (Guava makes them bearable, but barely) or Qt/STL containers without throwing in your mouth every now and then.</p>
+
+<p>Here&rsquo;s tl;dr for the non-enlightened: LINQ is a sane way to query and alter the data. Instead of this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>List&lt;int&gt; filtered = new List&lt;int&gt;();
+foreach (int i in unfiltered)
+    if (i % 2 == 0)
+        filtered.Add(i);
+filtered.Sort();
+foreach (int i in filtered)
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>You can just write this:</p>
+
+<p>``` c#
+private void PrintSortedEvenNumbers(IList<int> unfiltered)
+{</p>
+
+<pre><code>foreach (int i in unfiltered.Where(num =&gt; num % 2 == 0).OrderBy(n =&gt; n))
+    Console.Write(i + " ");
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This is a trivial example, but the more complicated code, the more benefit you get from using LINQ.</p>
+
+<p>I started using it for operations on collections and XML files and I immediately fell in love with it. Imagine my joy when I learned that Windows Phone 7.1 finally supports local relational database which can be queried through LINQ to SQL!</p>
+
+<p>I&rsquo;ve read the <a href="http://msdn.microsoft.com/en-us/library/hh286405(v=vs.92">tutorial</a>.aspx), thought a bit about the application I was writing at the time and decided that I need many-to-many relationship. Oops, that&rsquo;s not supported. Well, it&rsquo;s &ldquo;kinda&rdquo; supported, meaning you can create a data structure and insert some data, but when you remove the data the foreign key constraints won&rsquo;t be verified and cascade triggers won&rsquo;t work. I think I can simplify the above statement and just call it &ldquo;not supported feature&rdquo;.</p>
+
+<p>Fortunately I didn&rsquo;t absolutely had to use many-to-many relationship. It would be nicer and would allow us to relax some constraints, but the current data could be as well represented using a nested one-to-many relationships. I&rsquo;ve wrote the code based on aforementioned LINQ to SQL tutorial, wrote the tests, run them and watched in amazement as they fail. After googling a lot and experimenting I was able to make my code work, but it was quite different than the crap they posted on MSDN as tutorial. If you want to use LINQ to SQL, take a look at <a href="https://gist.github.com/1682648">this code on github</a>.</p>
+
+<p>I spent about two days reading about LINQ to SQL and experimenting with the code and in the end I didn&rsquo;t even had the data structure I wanted to. And we&rsquo;re not talking here about rocket science, the SQLite scheme I needed was something like this:</p>
+
+<p>``` sql
+create table x (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table y (id INTEGER PRIMARY KEY AUTOINCREMENT, text STRING);
+create table z (id INTEGER PRIMARY KEY AUTOINCREMENT,</p>
+
+<pre><code>            x_id INTEGER NOT NULL,
+            y_id INTEGER NOT NULL,
+            FOREIGN KEY(x_id) REFERENCES x(id) ON DELETE CASCADE,
+            FOREIGN KEY(y_id) REFERENCES y(id) ON DELETE CASCADE);
+</code></pre>
+
+<p>```</p>
+
+<p>Which leads me to conclusion: LINQ to SQL for Windows Phone just doesn&rsquo;t work. Consider also the amount of boilerplate code I had to write for simple foreign key relation: in case you didn&rsquo;t looked at the github link that&rsquo;s whooping 80 lines of code for every one-to-many relationship. I don&rsquo;t know, maybe there are some tools that generate this stuff for you, but in this case why does the official tutorial even mention writing the table classes by hand? And where are those tools?</p>
+
+<p>Recently I was also playing with Django which also features an ORM for the model definition. You need the foreign key? You use something called <code>ForeignKey</code>. You need the many-to-many relationship? You use the <code>ManyToManyField</code>. Dirt simple. I&rsquo;m sure there are some dark corners you have to be aware of, but the basic stuff just works.</p>
+]]></content>
+  </entry>
+  
+</feed>

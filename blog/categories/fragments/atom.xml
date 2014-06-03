@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Fragments | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/fragments/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Android Nested Fragments in Practice]]></title>
+    <link href="http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice/"/>
+    <updated>2013-03-16T22:03:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice</id>
+    <content type="html"><![CDATA[<p>Last November I wrote about the new feature in rev11 of Android support package &ndash; <a href="/blog/2012/11/13/android-gets-nested-fragments">Fragments nesting</a>. Recently I had an opportunity to use this feature in practice and I&rsquo;d like to share my experience with it.</p>
+
+<p>The basics are simple: each <a href="http://developer.android.com/reference/android/support/v4/app/FragmentActivity.html"><code>FragmentActivity</code></a> and each <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html"><code>Fragment</code></a> has it&rsquo;s own <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html"><code>FragmentManager</code></a>. Inside the Fragment you may call <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getFragmentManager%28%29"><code>getFragmentManager()</code></a> to get the <code>FragmentManager</code> this <code>Fragment</code> was added to, or <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getChildFragmentManager%28%29"><code>getChildFragmentManager()</code></a> to get the <code>FragmentManager</code> which can be used to nest <code>Fragments</code> inside this <code>Fragment</code>. This basic flow works fine, but I have found two issues.</p>
+
+<p>If you have a <code>Fragment</code> with nested <code>Fragments</code> and you save its state with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#saveFragmentInstanceState%28android.support.v4.app.Fragment%29"><code>saveFragmentInstanceState()</code></a> and try to use it in <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#setInitialSavedState%28android.support.v4.app.Fragment.SavedState%29"><code>setInitialSavedState()</code></a> on another instance of this <code>Fragment</code>, you&rsquo;ll get the <code>BadParcelableException</code> from <code>onCreate</code>. Fortunately it&rsquo;s an obvious bug which is easy to fix: you just need to set the correct <code>ClassLoader</code> for a <code>Bundle</code> containing this <code>Fragment</code>&rsquo;s state. There is a <a href="https://android-review.googlesource.com/#/c/40760/">patch for it in support library project Gerrit</a>, and if you need this fix ASAP you may use <a href="https://github.com/futuresimple/android-support-v4">this fork of support lib on Github</a>.</p>
+
+<p>The second issue is related with the <code>Fragments</code> backstack. Inside each <code>FragmentManager</code> you may build stack of <code>Fragments</code> with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentTransaction.html#addToBackStack%28java.lang.String%29"><code>FragmentTransaction.addToBackStack()</code></a> and later on use <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#popBackStack%28%29"><code>popBackStack()</code></a> to go back to the previous state. Pressing hardware back key is also supposed to pop the <code>Fragments</code> from the back stack, but it doesn&rsquo;t take into account any nested <code>Fragments</code>, only <code>Fragments</code> added to the <code>Activity</code>&rsquo;s <code>FragmentManager</code>. This is not so easy to fix, but you may use the following workaround:</p>
+
+<p>``` java
+String FAKE_BACKSTACK_ENTRY = &ldquo;fakeBackstackEntry&rdquo;;</p>
+
+<p>getFragmentManager()</p>
+
+<pre><code>.beginTransaction()
+.addToBackStack(null)
+// call replace/add
+.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+.commit();
+</code></pre>
+
+<p>final FragmentManager rootFragmentManager = getActivity().getSupportFragmentManager();</p>
+
+<p>rootFragmentManager</p>
+
+<pre><code>.beginTransaction()
+.addToBackStack(null)
+.add(new Fragment(), FAKE_BACKSTACK_ENTRY)
+.commit();
+</code></pre>
+
+<p>rootFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener() {
+  @Override
+  public void onBackStackChanged() {</p>
+
+<pre><code>if (rootFragmentManager.findFragmentByTag(FAKE_BACKSTACK_ENTRY) == null) {
+  getFragmentManager().popBackStack();
+  rootFragmentManager.removeOnBackStackChangedListener(this);
+}
+</code></pre>
+
+<p>  }
+});
+```</p>
+
+<p>Quick explanation: together with the actual backstack entry we want to add, we also add the fake backstack entry with empty <code>Fragment</code> to top level <code>FragmentManager</code> and set up <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.OnBackStackChangedListener.html"><code>OnBackStackChangedListener</code></a>. When user presses hardware back button, the fake backstack entry is popped, the backstack listener is triggered and our implementation pops the backstack inside our <code>Fragment</code>. The backstack listeners are not persisted throughout the orientation change, so we need to setup it again inside <code>onCreate()</code>.</p>
+
+<p>Note that there are two issues with this workaround: it allows adding only one backstack entry and this setup won&rsquo;t be automatically recreated from state saved by <code>saveFragmentInstanceState()</code> (fortunately it does work with orientation change). Both issues probably can be solved by some additional hacks, but writing workarounds for workarounds is not something I do unless I really have to, and in this case I neither issue affected me.</p>
+
+<p>Besides those bumps the nested <code>Fragments</code> are a real blessing which allows much more cleaner and reusable code.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Android Gets Nested Fragments]]></title>
+    <link href="http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments/"/>
+    <updated>2012-11-13T21:31:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments</id>
+    <content type="html"><![CDATA[<p>Most of the items in the <a href="http://developer.android.com/about/versions/android-4.2.html">Android 4.2 APIs list</a> are kind of &ldquo;meh&rdquo; to me, but there is one item that&rsquo;s make me very happy: <a href="http://developer.android.com/about/versions/android-4.2.html#NestedFragments">nested fragments</a>. Fragments were supposed to be reusable UI components, but for some unfathomable reason the initial release of the fragments API didn&rsquo;t allow composing a fragment from other fragments. Even during the 2012 Google I/O one of the Google developers said that they have discussed this idea, but they&rsquo;re not sure if it&rsquo;s a good one, which is an absolute surprise to me, because I don&rsquo;t think anyone sane would consider making the <a href="http://developer.android.com/reference/android/view/ViewGroup.html"><code>ViewGroup</code></a> which isn&rsquo;t a subclass of a <a href="http://developer.android.com/reference/android/view/View.html"><code>View</code></a>.</p>
+
+<p>Fragment nesting was a topic I kept on my topic list for a day when I feel I need to bitch about something, but now I&rsquo;m happy to remove it and write this ecstatic post. So now launch your SDK managers and download the r11 of support package! (or wait for half a year and hope it will be added to <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.google.android%22%20AND%20a%3A%22support-v4%22">Maven Central</a>)</p>
+]]></content>
+  </entry>
+  
+</feed>

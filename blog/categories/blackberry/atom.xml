@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: BlackBerry | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/blackberry/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[DIP on BlackBerry]]></title>
+    <link href="http://chalup.github.io/blog/2012/03/02/dip-on-blackberry/"/>
+    <updated>2012-03-02T21:35:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/03/02/dip-on-blackberry</id>
+    <content type="html"><![CDATA[<p>Android has this nice notion of <a href="http://developer.android.com/guide/practices/screens_support.html#density-independence">density-independent pixel</a> &ndash; a measurement unit which ensures the widgets have the same physical size on the devices with different screen size and different resolution. Basically 1dp is 1px on a device with 160dpi and is scaled appropriately on devices with different dpi.</p>
+
+<p>Why is it important? Because if you design your UI in px on high resolution device and then run it on low resolution device, you&rsquo;ll end up with gigantic buttons which take 50% of the screen. If you do the opposite, you&rsquo;ll end up with button, which are too small to click on high res device.</p>
+
+<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png"><img class="center" src="http://developer.android.com/images/screens_support/density-test-bad.png"></a></p>
+
+<p>Unfortunately the BlackBerry doesn&rsquo;t support this concept out of the box. By default you specify the size and position of UI controls in regular pixels. The <a href="http://docs.blackberry.com/en/developers/deliverables/29251/Developing_apps_for_different_screen_sizes_1579421_11.jsp">BlackBerry documentation</a> suggests using this nugget of a code:</p>
+
+<p>``` java
+boolean lowRes = Display.getWidth() &lt;= 320;</p>
+
+<p>if (lowRes)
+{</p>
+
+<pre><code>// The device has a low resolution screen size
+</code></pre>
+
+<p>}
+else
+{</p>
+
+<pre><code>// The device has a high resolution screen size
+</code></pre>
+
+<p>}
+```</p>
+
+<p>But I think there is a better way.</p>
+
+<p>The net.rim.device.api.ui.Ui contains the static method convertSize that can be used, as you might have guessed, for size conversion between different measurement units. We&rsquo;ll of course convert our measurements to pixels, because that&rsquo;s the unit expected by most drawing methods. But what unit will we convert from?</p>
+
+<p>Points are nice, because you probably use them for your font size already, but they are to coarse to be used for all components. Fortunately there is no need to write a wrapper for your own unit, because you can use built-in unit called centipoints. 100 centipoints = 1 point, so this unit should provide enough precision to layout elements just the way you want.</p>
+]]></content>
+  </entry>
+  
+</feed>

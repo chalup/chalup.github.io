@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ContentProvider | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/contentprovider/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Mobilization 2013 and Android Tech Talks Meetup]]></title>
+    <link href="http://chalup.github.io/blog/2013/09/30/mobilization-2013-and-android-tech/"/>
+    <updated>2013-09-30T21:11:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/09/30/mobilization-2013-and-android-tech</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ll give the presentation on this years Mobiliztion conference in Łódź on October 26th:</p>
+
+<p><a href="http://2013.mobilization.pl/"><img class="center" src="http://mobilization.pl/files/baner-speaking-at.png"></a></p>
+
+<p>I&rsquo;ll talk about challenges related to <code>ContentProvider</code> and data model in general we faced during 2 years of development of Base CRM for Android. Even if this particular topic does not concern you, the <a href="http://2013.mobilization.pl/agenda/">agenda</a> is ripe with other interesting Android topics: dependency injection with Dagger, Gradle, unit testing, continuous integration. It&rsquo;s not Android specific event &ndash; there are also several presentations about other mobile platforms.</p>
+
+<p>If you already have other plans for October 26th, you want to share some war stories related to data model on Android or you just want to talk about Android with fellow geeks, I recommend you a MeetUp happening next week in Kraków: <a href="http://www.meetup.com/GDG-Krakow/events/142021512/">Android Tech Talks #3</a>. I&rsquo;ll give a short topic intro, which (I hope) will be followed by deep, insightful discussion.</p>
+]]></content>
+  </entry>
+  
+</feed>

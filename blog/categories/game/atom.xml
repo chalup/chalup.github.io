@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Game | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/game/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing: Merry Cook]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/19/introducing-merry-cook/"/>
+    <updated>2013-08-19T21:10:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/19/introducing-merry-cook</id>
+    <content type="html"><![CDATA[<p><img class="center" src="/images/ss3.png"></p>
+
+<p>After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I knew that the &ldquo;Nu, Pogodi!&rdquo; code wasn&rsquo;t my top achievement, and I had to force myself into diving into it, but I feel it was worth it. Few things I think I did right this time:</p>
+
+<ul>
+<li><strong>Do not keep <em>any</em> game logic in QML</strong>. Qt has an excellent state machine framework, which makes writing the game logic in C++ relatively easy.</li>
+<li><strong>Keep the QML/C++ interface as simple as possible</strong>. Send signals from QML to C++ when user takes some action and update the QML UI from the C++ side by changing QProperties on some context property object. I&rsquo;ve actually used two objects for that, because it made testing a bit easier.</li>
+<li><strong>Unit tests</strong>. I&rsquo;ve set up the testing harness using gmock/gtest and I&rsquo;ve used it to unit test some things. I probably would have been fine without them, since Merry Cook is a very simple but a) it forced me to divide stuff into more manageable classes and b) it gave me a sense of accomplishing something early. It&rsquo;s funny, because even though I&rsquo;m absolutely conscious of the latter fact, I think it gave me enough boost to get to the point where I had moved forward with implementation and polishing, because I really wanted to publish this game.</li>
+<li><strong>QProperty helper</strong>. I wrote an abominable macro for reducing the QProperty boilerplate:</li>
+</ul>
+
+
+<script src="https://gist.github.com/chalup/6267728.js"></script>
+
+
+<p></li></p>
+
+<p>Things still on my TODO list:</p>
+
+<ul>
+<li><strong>More tests</strong>. Besides unit tests I&rsquo;d also like to write some integration tests for the state machine setup and connections, but I didn&rsquo;t have time to think how this should be done without making too much state public just for testing. Maybe next time.</li>
+<li><strong>Refactor &ldquo;Nu, Pogodi!&rdquo;</strong>. I jumped straight into new project, but I should have started with refactoring the old crap. On the other hand, it might have sucked out all the motivation out of me, and had I done it, I wouldn&rsquo;t have been writing this post right now. So, maybe next time.</li>
+<li><strong>Passing enums to QML</strong>. I have no idea what I did wrong, but I couldn&rsquo;t get the QML to see my C++ enums. I&rsquo;ve resorted to passing them as simple ints and using magic numbers on QML side, but it&rsquo;s definitely something I should fix. Obviously not now, but next time.</li>
+</ul>
+
+
+<p>Anyways, I&rsquo;m really happy with the final results, especially with the gameplay experience, which I think mimics the original game very well. Try it yourself!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Screensaver Blocking on Symbian]]></title>
+    <link href="http://chalup.github.io/blog/2012/10/03/screensaver-blocking-on-symbian/"/>
+    <updated>2012-10-03T20:55:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2012/10/03/screensaver-blocking-on-symbian</id>
+    <content type="html"><![CDATA[<p>In my <a href="http://store.ovi.com/content/318428">latest game</a> the players spend significant amount of time just watching the screen and trying to figure the puzzle out. The first few levels are obvious and most players will sole them in a few seconds, but as the difficulty of the puzzles increases the players stare at the screen longer and longer. At some point the screensaver would kick in and piss the player off (fortunately my ragtag QA/betatester team found this issue before launch).</p>
+
+<p><a href="https://www.google.com/search?q=how+to+block+screensaver+symbian+qt">Google search results</a> are (as usual) helpful, but the most promising lead, the <a href="http://doc.qt.digia.com/qtmobility/qsystemscreensaver.html"><code>QSystemScreenSaver</code></a> class is not a solution. There are three problems with it:</p>
+
+<ol>
+<li>The API of the class itself is terrible.</li>
+<li>The API of the <a href="http://doc.qt.digia.com/qtmobility/qml-screensaver.html">related QML element</a> is even worse.</li>
+<li>Last, but not least, it doesn&rsquo;t work (at least not in the Qt Mobility version shipped with the Qt SDK).</li>
+</ol>
+
+
+<p>(BTW: these three points sums up pretty much every experience with Qt Mobility package I had. Qt devs should either kill this festering boil with fire or fix it and rename it, because I learned to dread everything remotely related to Qt Mobility, and I suspect I&rsquo;m not the only one).</p>
+
+<p>Anyways, let&rsquo;s get back to the core of the problem, i.e. &ldquo;how to block the screensaver&rdquo;. Qt Mobility failed, but the task doesn&rsquo;t seems like a rocket science to me. <a href="https://www.google.com/search?q=how+to+block+screensaver+s60+c%2B%2B">Slightly different Google search</a> suggested using native Symbian&rsquo;s <a href="http://library.developer.nokia.com/topic/Nokia_Belle_Developers_Library/GUID-C6E5F800-0637-419E-8FE5-1EBB40E725AA/GUID-C197C9A7-EA05-3F24-9854-542E984C612D.html#GUID-A98E1B31-00E0-3DF1-8D5A-8E815B073D81"><code>User::ResetInactivityTime()</code></a> method. Few minutes and one <code>QTimer</code> later, everything worked:</p>
+
+<p>``` c++</p>
+
+<h1>ifndef SCREENSAVERBLOCKER_H</h1>
+
+<h1>define SCREENSAVERBLOCKER_H</h1>
+
+<h1>include <QObject></h1>
+
+<h1>include <QApplication></h1>
+
+<h1>include <QTimer></h1>
+
+<p>class ScreenSaverBlocker : public QObject
+{</p>
+
+<pre><code>Q_OBJECT
+</code></pre>
+
+<p>public:</p>
+
+<pre><code>explicit ScreenSaverBlocker(QObject *parent = 0) : QObject(parent) {
+    mTimer.setInterval(1000);
+    connect(&amp;mTimer, SIGNAL(timeout()), this, SLOT(blockScreenSaver()));
+    changeScreenSaverState(QApplication::activeWindow() != 0);
+    if (qApp) {
+        qApp-&gt;installEventFilter(this);
+    }
+}
+
+void changeScreenSaverState(bool blockScreenSaver) {
+    if (blockScreenSaver &amp;&amp; !mTimer.isActive()) {
+        mTimer.start();
+    } else {
+        mTimer.stop();
+    }
+}
+</code></pre>
+
+<p>protected:</p>
+
+<pre><code>bool eventFilter(QObject *obj, QEvent *event) {
+    Q_UNUSED(obj)
+    if (event-&gt;type() == QEvent::ApplicationActivate
+     || event-&gt;type() == QEvent::ApplicationDeactivate) {
+        changeScreenSaverState(event-&gt;type() == QEvent::ApplicationActivate);
+    }
+    return false;
+}
+</code></pre>
+
+<p>private slots:</p>
+
+<pre><code>void blockScreenSaver() {
+</code></pre>
+
+<h1>ifdef Q_OS_SYMBIAN</h1>
+
+<pre><code>    User::ResetInactivityTime();
+</code></pre>
+
+<h1>endif</h1>
+
+<pre><code>}
+</code></pre>
+
+<p>private:</p>
+
+<pre><code>QTimer mTimer;
+</code></pre>
+
+<p>};</p>
+
+<h1>endif // SCREENSAVERBLOCKER_H</h1>
+
+<p>```</p>
+
+<p>The important thing in the code above is watching the <code>ApplicationActivate</code> and <code>ApplicationDeactivate</code> events &ndash; after all, when your app is in background, you shouldn&rsquo;t affect the phone behavior. I&rsquo;m not sure if the app would fail the Nokia&rsquo;s QA process without this feature, but it seemed prudent to write the code this way.</p>
+
+<p>If you want to use this object in your QML UI just register it with <a href="http://doc.qt.digia.com/4.7/qdeclarativeengine.html#qmlRegisterType"><code>qmlRegisterType</code></a> and add the registered import and QML element to your root element.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA["Nu, Pogodi!" Bought by Over 2000 Users]]></title>
+    <link href="http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/"/>
+    <updated>2012-02-24T22:53:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users</id>
+    <content type="html"><![CDATA[<p>This week my <a href="http://store.ovi.com/content/219800">&ldquo;Nu, Pogodi!&rdquo;</a> game reached the 2000 downloads from Nokia Store. It might not be a lot if you compare it to the number of Angry Birds downloads, but considering that a) the game is paid, i.e. those 2000 Nokia phone users actually spent their money on my game, and b) it took about two weeks total to program it, I think it&rsquo;s a very good result.</p>
+
+<p>Despite the fact that the game is very simple, <a href="/blog/2012/01/22/how-not-to-test-your-qml-application">I&rsquo;ve learned</a> <a href="/blog/2012/01/31/updating-qt-applications-in-nokia-store/">a lot</a> <a href="/blog/2012/02/01/handling-qml-errors-101">while writing</a> <a href="/blog/2012/02/23/nokia-belle-update-and-content">and publishing it</a>, which makes me very excited about the next, more complex programs I&rsquo;m going to release and gives me enormous motivation boost. Now I just need to get to keep working before it wears off.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing: Nu, Pogodi!]]></title>
+    <link href="http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi/"/>
+    <updated>2012-01-20T12:05:00+01:00</updated>
+    <id>http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi</id>
+    <content type="html"><![CDATA[<p><img class="center" src="/images/nupogodi.png"></p>
+
+<p>&ldquo;Nu, pogodi!&rdquo; is the first application I&rsquo;ve published in Nokia Store (or any other app store, in fact). It&rsquo;s a remake of a classic handheld console game I used to play in my childhood: you had to place a wolf with a basket under one of four roosts to catch the eggs rolling from them. Despite the extreme simplicity and the obvious flaw in the game plot (namely: what the hell does the wolf need the eggs for?) the game was quite addictive and I spent many hours listening to the hypnotizing ticking of the falling eggs (if you played this game you know what I&rsquo;m talking about).</p>
+
+<p>The handheld console I based my game on is actually a Russian clone of &ldquo;Egg&rdquo; game from Nintendo&rsquo;s &ldquo;Game &amp; Watch&rdquo; game series. The main difference is the graphics &ndash; instead of fox and hen the Russian clone featured the Wolf and the Hare from a &ldquo;Nu, pogodi!&rdquo; cartoon &ndash; hence the name of the game.</p>
+
+<p><img class="center" src="/images/handhelds.jpg"></p>
+
+<p>At the beginning of 2011 I wanted to check out the Qt Quick, which was advertised by Nokia as the best thing since sliced bread. I never liked the go-through-a-boring-tutorials way of learning new things, so I started writing UI for a simple game instead. Few weeks later Nokia announced <a href="http://www.developer.nokia.com/Community/Wiki/The_Quick_Competition_2011Q1">Qt Quick Competition</a> &ndash; an event promoting Qt Quick introduced in Qt 4.7. I&rsquo;ve entered the competition with the early version of my game under the name <a href="http://projects.developer.nokia.com/PAGADI">&ldquo;Nu, Pagadi!&rdquo;</a> (which is, as I learned later, incorrect &ndash; apparently in Russian sometimes you write an &lsquo;o&rsquo;, but pronounce it as &lsquo;a&rsquo;), which didn&rsquo;t won me anything, but at least I had a motivation to work on the game. In accordance with the competition rules I&rsquo;ve published my code under OSS license and forgot about the whole deal.</p>
+
+<p>In November 2011 I&rsquo;ve stumbled upon a &ldquo;Soviet Eggs&rdquo; game in Nokia Store. It seems that some company forked my competition entry, added a splash screen and the menu and charged 2 euros for it. I&rsquo;ve watched the gameplay videos on YouTube, and thought I can do much better version than them. I polished my game, added sound effects, better looking menu and new game mode which resembles the gameplay of original game much more than the one included in the competition entry. All those changes took me about one week worth of evenings and one weekend. Subsequentially I&rsquo;ve <a href="/blog/2012/01/22/how-not-to-test-your-qml-application">screwed up testing</a>, published to Nokia Store a game which silently crashed on 90% of the phones, fixed the problem, and then I screwed up again, this time when <a href="/blog/2012/01/31/updating-qt-applications-in-nokia-store">publishing the update</a>.</p>
+
+<p>Despite the initial issues the game reached top 10 bestseller list in two weeks and stayed there ever since. Try it yourself!</p>
+
+<p><a href="http://store.ovi.com/content/219800"><img class="center" src="/images/nupogodi-banner.png"></a></p>
+]]></content>
+  </entry>
+  
+</feed>

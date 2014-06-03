@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Generics | Porcupine Programmer]]></title>
+  <link href="http://chalup.github.io/blog/categories/generics/atom.xml" rel="self"/>
+  <link href="http://chalup.github.io/"/>
+  <updated>2014-06-03T21:59:22+02:00</updated>
+  <id>http://chalup.github.io/</id>
+  <author>
+    <name><![CDATA[Jerzy Chalupski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Random Musings on Visitor Design Pattern in Java]]></title>
+    <link href="http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design/"/>
+    <updated>2013-08-25T13:21:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design</id>
+    <content type="html"><![CDATA[<p>First let&rsquo;s have a quick refresher on what is the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. This pattern consists of two elements: the Visitor, which in the Gang of Four book is defined as an &ldquo;operation to be performed on the elements of an object structure&rdquo;; the second element is the structure itself.</p>
+
+<p>``` java
+public interface Visitable {
+  void accept(Visitor visitor);
+}</p>
+
+<p>public interface Visitor {
+}
+```</p>
+
+<p>The Visitor interface is for now empty, because we haven&rsquo;t declared any Visitable types. In every class implementing Visitable interface we&rsquo;ll call a different method in Visitor:</p>
+
+<p>``` java
+public interface Visitable {
+  void accept(Visitor visitor);
+}</p>
+
+<p>public static class VisitableFoo implements Visitable {
+  @Override
+  public void accept(Visitor visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar implements Visitable {
+  @Override
+  public void accept(Visitor visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor {
+  void visit(VisitableBar visitableBar);
+  void visit(VisitableFoo visitableFoo);
+}
+```</p>
+
+<p>Sounds like a lot of work, but there is a reason for it. You could achieve something similar by simply adding another method to the Visitable pattern, but this means you&rsquo;d have to be able to modify the Visitable classes. The visit/accept double dispatch allows you to write a library like <a href="https://github.com/chalup/thneed">Thneed</a>, which defines the data structure, but leaves the operations implementation to the library users.</p>
+
+<p>The classic visitor pattern requires you to keep some kind of state and to write a method for getting and clearing this state. This might be what you want, but if you want to simply process your Visitable objects one by one and return independent computations, you might want just to return a value from visit() method. So the first twist you can add to classic Visitor pattern is to return a value from visit/accept method:</p>
+
+<p>``` java
+public interface Visitable {
+  <TReturn> TReturn accept(Visitor<TReturn> visitor);
+}</p>
+
+<p>public static class VisitableFoo implements Visitable {
+  @Override
+  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
+
+<pre><code>return visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar implements Visitable {
+  @Override
+  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
+
+<pre><code>return visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<TReturn> {
+  TReturn visit(VisitableBar visitableBar);
+  TReturn visit(VisitableFoo visitableFoo);
+}
+```</p>
+
+<p>Note that only Visitor interface is parametrized with a return type. The only thing that <code>Visitable.accept()</code> do is dispatching the call to Visitor, so there is no point in generifying the whole interface, it&rsquo;s sufficient to make an accept method generic. In fact, making the TReturn type a Visitable interface type would be a design mistake, because you wouldn&rsquo;t be able to create a Visitable that could be accepted by Visitors with different return types:</p>
+
+<p><code>java
+public interface Visitable&lt;TReturn&gt; {&lt;br/&gt;  TReturn accept(Visitor&lt;TReturn&gt; visitor);&lt;br/&gt;}
+</code></p>
+
+<p>Because of type erasure you wouldn&rsquo;t be able to create a Visitable that can accept two Visitors returning a different types:</p>
+
+<p><code>java
+public static class MyVisitable implements Visitable&lt;String&gt;, Visitable&lt;Integer&gt; {
+  // Invalid! "Duplicate class Visitable" compilation error.
+}
+</code></p>
+
+<p>Another thing you can do is generifying the whole pattern. The use case for this is when your Visitables are some kind of containers or wrappers over objects (again, see the <a href="https://github.com/chalup/thneed">Thneed</a> library, where the Visitables subclasses are the different kinds of relationships between data models and are parametrized with the type representing the data models). The naive way to do this is just adding the type parameters:</p>
+
+<p>``` java
+public interface Visitable<T> {
+  void accept(Visitor<T> visitor);
+}</p>
+
+<p>public static class VisitableFoo<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor<T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor<T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<T> {
+  void visit(VisitableBar<T> visitableBar);
+  void visit(VisitableFoo<T> visitableFoo);
+}
+```</p>
+
+<p>There is a problem with the signatures of those interfaces. Let&rsquo;s say that we want our Visitor to operate on Visitables containing Numbers:</p>
+
+<p>``` java
+Visitor<Number> visitor = new Visitor<Number>() {
+  @Override
+  public void visit(VisitableBar<Number> visitableBar) {
+  }</p>
+
+<p>  @Override
+  public void visit(VisitableFoo<Number> visitableFoo) {
+  }
+};
+```</p>
+
+<p>You should think about Visitor as the method accepting the Visitable. If our Visitor can handle something that contains Number, it should also handle something that contain any Number subclass &ndash; it&rsquo;s a classic example of <a href="https://sites.google.com/site/io/effective-java-reloaded">&ldquo;consumer extends, producer super&rdquo;</a> behaviour or <a href="http://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science">covariance and contravariance</a>) in general. In the implementation above however, the strict generics types are causing compilation errors. <a href="http://docs.oracle.com/javase/tutorial/extra/generics/wildcards.html">Generics wildcards</a> to the rescue:</p>
+
+<p>``` java
+public interface Visitable<T> {
+  void accept(Visitor&lt;? super T> visitor);
+}</p>
+
+<p>public static class VisitableFoo<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor&lt;? super T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public static class VisitableBar<T> implements Visitable<T> {
+  @Override
+  public void accept(Visitor&lt;? super T> visitor) {</p>
+
+<pre><code>visitor.visit(this);
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>public interface Visitor<T> {
+  void visit(VisitableBar&lt;? extends T> visitableBar);
+  void visit(VisitableFoo&lt;? extends T> visitableFoo);
+}
+```</p>
+
+<p>Note that the change has to be symmetric, i.e. both the <code>accept()</code> and <code>visit()</code> signatures have to include the bounds. Now we can safely call:</p>
+
+<p>``` java
+VisitableBar<Integer> visitableBar = new VisitableBar<Integer>();
+Visitor<Number> visitor = new Visitor<Number>() {
+  // visit() implementations
+}</p>
+
+<p>visitableBar.accept(visitor);
+```</p>
+]]></content>
+  </entry>
+  
+</feed>
