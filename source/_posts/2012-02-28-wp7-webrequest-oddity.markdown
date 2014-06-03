@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "WP7 WebRequest oddity"
 date: 2012-02-28T09:50:00+01:00
 categories:

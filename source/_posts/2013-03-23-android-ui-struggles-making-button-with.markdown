@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android UI struggles: making a button with centered text and icon"
 date: 2013-03-23T14:04:00+01:00
 categories:

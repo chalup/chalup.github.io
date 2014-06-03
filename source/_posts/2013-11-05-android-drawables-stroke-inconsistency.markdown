@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android drawables stroke inconsistency"
 date: 2013-11-05T00:34:00+01:00
 categories:

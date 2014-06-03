@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android sticky broadcast perils"
 date: 2012-09-26T10:16:00+02:00
 categories:

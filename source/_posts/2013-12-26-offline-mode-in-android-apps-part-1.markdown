@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Offline mode in Android apps, part 1 - data migrations"
 date: 2013-12-26T14:05:00+01:00
 categories:

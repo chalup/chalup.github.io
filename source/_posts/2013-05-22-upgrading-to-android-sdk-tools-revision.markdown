@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Upgrading to Android SDK Tools revision 22"
 date: 2013-05-22T23:31:00+02:00
 categories:

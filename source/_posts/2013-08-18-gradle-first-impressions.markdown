@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Gradle - first impressions"
 date: 2013-08-18T22:36:00+02:00
 categories:

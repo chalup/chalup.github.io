@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android SharedPreferences gotcha"
 date: 2012-09-05T22:26:00+02:00
 categories:

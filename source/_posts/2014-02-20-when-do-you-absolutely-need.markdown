@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "When do you absolutely need WakefulBroadcastReceiver"
 date: 2014-02-20T10:24:00+01:00
 categories:

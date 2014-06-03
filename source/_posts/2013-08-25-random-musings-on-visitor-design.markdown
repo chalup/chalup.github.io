@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Random musings on Visitor design pattern in Java"
 date: 2013-08-25T13:21:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android protip: remove debug logs from release builds with Proguard"
 date: 2012-10-17T22:59:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "On CachePolicy, UriBuilder and mobile .NET"
 date: 2012-02-19T11:00:00+01:00
 categories:

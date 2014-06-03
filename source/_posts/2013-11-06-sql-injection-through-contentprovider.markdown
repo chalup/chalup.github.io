@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "SQL injection through ContentProvider projection"
 date: 2013-11-06T23:45:00+01:00
 categories:

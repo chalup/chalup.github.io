@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "MicroOrm API established"
 date: 2013-06-04T21:51:00+02:00
 categories:

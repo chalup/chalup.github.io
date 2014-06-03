@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Introducing: Merry Cook"
 date: 2013-08-19T21:10:00+02:00
 categories:

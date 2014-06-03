@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "More content coming soon"
 date: 2012-08-24T23:39:00+02:00
 ---

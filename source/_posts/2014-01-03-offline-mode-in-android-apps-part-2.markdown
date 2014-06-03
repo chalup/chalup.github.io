@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Offline mode in Android apps, part 2 - SQLite's ALTER TABLE"
 date: 2014-01-03T20:29:00+01:00
 categories:

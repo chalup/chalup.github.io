@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Word Judge for Symbian available in Nokia Store"
 date: 2012-03-23T23:23:00+01:00
 categories:

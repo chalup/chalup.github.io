@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "UnknownHostException gotcha"
 date: 2012-12-28T11:28:00+01:00
 categories:

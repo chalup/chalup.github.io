@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Mobilization 2013 and Android Tech Talks meetup"
 date: 2013-09-30T21:11:00+02:00
 categories:

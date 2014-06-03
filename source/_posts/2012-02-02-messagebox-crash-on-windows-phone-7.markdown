@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "MessageBox crash on Windows Phone 7"
 date: 2012-02-02T22:05:00+01:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "x:name binding crash on Windows Phone 7.1"
 date: 2012-01-27T11:29:00+01:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android App Widgets issues"
 date: 2014-05-10T15:42:00+02:00
 categories:

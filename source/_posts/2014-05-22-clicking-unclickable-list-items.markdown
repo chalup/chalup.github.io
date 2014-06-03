@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Clicking unclickable list items"
 date: 2014-05-22T22:26:00+02:00
 categories:

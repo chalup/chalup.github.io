@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Use minSdkVersion=10 for libraries"
 date: 2014-02-25T21:42:00+01:00
 categories:

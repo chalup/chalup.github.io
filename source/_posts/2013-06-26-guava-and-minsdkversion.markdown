@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Guava and minSdkVersion"
 date: 2013-06-26T23:03:00+02:00
 categories:

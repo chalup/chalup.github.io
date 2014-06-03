@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: " Weekend hack: viewing markdown attachments in GMail on Android"
 date: 2013-03-05T23:02:00+01:00
 categories:

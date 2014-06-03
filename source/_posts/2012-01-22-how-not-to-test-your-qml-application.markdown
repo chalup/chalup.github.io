@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "How (not to) test your QML application for Symbian"
 date: 2012-01-22T16:15:00+01:00
 categories:

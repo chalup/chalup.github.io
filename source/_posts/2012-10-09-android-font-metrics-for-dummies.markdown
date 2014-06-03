@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android font metrics for dummies"
 date: 2012-10-09T22:59:00+02:00
 categories:

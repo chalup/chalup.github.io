@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "To Guava or not to Guava?"
 date: 2013-12-27T12:10:00+01:00
 categories:

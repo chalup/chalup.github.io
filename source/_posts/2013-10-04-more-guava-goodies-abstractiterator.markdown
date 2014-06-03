@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "More Guava goodies - AbstractIterator"
 date: 2013-10-04T23:19:00+02:00
 categories:

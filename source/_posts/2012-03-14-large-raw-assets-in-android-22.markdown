@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Large raw assets in Android 2.2"
 date: 2012-03-14T07:50:00+01:00
 categories:

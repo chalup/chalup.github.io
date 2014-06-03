@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Screen orientation and QT applications on Symbian Belle"
 date: 2012-09-12T22:05:00+02:00
 categories:

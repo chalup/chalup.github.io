@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "2013 summary"
 date: 2014-01-03T09:07:00+01:00
 ---

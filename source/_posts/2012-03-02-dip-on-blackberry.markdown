@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "DIP on BlackBerry"
 date: 2012-03-02T21:35:00+01:00
 categories:

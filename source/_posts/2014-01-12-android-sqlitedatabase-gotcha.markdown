@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android SQLiteDatabase gotcha"
 date: 2014-01-12T22:15:00+01:00
 categories:

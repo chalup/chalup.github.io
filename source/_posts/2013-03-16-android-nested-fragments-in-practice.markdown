@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android nested Fragments in practice"
 date: 2013-03-16T22:03:00+01:00
 categories:

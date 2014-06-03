@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Git killer feature: content tracking"
 date: 2012-04-17T16:20:00+02:00
 categories:

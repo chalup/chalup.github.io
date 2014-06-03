@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Guava goodies"
 date: 2013-09-21T14:49:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Custom scrollbar graphics in Android"
 date: 2012-08-30T16:04:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Screensaver blocking on Symbian"
 date: 2012-10-03T20:55:00+02:00
 categories:

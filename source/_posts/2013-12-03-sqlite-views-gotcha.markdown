@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "SQLite views gotcha"
 date: 2013-12-03T00:13:00+01:00
 categories:

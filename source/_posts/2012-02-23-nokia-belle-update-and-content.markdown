@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Nokia Belle update and content published in Nokia Store"
 date: 2012-02-23T16:22:00+01:00
 categories:

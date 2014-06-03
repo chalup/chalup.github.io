@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Updating Qt applications in Nokia Store"
 date: 2012-01-31T21:10:00+01:00
 categories:

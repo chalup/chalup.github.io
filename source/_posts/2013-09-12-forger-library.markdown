@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Forger library"
 date: 2013-09-12T23:19:00+02:00
 categories:

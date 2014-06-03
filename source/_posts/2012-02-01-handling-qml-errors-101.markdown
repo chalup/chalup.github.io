@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Handling QML errors 101"
 date: 2012-02-01T12:02:00+01:00
 categories:

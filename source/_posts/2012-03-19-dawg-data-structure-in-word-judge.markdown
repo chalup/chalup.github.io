@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "DAWG data structure in Word Judge"
 date: 2012-03-19T14:01:00+01:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android heterogeneous Adapters gotcha"
 date: 2012-09-19T23:49:00+02:00
 categories:

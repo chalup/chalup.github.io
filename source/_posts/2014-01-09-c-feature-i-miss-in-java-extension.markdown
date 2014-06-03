@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "C# feature I miss in Java: extension methods"
 date: 2014-01-09T00:12:00+01:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "\"Nu, Pogodi!\" bought by over 2000 users"
 date: 2012-02-24T22:53:00+01:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "libphonenumber crash on Android 3.2"
 date: 2013-03-23T18:54:00+01:00
 categories:

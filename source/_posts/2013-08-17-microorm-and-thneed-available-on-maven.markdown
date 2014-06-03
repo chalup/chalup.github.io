@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "MicroOrm and Thneed available on Maven Central"
 date: 2013-08-17T21:56:00+02:00
 categories:

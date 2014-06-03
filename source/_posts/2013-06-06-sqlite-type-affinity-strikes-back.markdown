@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "SQLite type affinity strikes back"
 date: 2013-06-06T22:22:00+02:00
 categories:

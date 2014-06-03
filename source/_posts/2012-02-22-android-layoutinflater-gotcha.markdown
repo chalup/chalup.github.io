@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android LayoutInflater gotcha"
 date: 2012-02-22T09:26:00+01:00
 categories:

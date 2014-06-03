@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Introducing: Word Judge"
 date: 2012-03-10T11:17:00+01:00
 categories:

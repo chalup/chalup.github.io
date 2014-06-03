@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android: sync adapter lifecycle"
 date: 2013-01-30T21:46:00+01:00
 categories:

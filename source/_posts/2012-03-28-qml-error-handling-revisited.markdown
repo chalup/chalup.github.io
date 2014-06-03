@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "QML error handling revisited"
 date: 2012-03-28T23:01:00+02:00
 categories:

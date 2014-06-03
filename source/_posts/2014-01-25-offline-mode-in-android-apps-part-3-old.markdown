@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Offline mode in Android apps, part 3 - old db schemas"
 date: 2014-01-25T11:43:00+01:00
 categories:

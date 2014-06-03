@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "SQLite unions gotcha"
 date: 2012-06-22T23:03:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android gotcha: CursorAdapter constructors"
 date: 2013-04-24T23:14:00+02:00
 categories:

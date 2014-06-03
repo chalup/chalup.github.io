@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android gets nested fragments"
 date: 2012-11-13T21:31:00+01:00
 categories:

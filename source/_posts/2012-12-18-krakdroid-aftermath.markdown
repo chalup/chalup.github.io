@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "KrakDroid aftermath"
 date: 2012-12-18T09:03:00+01:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Background operations on Windows Phone 7"
 date: 2012-04-04T13:23:00+02:00
 categories:

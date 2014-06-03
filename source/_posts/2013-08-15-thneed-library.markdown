@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Thneed library"
 date: 2013-08-15T23:32:00+02:00
 categories:

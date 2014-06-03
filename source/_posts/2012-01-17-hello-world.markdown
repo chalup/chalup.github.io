@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Hello, world"
 date: 2012-01-17T21:07:00+01:00
 ---

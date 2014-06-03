@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "The dark side of LINQ: LINQ to SQL on Windows Phone"
 date: 2012-04-10T08:23:00+02:00
 categories:

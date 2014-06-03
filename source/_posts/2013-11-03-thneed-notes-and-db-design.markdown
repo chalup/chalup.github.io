@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Thneed, notes and db design"
 date: 2013-11-03T18:59:00+01:00
 categories:

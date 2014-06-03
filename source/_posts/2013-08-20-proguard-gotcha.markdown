@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Proguard gotcha"
 date: 2013-08-20T19:53:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Introducing: Nu, Pogodi!"
 date: 2012-01-20T12:05:00+01:00
 categories:

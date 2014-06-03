@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Weekend hack: MicroOrm library"
 date: 2013-05-28T17:28:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "The quest for paramerized converter for Windows Phone 7"
 date: 2012-02-16T13:16:00+01:00
 categories:

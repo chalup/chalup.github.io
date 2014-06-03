@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Guava on Android"
 date: 2013-02-20T22:15:00+01:00
 categories:

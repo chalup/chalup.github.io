@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Customizing UI controls on Android"
 date: 2012-03-08T15:09:00+01:00
 categories:

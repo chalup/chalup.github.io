@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "QML applications on Nokia Belle"
 date: 2012-05-30T20:06:00+02:00
 categories:

@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: "Android stuff you probably want to know about"
 date: 2013-05-29T23:24:00+02:00
 categories:
