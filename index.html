@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="One of the UI patterns that improve lists usability is dividing items into sections. The section might be the first letter of the main text on the &hellip;">
+  <meta name="description" content="The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,133 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-10T09:24:00+02:00" pubdate data-updated="true">Jun 10<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using ant?!&rdquo;.</p>
+
+<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=208140">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
+
+<p>And why ant instead of Maven, gradle, buck or any other non-antique build tool? We&rsquo;ve started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.</p>
+
+<p>It all boils down to this: I can spend several hours working on some useful feature or library or I can use this time to switch to another build system. Until the latter option gives me some real benefits, I&rsquo;d rather work on some features.</p>
+
+<p>Anyways, using ProGuard for IDE builds is easy: go to Project Structure, Facets, and fill appropriate options on ProGuard tab for your project. That&rsquo;s fine for developers workflow, but not for CI.</p>
+
+<p>To make ProGuard work with ant you need to customize your build.xml. First, if this is your first cusomization, change the version tag in build.xml as recommended:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="c">&lt;!-- version-tag: custom --&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then override <code>-debug-obfuscation-check</code> and <code>-release-obfuscation-check</code> targets:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;-set-proguard-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;condition</span> <span class="na">property=</span><span class="s">&quot;proguard.config&quot;</span> <span class="na">value=</span><span class="s">&quot;proguard.cfg&quot;</span> <span class="na">else=</span><span class="s">&quot;proguard_debug.cfg&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;isfalse</span> <span class="na">value=</span><span class="s">&quot;${build.is.packaging.debug}&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/condition&gt;</span>
+</span><span class='line'><span class="nt">&lt;/target&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;-debug-obfuscation-check&quot;</span> <span class="na">depends=</span><span class="s">&quot;-set-proguard-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- enable proguard even in debug mode --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">&quot;proguard.enabled&quot;</span> <span class="na">value=</span><span class="s">&quot;true&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;echo&gt;</span>proguard.config is ${proguard.config}<span class="nt">&lt;/echo&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c">&lt;!-- Secondary dx input (jar files) is empty since all the jar files will be in the obfuscated jar --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;path</span> <span class="na">id=</span><span class="s">&quot;out.dex.jar.input.ref&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/target&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;-release-obfuscation-check&quot;</span> <span class="na">depends=</span><span class="s">&quot;-set-proguard-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;echo</span> <span class="na">level=</span><span class="s">&quot;info&quot;</span><span class="nt">&gt;</span>proguard.config is ${proguard.config}<span class="nt">&lt;/echo&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;condition</span> <span class="na">property=</span><span class="s">&quot;proguard.enabled&quot;</span> <span class="na">value=</span><span class="s">&quot;true&quot;</span> <span class="na">else=</span><span class="s">&quot;false&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;and&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;isset</span> <span class="na">property=</span><span class="s">&quot;build.is.mode.release&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;isset</span> <span class="na">property=</span><span class="s">&quot;proguard.config&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/and&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/condition&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;if</span> <span class="na">condition=</span><span class="s">&quot;${proguard.enabled}&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;then&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;echo</span> <span class="na">level=</span><span class="s">&quot;info&quot;</span><span class="nt">&gt;</span>Proguard.config is enabled<span class="nt">&lt;/echo&gt;</span>
+</span><span class='line'>            <span class="c">&lt;!-- Secondary dx input (jar files) is empty since all the</span>
+</span><span class='line'><span class="c">                 jar files will be in the obfuscated jar --&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;path</span> <span class="na">id=</span><span class="s">&quot;out.dex.jar.input.ref&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/then&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/if&gt;</span>
+</span><span class='line'><span class="nt">&lt;/target&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that I&rsquo;ve also introduced a <code>-set-proguard-config</code> task to be able to select different configuration for debug and release builds. We do not want to do obfuscation or advanced optimisations in debug, a simple dead code pruning is all we need. Since ant properties are immutable, this means that you <strong>HAVE TO</strong> remove proguard.config from your ant.properties.</p>
+
+<p>I&rsquo;m not exactly sure when this happened, but at some point our build times skyrocketed to over 3 minutes. It&rsquo;s fine for release or CI scripts, but absolutely unnacceptable for developers workflow. Fortunately it was enough to bump the heap size for Proguard. In Android Studio go to Settings, Compiler, Android Compilers and pass <code>-Xmx1024m</code> to ProGuard VM options.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1224,53 +1351,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/12/27/to-guava-or-not-to-guava/">To Guava or Not to Guava?</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-12-27T12:10:00+01:00" pubdate data-updated="true">Dec 27<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/12/27/to-guava-or-not-to-guava/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/12/27/to-guava-or-not-to-guava/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I faced this dilemma recently, when I was preparing first release of <a href="https://github.com/chalup/cerberus">Cerberus</a> utility for Android. On one hand, in <a href="https://github.com/chalup/cerberus">Cerberus</a> I used a tiny subset of Guava features which can be trivially rewritten in vanilla Java in 15 minutes, so maybe I should not force Guava down peoples throat?  On the other hand I&rsquo;m a <a href="/blog/2013/09/21/guava-goodies">huge</a> <a href="/blog/2013/10/04/more-guava-goodies-abstractiterator">fan</a> of Guava and I think you should definitely use it in anything more complicated than &ldquo;Hello, world!&rdquo; tutorial, because it either reduces a boilerplate or replaces your handrolled utilities with better, faster and more thoroughly tested implementations.</p>
-
-<p>The &ldquo;this library bloats my apk&rdquo; argument is moot, because you can easily set up the ProGuard configuration which only strips the unused code, without doing any expensive optimizations. It&rsquo;s a good idea, because the dex input will be smaller, which speeds up the build and the apk will be smaller, which reduces time required to upload and install the app on the device.</p>
-
-<p>I found the problem though, which is a bit harder to solve. Modern versions of Guava use some <a href="http://developer.android.com/reference/java/util/NavigableSet.html">Java 1.6 APIs, which are available from API level 9</a>, so when you try to use it on Android 2.2 (API level 8), you&rsquo;ll get the <code>NoSuchMethodException</code> or some other unpleasant runtime error (side note: position #233 on my TODO list was a jar analyzer which finds this problem). <a href="/blog/2013/06/26/guava-and-minsdkversion">On Android 2.2 you&rsquo;re stuck with Guava 13.0.1.</a></p>
-
-<p>This extends also to Guava as a library dependency. If one library supports Android 2.2 and older, it forces old version of Guava as dependency. And if another library depends on more recent version of Guava, you&rsquo;re basically screwed.</p>
-
-<p>One conclusion you can draw from this blog post is that you shouldn&rsquo;t use Guava in your open source libraries to prevent dependency hell, but that&rsquo;s spilling the baby with the bathwater. The problem is not Guava or any other library, the problem are Java 1.6 methods missing from Android API level 8! <a href="http://developer.android.com/about/dashboards/index.html">The statistics from Google</a> indicates that Froyo is used by 1.6%, in case of Base CRM user base it&rsquo;s only 0.2%. So more reasonable course of action is finally <strong>bumping minSdkVersion to 10</strong> (<a href="http://dannyroa.com/2013/10/17/why-its-time-to-support-only-android-4-0-and-above/">or even 14</a>), both for your applications and all the libraries.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1286,6 +1366,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
@@ -1299,10 +1383,6 @@
     
       <li class="post">
         <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
       </li>
     
   </ul>

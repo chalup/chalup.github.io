@@ -9,29 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I have another gotcha for you. Can you tell what&rsquo;s wrong with the following code? 1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23 &hellip;">
+  <meta name="description" content="Let&rsquo;s take a break from Android gotchas and do some mobile necrophilia, i.e. let&rsquo;s talk about Symbian. Recently I received an email from &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -99,6 +77,107 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/09/12/screen-orientation-and-qt-applications/">Screen Orientation and QT Applications on Symbian Belle</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-12T22:05:00+02:00" pubdate data-updated="true">Sep 12<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/09/12/screen-orientation-and-qt-applications/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/09/12/screen-orientation-and-qt-applications/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Let&rsquo;s take a break from <a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android">Android</a> <a href="/blog/2012/09/05/android-sharedpreferences-gotcha">gotchas</a> and do some mobile necrophilia, i.e. let&rsquo;s talk about Symbian.</p>
+
+<p>Recently I received an email from Nokians saying that they are testing Nokia Store content with new firmware update and <a href="http://store.ovi.com/content/219800">my app</a> won&rsquo;t work after update. After few quick email exchanges we narrowed down the problem to <a href="/blog/2012/05/30/qml-applications-on-nokia-belle">screen orientation locking code I wrote about some time ago</a>. It turns out that things can be done much simpler:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">Window</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">Rectangle</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">id</span><span class="o">:</span> <span class="nx">root</span>
+</span><span class='line'>        <span class="nx">anchors</span><span class="p">.</span><span class="nx">fill</span><span class="o">:</span> <span class="nx">parent</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="nx">Component</span><span class="p">.</span><span class="nx">onCompleted</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">screen</span><span class="p">.</span><span class="nx">allowedOrientations</span> <span class="o">=</span> <span class="nx">Screen</span><span class="p">.</span><span class="nx">Landscape</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1">// more stuff</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QApplication</span><span class="o">&gt;</span> <span class="n">app</span><span class="p">(</span><span class="n">createApplication</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">QmlApplicationViewer</span> <span class="n">viewer</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setMainQmlFile</span><span class="p">(</span><span class="n">QLatin1String</span><span class="p">(</span><span class="s">&quot;qml/nupagadi/GameArea.qml&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setOrientation</span><span class="p">(</span><span class="n">QmlApplicationViewer</span><span class="o">::</span><span class="n">ScreenOrientationLockLandscape</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setResizeMode</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">SizeRootObjectToView</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">showExpanded</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="n">app</span><span class="o">-&gt;</span><span class="n">exec</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Less code, no need to comment it as a gotcha/workaround, and it&rsquo;s supposedly futureproof.</p>
+
+<p>I&rsquo;m very positively surprised with Nokians&#8217; approach, responsiveness and this whole experience. Of course I wouldn&rsquo;t be me if I didn&rsquo;t bitch a little bit, namely: why did I have this problem in the first place? I mean, locking the screen orientation is not a rocket science and should be well documented. It should, but unfortunately it&rsquo;s not, like so many things about QML.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1191,49 +1270,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/23/word-judge-for-symbian-available-in/">Word Judge for Symbian Available in Nokia Store</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-23T23:23:00+01:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2012</time>
-        
-           | <a href="/blog/2012/03/23/word-judge-for-symbian-available-in/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/03/23/word-judge-for-symbian-available-in/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Today I have finally pushed both versions of Word Judge through Nokia Store QA. The version with an english dictionary was available for over the week now, but I had to submit the polish version few times until it passed the Nokia tests.</p>
-
-<p>Anyways, the applications are available for free in Nokia Store. Here&rsquo;s the link for <a href="http://store.ovi.com/content/262526">english version</a> and <a href="http://store.ovi.com/content/262535">polish version</a> (might not be available in all countries &ndash; I had to add some restrictions to pass QA process).</p>
-
-<p>Stay tuned for posts about development of Symbian version and enjoy your Scrabble games.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/7/">&larr; Older</a>
@@ -1251,6 +1287,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
@@ -1264,10 +1304,6 @@
     
       <li class="post">
         <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
       </li>
     
   </ul>

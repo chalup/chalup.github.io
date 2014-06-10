@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Android | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-04T00:04:51+02:00</updated>
+  <updated>2014-06-10T09:28:49+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,82 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[ProGuard in Ant Debug Builds]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/"/>
+    <updated>2014-06-10T09:24:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds</id>
+    <content type="html"><![CDATA[<p>The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using ant?!&rdquo;.</p>
+
+<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=208140">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
+
+<p>And why ant instead of Maven, gradle, buck or any other non-antique build tool? We&rsquo;ve started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.</p>
+
+<p>It all boils down to this: I can spend several hours working on some useful feature or library or I can use this time to switch to another build system. Until the latter option gives me some real benefits, I&rsquo;d rather work on some features.</p>
+
+<p>Anyways, using ProGuard for IDE builds is easy: go to Project Structure, Facets, and fill appropriate options on ProGuard tab for your project. That&rsquo;s fine for developers workflow, but not for CI.</p>
+
+<p>To make ProGuard work with ant you need to customize your build.xml. First, if this is your first cusomization, change the version tag in build.xml as recommended:</p>
+
+<p>``` xml</p>
+
+<!-- version-tag: custom -->
+
+
+<p>```</p>
+
+<p>Then override <code>-debug-obfuscation-check</code> and <code>-release-obfuscation-check</code> targets:</p>
+
+<p>``` xml
+<target name="-set-proguard-config"></p>
+
+<pre><code>&lt;condition property="proguard.config" value="proguard.cfg" else="proguard_debug.cfg"&gt;
+    &lt;isfalse value="${build.is.packaging.debug}"/&gt;
+&lt;/condition&gt;
+</code></pre>
+
+<p></target></p>
+
+<p><target name="-debug-obfuscation-check" depends="-set-proguard-config"></p>
+
+<pre><code>&lt;!-- enable proguard even in debug mode --&gt;
+&lt;property name="proguard.enabled" value="true"/&gt;
+&lt;echo&gt;proguard.config is ${proguard.config}&lt;/echo&gt;
+
+&lt;!-- Secondary dx input (jar files) is empty since all the jar files will be in the obfuscated jar --&gt;
+&lt;path id="out.dex.jar.input.ref" /&gt;
+</code></pre>
+
+<p></target></p>
+
+<p><target name="-release-obfuscation-check" depends="-set-proguard-config"></p>
+
+<pre><code>&lt;echo level="info"&gt;proguard.config is ${proguard.config}&lt;/echo&gt;
+&lt;condition property="proguard.enabled" value="true" else="false"&gt;
+    &lt;and&gt;
+        &lt;isset property="build.is.mode.release" /&gt;
+        &lt;isset property="proguard.config" /&gt;
+    &lt;/and&gt;
+&lt;/condition&gt;
+&lt;if condition="${proguard.enabled}"&gt;
+    &lt;then&gt;
+        &lt;echo level="info"&gt;Proguard.config is enabled&lt;/echo&gt;
+        &lt;!-- Secondary dx input (jar files) is empty since all the
+             jar files will be in the obfuscated jar --&gt;
+        &lt;path id="out.dex.jar.input.ref" /&gt;
+    &lt;/then&gt;
+&lt;/if&gt;
+</code></pre>
+
+<p></target>
+```</p>
+
+<p>Note that I&rsquo;ve also introduced a <code>-set-proguard-config</code> task to be able to select different configuration for debug and release builds. We do not want to do obfuscation or advanced optimisations in debug, a simple dead code pruning is all we need. Since ant properties are immutable, this means that you <strong>HAVE TO</strong> remove proguard.config from your ant.properties.</p>
+
+<p>I&rsquo;m not exactly sure when this happened, but at some point our build times skyrocketed to over 3 minutes. It&rsquo;s fine for release or CI scripts, but absolutely unnacceptable for developers workflow. Fortunately it was enough to bump the heap size for Proguard. In Android Studio go to Settings, Compiler, Android Compilers and pass <code>-Xmx1024m</code> to ProGuard VM options.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Clicking Unclickable List Items]]></title>
@@ -313,185 +389,6 @@ alarmManager.set(
 <p><img class="center" src="/images/wakelock.002.png"></p>
 
 <p>This is where the <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> comes into play: its <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#startWakefulService%28android.content.Context,%20android.content.Intent%29"><code>startWakefulService</code></a> and <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#completeWakefulIntent%28android.content.Intent%29"><code>completeWakefulIntent</code></a> static methods encapsulate all the <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLocks</code></a> juggling, allowing you to focus on your business logic.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Offline Mode in Android Apps, Part 3 - Old Db Schemas]]></title>
-    <link href="http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/"/>
-    <updated>2014-01-25T11:43:00+01:00</updated>
-    <id>http://chalup.github.io/blog/2014/01/25/offline-mode-in-android-apps-part-3-old</id>
-    <content type="html"><![CDATA[<p>The <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first post in this series</a> explained the first consequence on implementing the offline mode &ndash; performing the data migrations. In <a href="/blog/2014/01/03/offline-mode-in-android-apps-part-2">second part</a> I showed a workaround for the rudimentary SQLite&rsquo;s ALTER TABLE syntax. If you have checked the link to <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationHelper</code></a> class I mentioned, you migth have noticed that it&rsquo;s just a tiny part of a <a href="https://github.com/futuresimple/android-schema-utils">larger library</a>, which allows you to define database schemas. Note the plural &ldquo;schemas&rdquo;: the whole point of this library is defining both current schema and the schemas for the older versions of your app. This post explains why do you have to do this.</p>
-
-<p>Let&rsquo;s say in the first version you have the following data structure:</p>
-
-<p><code>java
-public static class User {
-  public long id;
-  public String firstName;
-  public String lastName;
-  public String email;
-}
-</code></p>
-
-<p>And the table definition for this table in your <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper.html"><code>SQLiteOpenHelper</code></a> looks like this:</p>
-
-<p>``` java
-private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
-
-<pre><code>TABLE_USERS +
-" ( " +
-ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
-FIRST_NAME + " TEXT " + ", " +
-LAST_NAME + " TEXT " + ", " +
-EMAIL + " TEXT " +
-" ) ";
-</code></pre>
-
-<p>```</p>
-
-<p>In the next version you decide to keep only the first name in a single field, so you change your data structure accordingly and perform the data migration. In the snippet below I used the <code>MigrationHelper</code>, but you might have as well performed the migration by hand:</p>
-
-<p>``` java
-private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
-
-<pre><code>TABLE_USERS +
-" ( " +
-ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
-NAME + " TEXT " + ", " +
-EMAIL + " TEXT " +
-" ) ";
-</code></pre>
-
-<p>@Override
-public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-  MigrationsHelper helper = new MigrationsHelper();
-  if (oldVersion &lt; 2) {</p>
-
-<pre><code>helper.performMigrations(db, 
-    TableMigration.of(TABLE_USERS)
-        .to(CREATE_TABLE_USERS)
-        .withMapping(NAME, FIRST_NAME)
-        .build()
-);
-</code></pre>
-
-<p>  }
-}
-```</p>
-
-<p>Then you decide that the email field should be mandatory, so you change the schema and migrate the data again:</p>
-
-<p>``` java
-private static final String CREATE_TABLE_USERS = &ldquo;CREATE TABLE &rdquo; +</p>
-
-<pre><code>TABLE_USERS +
-" ( " +
-ID + " INTEGER PRIMARY KEY AUTOINCREMENT " + ", " +
-NAME + " TEXT " + ", " +
-EMAIL + " TEXT NOT NULL" +
-" ) ";
-</code></pre>
-
-<p>@Override
-public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-  MigrationsHelper helper = new MigrationsHelper();
-  if (oldVersion &lt; 2) {</p>
-
-<pre><code>helper.performMigrations(db,
-    TableMigration.of(TABLE_USERS)
-        .to(CREATE_TABLE_USERS)
-        .withMapping(NAME, FIRST_NAME)
-        .build()
-);
-</code></pre>
-
-<p>  }
-  if (oldVersion &lt; 3) {</p>
-
-<pre><code>db.execSQL("DELETE FROM " + TABLE_USERS + " WHERE " + EMAIL + " IS NULL");
-helper.performMigrations(db,
-    TableMigration.of(TABLE_USERS)
-        .to(CREATE_TABLE_USERS)
-        .build()
-);
-</code></pre>
-
-<p>  }
-}
-```</p>
-
-<p>The code looks fine, but you have just broken migrations from v1 to v3. If there is an user with a null email field, the app will crash in line 13 above. But why, shouldn&rsquo;t the email field in v2 schema be nullable? It should, but this migration uses the constant containing the latest schema definition with different column constraint.</p>
-
-<p>The worst thing about this kind of bugs is that it might slip through your tests, because the crash happens only if you have a specific data before the application update.</p>
-
-<p>You migth be tempted to define separate migrations from every old version to the latest one (in our case migrations from v1 to v3 and from v2 to v3) and always execute only single migration, but this workaround doesn&rsquo;t scale. For each new migration you&rsquo;d have to check and potentially update every existing migration. When you publish the app twice a month, this quickly becomes a huge problem.</p>
-
-<p>The other solution is to make every migration completely independent from the others, and execute them sequentially. This way, when you define a new migration, you don&rsquo;t have to worry about the previous ones. This means that when you upgrade from v1 to v3, you first upgrade from v1 to v2 and then from v2 to v2 and after the first step the database should be in the same state it were, when the v2 was the latest version. In other words, you have to keep an old database schemas.</p>
-
-<p>As usual there are multiple ways to do this. You can copy the schema definition to another constant and append &ldquo;ver#&rdquo; suffix, but it means there will be a lot of duplicated code (although this code should never, ever change, so it&rsquo;s not as bad as the regular case of copypaste). The other way is to keep the initial database state and all the schema updates. The issue here is that you don&rsquo;t have a place in your code with current schema definition. The opposite solution is to keep the current schema and the list of downgrades. Sounds counterintuitive? Don&rsquo;t worry, that&rsquo;s because it <strong><em>is</em></strong> counterintuitive.</p>
-
-<p>In <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils</a> I&rsquo;ve chosen the third approach, because in the long run it processes less data than the upgrades solution &ndash; in case of upgrade from vN-1 to vN it has to generate only 1 additional schema instead of N-1 schemas. I&rsquo;m still not sure if the code wouldn&rsquo;t be clearer had I went with duplicated schema definitions approach, but the current approach, once you get used to it, works fine. The schema and migrations for our example would look like this:</p>
-
-<p>``` java
-private static final MigrationsHelper MIGRATIONS_HELPER = new MigrationsHelper();
-private static final Schemas SCHEMAS = Schemas.Builder</p>
-
-<pre><code>.currentSchema(3,
-    new TableDefinition(TABLE_USERS,
-        new AddColumn(ID, "INTEGER PRIMARY KEY AUTOINCREMENT"),
-        new AddColumn(NAME, "TEXT"),
-        new AddColumn(EMAIL, "TEXT NOT NULL")
-    )
-)
-.upgradeTo(3,
-    new SimpleMigration() {
-      @Override
-      public void apply(SQLiteDatabase db, Schema schema) {
-        db.execSQL("DELETE FROM " + TABLE_USERS + " WHERE " + EMAIL + " IS NULL");
-      }
-    },
-    auto()
-)
-.downgradeTo(2,
-    new TableDowngrade(TABLE_USERS, new AddColumn(EMAIL, "TEXT"))
-)
-.upgradeTo(2,
-    SimpleTableMigration.of(TABLE_USERS)
-        .withMapping(NAME, FIRST_NAME)
-        .using(MIGRATIONS_HELPER)
-    )
-.downgradeTo(1,
-    new TableDowngrade(TABLE_USERS,
-        new AddColumn(FIRST_NAME, "TEXT"),
-        new AddColumn(LAST_NAME, "TEXT"),
-        new DropColumn(EMAIL)
-    )
-)
-.build();
-</code></pre>
-
-<p>```</p>
-
-<p>There are other benefits of keeping the old schemas in a more reasonable format than raw strings. Most of the schema migrations can be deducted from comparing subsequent schema versions, so you don&rsquo;t have to do it yourself. For example in migration from v2 to v3 I didn&rsquo;t have to specify that I want to migrate the Users table &ndash; the <code>auto()</code> migration automatically handles it. If the <code>auto()</code> is the only migration for a given upgrade, you can skip the whole <code>upgradeTo()</code> block. In our case that covered about 50% migrations, but YMMV.</p>
-
-<p>If you go this way, your <code>onUpgrade</code> method, which usually is the most complex part of <code>SQLiteOpenHelper</code>, can be reduced to this:
-<code>java
-@Override
-public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-  SCHEMAS.upgrade(oldVersion, mContext, db);
-}
-</code></p>
-
-<p>This part concludes the &ldquo;offline mode&rdquo; series. Here&rsquo;s the short recap:</p>
-
-<ul>
-<li>If you don&rsquo;t want to compromise on UX, your application should work regardless whether the user is connected to internet or not.</li>
-<li>In this case the user may end up in a situation when the application is upgraded, but not all data is synced with the server yet. You <strong><em>do not</em></strong> want to lose your users' data. You&rsquo;ll have to migrate them.</li>
-<li>If you migrate your data, you should keep the migrations separate from one another, because otherwise maintaining them becomes a nightmare.</li>
-<li>The best way to do this that I know of, is keeping the old schemas and always performing all migrations sequentially. To make things simpler, I recommend the <a href="https://github.com/futuresimple/android-schema-utils">android-schema-utils library</a>.</li>
-</ul>
-
 ]]></content>
   </entry>
   

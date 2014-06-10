@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="The end of the year is the usual time for looking back and making a new years&#8217; resolutions, so I&rsquo;m going to gloat a little bit and do &hellip;">
+  <meta name="description" content="In Android sticky broadcast perils I hinted that the ContentResolver.isSyncActive() might not yield the results you&rsquo;d expect. I described this &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,64 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/01/30/android-sync-adapter-lifecycle/">Android: Sync Adapter Lifecycle</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-30T21:46:00+01:00" pubdate data-updated="true">Jan 30<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/01/30/android-sync-adapter-lifecycle/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/01/30/android-sync-adapter-lifecycle/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In <a href="/blog/2012/09/26/android-sticky-broadcast-perils">Android sticky broadcast perils</a> I hinted that the <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>ContentResolver.isSyncActive()</code></a> might not yield the results you&rsquo;d expect. I described this issue in <a href="/blog/2012/12/18/krakdroid-aftermath">the talk I gave during the KrakDroid 2012 conference</a>, but the chances are you weren&rsquo;t there, so I decided to write a blog post about it.</p>
+
+<p><a href="http://developer.android.com/reference/android/content/ContentResolver.html"><code>ContentResolver</code></a> contains bunch of static methods with &ldquo;sync&rdquo; in their name: there is <a href="http://developer.android.com/reference/android/content/ContentResolver.html#requestSync%28android.accounts.Account,%20java.lang.String,%20android.os.Bundle%29"><code>requestSync</code></a> to start sync process, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> for polling the sync state, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#addStatusChangeListener%28int,%20android.content.SyncStatusObserver%29"><code>addStatusChangeListener</code></a> for listening for sync status and finally <a href="http://developer.android.com/reference/android/content/ContentResolver.html#cancelSync%28android.accounts.Account,%20java.lang.String%29"><code>cancelSync</code></a> for stopping the ongoing synchronization process. The list looks fine, in a sense that theoretically it&rsquo;s enough to implement the most sync-related functionality on the UI side. Let&rsquo;s see what is the relation between sync status reported by ContentResolver&rsquo;s sync methods and <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method in your <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html"><code>SyncAdapter</code></a>.</p>
+
+<p>After calling <a href="http://developer.android.com/reference/android/content/ContentResolver.html#requestSync%28android.accounts.Account,%20java.lang.String,%20android.os.Bundle%29"><code>requestSync</code></a>, the sync for a given account and authority is added to the pending list, meaning that the sync will be executed as soon as possible (for example when syncs for other authorities are finished). In this state the <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> returns true, the <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> registered with <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_PENDING"><code>SYNC_OBSERVER_TYPE_PENDING</code></a> mask will be triggered, and so on. This happens <strong>before</strong> your <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> code is executed. Nothing especially surprising yet. The key point here is, you should take into consideration that your sync request might spend a lot of time in this state, especially if many other SyncAdapters are registered in the system. For example, it&rsquo;s a good idea to indicate this state somehow in the UI, otherwise your app might seem unresponsive.</p>
+
+<p><img class="center" src="/images/sync.png"></p>
+
+<p>When there are no other pending or active sync requests, your sync operation will move to active state. The <code>onPerformSync</code> will start executing in the background thread, <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> will trigger for both <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_ACTIVE"><code>SYNC_OBSERVER_TYPE_ACTIVE</code></a> (because the sync request enters this state) and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_PENDING"><code>SYNC_OBSERVER_TYPE_PENDING</code></a> (because the sync request leaves this state) masks, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncPending%28android.accounts.Account,%20java.lang.String%29"><code>isSyncPending</code></a> will return false, and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return true. In the happy case, when the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method will finish normally, the <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> for <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SYNC_OBSERVER_TYPE_ACTIVE"><code>SYNC_OBSERVER_TYPE_ACTIVE</code></a> state will trigger again, and <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return false again. Booring.</p>
+
+<p>The things get funny when the cancelSync is called during <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> execution. The sync thread will be interrupted and the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> method in <code>SyncAdapter</code> will be called. The <a href="http://developer.android.com/reference/android/content/SyncStatusObserver.html"><code>SyncStatusObservers</code></a> will trigger, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>isSyncActive</code></a> will return false and so on, and&hellip; at some point the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> method will finish execution.</p>
+
+<p>Say what? Wasn&rsquo;t the sync thread interrupted? It was, but not in a &ldquo;Bang, you&rsquo;re dead&rdquo; way, but in a <a href="http://www.drdobbs.com/parallel/interrupt-politely/207100682">&ldquo;polite&rdquo; way as described by Herb Sutter</a>. All the stuff described in the <a href="http://developer.android.com/reference/java/lang/Thread.html#interrupt%28%29"><code>Thread.interrupt</code></a> happened, but in 99% of cases it means that the thread continues to execute as usual, except the <a href="http://developer.android.com/reference/java/lang/Thread.html#isInterrupted%28%29"><code>interrupted</code></a> flag is now set. To really support cancelling the sync thread you&rsquo;d have to define an interruption points at which you&rsquo;ll check this flag and return early from <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a>.</p>
+
+<p><a href="http://twimgs.com/ddj/images/article/2008/0804/080401hs01_f1.gif"><img class="center" src="http://twimgs.com/ddj/images/article/2008/0804/080401hs01_f1.gif"></a>
+Things get even funnier here: when I used the <a href="http://developer.android.com/reference/java/lang/Thread.html#isInterrupted%28%29"><code>isInterrupted</code></a> method for polling the state of the sync thread, I got the bad case of heisenbug. In 9 cases out of 10 everything worked as expected, but every now and then the thread continued to execute even though earlier the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> was called. I guess somewhere else the <code>InterruptedException</code> was caught and never rethrown or someone else was polling the sync thread with <a href="http://developer.android.com/reference/java/lang/Thread.html#interrupted%28%29"><code>interrupted</code></a> and cleared the flag. To pinpoint the root cause of this behavior I&rsquo;d have to read through a lot of code, so instead I implemented my own flag and set it in <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onSyncCanceled%28%29"><code>onSyncCancelled</code></a> callback. Works like a charm.</p>
+
+<p>Why is this an issue though? Can&rsquo;t we just let <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> to finish in some undefined future? In most cases that&rsquo;s exactly the right way to think about this issue, but if the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html#onPerformSync%28android.accounts.Account,%20android.os.Bundle,%20java.lang.String,%20android.content.ContentProviderClient,%20android.content.SyncResult%29"><code>onPerformSync</code></a> holds a lock on some resource like database handle, you might need to ensure that this lock is released as soon as possible after user cancels the sync.</p>
+
+<p><strong>Recap</strong>: show the sync pending state in the UI and if you really have to know when the sync has ended, do not trust the <code>ContentResolver</code> sync methods.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -783,107 +841,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/09/12/screen-orientation-and-qt-applications/">Screen Orientation and QT Applications on Symbian Belle</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-12T22:05:00+02:00" pubdate data-updated="true">Sep 12<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/09/12/screen-orientation-and-qt-applications/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/09/12/screen-orientation-and-qt-applications/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Let&rsquo;s take a break from <a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android">Android</a> <a href="/blog/2012/09/05/android-sharedpreferences-gotcha">gotchas</a> and do some mobile necrophilia, i.e. let&rsquo;s talk about Symbian.</p>
-
-<p>Recently I received an email from Nokians saying that they are testing Nokia Store content with new firmware update and <a href="http://store.ovi.com/content/219800">my app</a> won&rsquo;t work after update. After few quick email exchanges we narrowed down the problem to <a href="/blog/2012/05/30/qml-applications-on-nokia-belle">screen orientation locking code I wrote about some time ago</a>. It turns out that things can be done much simpler:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">Window</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">Rectangle</span> <span class="p">{</span>
-</span><span class='line'>        <span class="nx">id</span><span class="o">:</span> <span class="nx">root</span>
-</span><span class='line'>        <span class="nx">anchors</span><span class="p">.</span><span class="nx">fill</span><span class="o">:</span> <span class="nx">parent</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="nx">Component</span><span class="p">.</span><span class="nx">onCompleted</span><span class="o">:</span> <span class="p">{</span>
-</span><span class='line'>            <span class="nx">screen</span><span class="p">.</span><span class="nx">allowedOrientations</span> <span class="o">=</span> <span class="nx">Screen</span><span class="p">.</span><span class="nx">Landscape</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="c1">// more stuff</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QApplication</span><span class="o">&gt;</span> <span class="n">app</span><span class="p">(</span><span class="n">createApplication</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">));</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">QmlApplicationViewer</span> <span class="n">viewer</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setMainQmlFile</span><span class="p">(</span><span class="n">QLatin1String</span><span class="p">(</span><span class="s">&quot;qml/nupagadi/GameArea.qml&quot;</span><span class="p">));</span>
-</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setOrientation</span><span class="p">(</span><span class="n">QmlApplicationViewer</span><span class="o">::</span><span class="n">ScreenOrientationLockLandscape</span><span class="p">);</span>
-</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setResizeMode</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">SizeRootObjectToView</span><span class="p">);</span>
-</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">showExpanded</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">return</span> <span class="n">app</span><span class="o">-&gt;</span><span class="n">exec</span><span class="p">();</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Less code, no need to comment it as a gotcha/workaround, and it&rsquo;s supposedly futureproof.</p>
-
-<p>I&rsquo;m very positively surprised with Nokians&#8217; approach, responsiveness and this whole experience. Of course I wouldn&rsquo;t be me if I didn&rsquo;t bitch a little bit, namely: why did I have this problem in the first place? I mean, locking the screen orientation is not a rocket science and should be well documented. It should, but unfortunately it&rsquo;s not, like so many things about QML.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -901,6 +858,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
@@ -914,10 +875,6 @@
     
       <li class="post">
         <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/01/25/offline-mode-in-android-apps-part-3-old/">Offline Mode in Android Apps, Part 3 - Old Db Schemas</a>
       </li>
     
   </ul>

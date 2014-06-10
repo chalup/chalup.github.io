@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ProGuard in Ant Debug Builds - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">ProGuard in Ant Debug Builds</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-10T09:24:00+02:00" pubdate data-updated="true">Jun 10<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using ant?!&rdquo;.</p>
+
+<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=208140">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
+
+<p>And why ant instead of Maven, gradle, buck or any other non-antique build tool? We&rsquo;ve started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.</p>
+
+<p>It all boils down to this: I can spend several hours working on some useful feature or library or I can use this time to switch to another build system. Until the latter option gives me some real benefits, I&rsquo;d rather work on some features.</p>
+
+<p>Anyways, using ProGuard for IDE builds is easy: go to Project Structure, Facets, and fill appropriate options on ProGuard tab for your project. That&rsquo;s fine for developers workflow, but not for CI.</p>
+
+<p>To make ProGuard work with ant you need to customize your build.xml. First, if this is your first cusomization, change the version tag in build.xml as recommended:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="c">&lt;!-- version-tag: custom --&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then override <code>-debug-obfuscation-check</code> and <code>-release-obfuscation-check</code> targets:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;-set-proguard-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;condition</span> <span class="na">property=</span><span class="s">&quot;proguard.config&quot;</span> <span class="na">value=</span><span class="s">&quot;proguard.cfg&quot;</span> <span class="na">else=</span><span class="s">&quot;proguard_debug.cfg&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;isfalse</span> <span class="na">value=</span><span class="s">&quot;${build.is.packaging.debug}&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/condition&gt;</span>
+</span><span class='line'><span class="nt">&lt;/target&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;-debug-obfuscation-check&quot;</span> <span class="na">depends=</span><span class="s">&quot;-set-proguard-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- enable proguard even in debug mode --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">&quot;proguard.enabled&quot;</span> <span class="na">value=</span><span class="s">&quot;true&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;echo&gt;</span>proguard.config is ${proguard.config}<span class="nt">&lt;/echo&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c">&lt;!-- Secondary dx input (jar files) is empty since all the jar files will be in the obfuscated jar --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;path</span> <span class="na">id=</span><span class="s">&quot;out.dex.jar.input.ref&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/target&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;target</span> <span class="na">name=</span><span class="s">&quot;-release-obfuscation-check&quot;</span> <span class="na">depends=</span><span class="s">&quot;-set-proguard-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;echo</span> <span class="na">level=</span><span class="s">&quot;info&quot;</span><span class="nt">&gt;</span>proguard.config is ${proguard.config}<span class="nt">&lt;/echo&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;condition</span> <span class="na">property=</span><span class="s">&quot;proguard.enabled&quot;</span> <span class="na">value=</span><span class="s">&quot;true&quot;</span> <span class="na">else=</span><span class="s">&quot;false&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;and&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;isset</span> <span class="na">property=</span><span class="s">&quot;build.is.mode.release&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;isset</span> <span class="na">property=</span><span class="s">&quot;proguard.config&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/and&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/condition&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;if</span> <span class="na">condition=</span><span class="s">&quot;${proguard.enabled}&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;then&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;echo</span> <span class="na">level=</span><span class="s">&quot;info&quot;</span><span class="nt">&gt;</span>Proguard.config is enabled<span class="nt">&lt;/echo&gt;</span>
+</span><span class='line'>            <span class="c">&lt;!-- Secondary dx input (jar files) is empty since all the</span>
+</span><span class='line'><span class="c">                 jar files will be in the obfuscated jar --&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;path</span> <span class="na">id=</span><span class="s">&quot;out.dex.jar.input.ref&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/then&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/if&gt;</span>
+</span><span class='line'><span class="nt">&lt;/target&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that I&rsquo;ve also introduced a <code>-set-proguard-config</code> task to be able to select different configuration for debug and release builds. We do not want to do obfuscation or advanced optimisations in debug, a simple dead code pruning is all we need. Since ant properties are immutable, this means that you <strong>HAVE TO</strong> remove proguard.config from your ant.properties.</p>
+
+<p>I&rsquo;m not exactly sure when this happened, but at some point our build times skyrocketed to over 3 minutes. It&rsquo;s fine for release or CI scripts, but absolutely unnacceptable for developers workflow. Fortunately it was enough to bump the heap size for Proguard. In Android Studio go to Settings, Compiler, Android Compilers and pass <code>-Xmx1024m</code> to ProGuard VM options.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-10T09:24:00+02:00" pubdate data-updated="true">Jun 10<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/proguard/'>ProGuard</a>, <a class='category' href='/blog/categories/ant/'>ant</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/05/22/clicking-unclickable-list-items/" title="Previous Post: Clicking unclickable list items">&laquo; Clicking unclickable list items</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 0,
+            skip_forks: true,
+            filter_repos: [ "microorm", "thneed", "dawggenerator", "cerberus" ],
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/106340839330487061995?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Proguard | Porcupine Programmer]]></title>
+  <title><![CDATA[Category: ProGuard | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/proguard/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-04T00:04:51+02:00</updated>
+  <updated>2014-06-10T09:28:49+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -14,134 +14,78 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Proguard Gotcha]]></title>
-    <link href="http://chalup.github.io/blog/2013/08/20/proguard-gotcha/"/>
-    <updated>2013-08-20T19:53:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2013/08/20/proguard-gotcha</id>
-    <content type="html"><![CDATA[<p>A while ago I wrote about <a href="/blog/2012/10/17/android-protip-remove-debug-logs-from">removing the logs from release builds using Proguard</a>. As usual, I&rsquo;ve found a gotcha that might cost you a couple hours of head scratching.</p>
+    <title type="html"><![CDATA[ProGuard in Ant Debug Builds]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/"/>
+    <updated>2014-06-10T09:24:00+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds</id>
+    <content type="html"><![CDATA[<p>The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using ant?!&rdquo;.</p>
 
-<p>Let&rsquo;s say that we have a code like this somewhere:</p>
+<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=208140">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
 
-<p>``` java
-package com.porcupineprogrammer.proguardgotcha;</p>
+<p>And why ant instead of Maven, gradle, buck or any other non-antique build tool? We&rsquo;ve started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.</p>
 
-<p>import android.app.Activity;
-import android.os.Bundle;
-import android.util.Log;</p>
+<p>It all boils down to this: I can spend several hours working on some useful feature or library or I can use this time to switch to another build system. Until the latter option gives me some real benefits, I&rsquo;d rather work on some features.</p>
 
-<p>public class MainActivity extends Activity {
-  static final String TAG = &ldquo;ProguardGotcha&rdquo;;</p>
+<p>Anyways, using ProGuard for IDE builds is easy: go to Project Structure, Facets, and fill appropriate options on ProGuard tab for your project. That&rsquo;s fine for developers workflow, but not for CI.</p>
 
-<p>  @Override
-  protected void onCreate(Bundle savedInstanceState) {</p>
+<p>To make ProGuard work with ant you need to customize your build.xml. First, if this is your first cusomization, change the version tag in build.xml as recommended:</p>
 
-<pre><code>super.onCreate(savedInstanceState);
+<p>``` xml</p>
 
-Log.d(TAG, doNotRunOnProduction());
+<!-- version-tag: custom -->
+
+
+<p>```</p>
+
+<p>Then override <code>-debug-obfuscation-check</code> and <code>-release-obfuscation-check</code> targets:</p>
+
+<p>``` xml
+<target name="-set-proguard-config"></p>
+
+<pre><code>&lt;condition property="proguard.config" value="proguard.cfg" else="proguard_debug.cfg"&gt;
+    &lt;isfalse value="${build.is.packaging.debug}"/&gt;
+&lt;/condition&gt;
 </code></pre>
 
-<p>  }</p>
+<p></target></p>
 
-<p>  private String doNotRunOnProduction() {</p>
+<p><target name="-debug-obfuscation-check" depends="-set-proguard-config"></p>
 
-<pre><code>Log.e(TAG, "FIRE ZE MISSILES!");
+<pre><code>&lt;!-- enable proguard even in debug mode --&gt;
+&lt;property name="proguard.enabled" value="true"/&gt;
+&lt;echo&gt;proguard.config is ${proguard.config}&lt;/echo&gt;
 
-return "Harmless log message";
+&lt;!-- Secondary dx input (jar files) is empty since all the jar files will be in the obfuscated jar --&gt;
+&lt;path id="out.dex.jar.input.ref" /&gt;
 </code></pre>
 
-<p>  }
-}
-```</p>
+<p></target></p>
 
-<p>The <code>doNotRunOnProduction()</code> method might perform some expensive database query, send some data over the network or launch intercontinental missiles &ndash; anyways do something that you don&rsquo;t want to happen in production app. If you run the code on the debug build you&rsquo;ll of course get the following logs.</p>
+<p><target name="-release-obfuscation-check" depends="-set-proguard-config"></p>
 
-<p><code>
-08-20 19:31:34.183    1819-1819/com.porcupineprogrammer.proguardgotcha E/ProguardGotcha: FIRE ZE MISSILES!
-08-20 19:31:34.183    1819-1819/com.porcupineprogrammer.proguardgotcha D/ProguardGotcha: Harmless log message
-</code></p>
-
-<p>Now, let&rsquo;s add Proguard config that removes all the <code>Log.d()</code> calls:</p>
-
-<p><code>
--assumenosideeffects class android.util.Log {
-  public static *** d(...);
-}
-</code></p>
-
-<p>We might expect the <code>Log.e()</code> call to be gone as well, but alas, here is what we get:</p>
-
-<p><code>
-08-20 19:34:45.733    2078-2078/com.porcupineprogrammer.proguardgotcha E/ProguardGotcha: FIRE ZE MISSILES!
-</code></p>
-
-<p>The key point to understanding what is happening here is the fact that the Proguard does not operate on the source code, but on the compiled bytecode. In this case, what the Proguard processes is more like this code:</p>
-
-<p>``` java
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-  super.onCreate(savedInstanceState);</p>
-
-<p>  String tmp = doNotRunOnProduction();
-  Log.d(TAG, tmp);
-}
-```</p>
-
-<p>One might argue that the temporary variable is not used and Proguard should remove it as well. Actually that might happen if you add some other Proguard configuration settings, but the point of this blog post is that when you specify that you want to remove calls to <code>Log.d()</code>, you shouldn&rsquo;t expect that any other calls will be affected. They might, but if your code really launches the missiles (or does something with similar effect for your users), you don&rsquo;t want to bet on this.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Guava on Android]]></title>
-    <link href="http://chalup.github.io/blog/2013/02/20/guava-on-android/"/>
-    <updated>2013-02-20T22:15:00+01:00</updated>
-    <id>http://chalup.github.io/blog/2013/02/20/guava-on-android</id>
-    <content type="html"><![CDATA[<p>In November 2012, the revision 21 of Android SDK Tools was released and one of the items in the <a href="http://developer.android.com/tools/sdk/tools-notes.html">release notes</a> made me a very happy panda:</p>
-
-<p><blockquote><p>Improved the build time by pre-dexing libraries (both JAR files and library projects).</p></blockquote></p>
-
-<p>This change solved the most problematic issue with <a href="http://code.google.com/p/guava-libraries/">Guava</a> and other large libraries &ndash; build time. Before this change Android tools executed dex for your code and every referenced library every time you wanted to launch the application, which in case of Guava took ages and required increasing heap space for Java VM, because the Eclipse closed with &ldquo;Unable to execute dex: Java heap space&rdquo; error.</p>
-
-<p>IntelliJ users could work around this issue by enabling Proguard for debug builds, which could reduce the size of dex input by removing unused code. Eclipse users might try generalizing the <a href="http://code.google.com/p/treeshaker/">Treeshaker plugin</a>, which does pretty much the same inside a custom compilation step added before dexing. But there was no straight way to use Guava and keep the build times on the sane level.</p>
-
-<p>Now the first build still takes ages, and the Eclipse still crashes if you don&rsquo;t bump its heap space, but for all consecutive builds everything works blazing fast. Goodbye hand rolled stuff, welcome <a href="http://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">immutable collections</a>, <a href="http://code.google.com/p/guava-libraries/wiki/OrderingExplained">fluent comparators</a>, <a href="http://code.google.com/p/guava-libraries/wiki/CommonObjectUtilitiesExplained#hashCode">hashCode helper</a> and tons of <a href="http://code.google.com/p/guava-libraries/wiki/GuavaExplained">other goodness</a>. I keep finding in our code base whole chunks of code which can be replaced with one or two lines utilizing Guava features. I plan to post a summary of those changes.</p>
-
-<p>Final note: if you are using Proguard, remember to add Guava specific entries <a href="http://code.google.com/p/guava-libraries/wiki/UsingProGuardWithGuava">mentioned in the documentation</a>.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Android Protip: Remove Debug Logs From Release Builds With Proguard]]></title>
-    <link href="http://chalup.github.io/blog/2012/10/17/android-protip-remove-debug-logs-from/"/>
-    <updated>2012-10-17T22:59:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2012/10/17/android-protip-remove-debug-logs-from</id>
-    <content type="html"><![CDATA[<p>I use the <code>android.util.Log</code> extensively &ndash; often it&rsquo;s faster than starting the debugger and (unlike debugging) it&rsquo;s always on, which is invaluable when you&rsquo;re trying to track the root cause of some hard to reproduce bugs. Logging is also nice for release candidate builds you give to the QA team &ndash; if they find some bugs you&rsquo;ll have more information than just a stack trace.</p>
-
-<p>On the other hand you don&rsquo;t want to keep all those logs for release builds, mostly for performance and privacy reasons. If you google around for a solution to this issue you&rsquo;ll probably find a dozen ideas like using a wrapper for logging class, using a dedicated logging framework or even some sed/awk scripts to ant build process. Among those ideas is the one I&rsquo;d like to recommend: customizing <a href="http://developer.android.com/tools/help/proguard.html">Proguard</a> configuration.</p>
-
-<p>Proguard is automatically run in release builds by ant and Export wizards from Eclipse and there is an <a href="http://proguard.sourceforge.net/index.html#manual/usage.html">optimization option</a>, which can be used to disable logs:</p>
-
-<p><blockquote><p>-assumenosideeffects</p></p><p><p>Specifies methods that don&rsquo;t have any side effects (other than maybe returning a value). In the optimization step, ProGuard will then remove calls to such methods, if it can determine that the return values aren&rsquo;t used.</p></blockquote></p>
-
-<p>I wouldn&rsquo;t use this tool for the purpose stated in the manual, because even if my code doesn&rsquo;t have any side effects, the methods called from it might have ones; I&rsquo;d rather use some static code analysis tool to find the unnecessary calls and manually remove them. It looks perfect for suppressing the logs though and it&rsquo;s very simple to set up &ndash; just add the following lines to the proguard-project.txt file generated by <a href="http://developer.android.com/tools/help/android.html">android command line tool</a>:</p>
-
-<p>```
--assumenosideeffects class android.util.Log {</p>
-
-<pre><code>public static *** d(...);
-public static *** v(...);
-public static *** i(...);
-public static *** w(...);
-public static *** e(...);
+<pre><code>&lt;echo level="info"&gt;proguard.config is ${proguard.config}&lt;/echo&gt;
+&lt;condition property="proguard.enabled" value="true" else="false"&gt;
+    &lt;and&gt;
+        &lt;isset property="build.is.mode.release" /&gt;
+        &lt;isset property="proguard.config" /&gt;
+    &lt;/and&gt;
+&lt;/condition&gt;
+&lt;if condition="${proguard.enabled}"&gt;
+    &lt;then&gt;
+        &lt;echo level="info"&gt;Proguard.config is enabled&lt;/echo&gt;
+        &lt;!-- Secondary dx input (jar files) is empty since all the
+             jar files will be in the obfuscated jar --&gt;
+        &lt;path id="out.dex.jar.input.ref" /&gt;
+    &lt;/then&gt;
+&lt;/if&gt;
 </code></pre>
 
-<p>}
+<p></target>
 ```</p>
 
-<p>You can of course keep some of the priority levels by removing lines from this config.</p>
+<p>Note that I&rsquo;ve also introduced a <code>-set-proguard-config</code> task to be able to select different configuration for debug and release builds. We do not want to do obfuscation or advanced optimisations in debug, a simple dead code pruning is all we need. Since ant properties are immutable, this means that you <strong>HAVE TO</strong> remove proguard.config from your ant.properties.</p>
 
-<p>The nice thing about this solution is that you have to set it only once and it will just work for all further release builds.</p>
-
-<p><strong>UPDATE (August 2013):</strong> do not assume that Proguard will remove any code other than the methods listed in assumenosideeffects setting. See <a href="/blog/2013/08/20/proguard-gotcha">&ldquo;Proguard gotcha&rdquo;</a> post for more details.</p>
+<p>I&rsquo;m not exactly sure when this happened, but at some point our build times skyrocketed to over 3 minutes. It&rsquo;s fine for release or CI scripts, but absolutely unnacceptable for developers workflow. Fortunately it was enough to bump the heap size for Proguard. In Android Studio go to Settings, Compiler, Android Compilers and pass <code>-Xmx1024m</code> to ProGuard VM options.</p>
 ]]></content>
   </entry>
   
