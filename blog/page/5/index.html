@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="In Android sticky broadcast perils I hinted that the ContentResolver.isSyncActive() might not yield the results you&rsquo;d expect. I described this &hellip;">
+  <meta name="description" content="In November 2012, the revision 21 of Android SDK Tools was released and one of the items in the release notes made me a very happy panda: Improved &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,56 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/02/20/guava-on-android/">Guava on Android</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-02-20T22:15:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/02/20/guava-on-android/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/02/20/guava-on-android/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In November 2012, the revision 21 of Android SDK Tools was released and one of the items in the <a href="http://developer.android.com/tools/sdk/tools-notes.html">release notes</a> made me a very happy panda:</p>
+
+<blockquote><p>Improved the build time by pre-dexing libraries (both JAR files and library projects).</p></blockquote>
+
+
+<p>This change solved the most problematic issue with <a href="http://code.google.com/p/guava-libraries/">Guava</a> and other large libraries &ndash; build time. Before this change Android tools executed dex for your code and every referenced library every time you wanted to launch the application, which in case of Guava took ages and required increasing heap space for Java VM, because the Eclipse closed with &ldquo;Unable to execute dex: Java heap space&rdquo; error.</p>
+
+<p>IntelliJ users could work around this issue by enabling Proguard for debug builds, which could reduce the size of dex input by removing unused code. Eclipse users might try generalizing the <a href="http://code.google.com/p/treeshaker/">Treeshaker plugin</a>, which does pretty much the same inside a custom compilation step added before dexing. But there was no straight way to use Guava and keep the build times on the sane level.</p>
+
+<p>Now the first build still takes ages, and the Eclipse still crashes if you don&rsquo;t bump its heap space, but for all consecutive builds everything works blazing fast. Goodbye hand rolled stuff, welcome <a href="http://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">immutable collections</a>, <a href="http://code.google.com/p/guava-libraries/wiki/OrderingExplained">fluent comparators</a>, <a href="http://code.google.com/p/guava-libraries/wiki/CommonObjectUtilitiesExplained#hashCode">hashCode helper</a> and tons of <a href="http://code.google.com/p/guava-libraries/wiki/GuavaExplained">other goodness</a>. I keep finding in our code base whole chunks of code which can be replaced with one or two lines utilizing Guava features. I plan to post a summary of those changes.</p>
+
+<p>Final note: if you are using Proguard, remember to add Guava specific entries <a href="http://code.google.com/p/guava-libraries/wiki/UsingProGuardWithGuava">mentioned in the documentation</a>.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -674,173 +724,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/09/19/android-heterogeneous-adapters-gotcha/">Android Heterogeneous Adapters Gotcha</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-19T23:49:00+02:00" pubdate data-updated="true">Sep 19<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/09/19/android-heterogeneous-adapters-gotcha/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/09/19/android-heterogeneous-adapters-gotcha/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Unless you were writing your Android apps under some kind of digital rock, you heard about Mark Murphy a.k.a. <a href="https://github.com/commonsguy">commonsguy</a>. Today I&rsquo;d like to write about a gotcha related to heterogeneous Adapters in general, which recently bit me in the rear when I used (misused?) one of Mark&rsquo;s Android components &ndash; <a href="https://github.com/commonsguy/cwac-merge">MergeAdapter</a>.</p>
-
-<p>As you can read on the <a href="https://github.com/commonsguy/cwac-merge">project&rsquo;s site</a>, &ldquo;MergeAdapter accepts a mix of Adapters and Views and presents them as one contiguous whole to whatever ListView it is poured into&rdquo;. This means of course that this is a heterogeneous adapter, i.e. the one which returns integer > 1 from <a href="http://developer.android.com/reference/android/widget/BaseAdapter.html"><code>getViewTypeCount()</code></a>. The implementation of this method is pretty straightforward &ndash; it just iterates through the list of adapters it consists of and returns the sum of <code>getViewTypeCount()</code>s :</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">getViewTypeCount</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">int</span> <span class="n">total</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">for</span> <span class="o">(</span><span class="n">PieceState</span> <span class="n">piece</span> <span class="o">:</span> <span class="n">pieces</span><span class="o">.</span><span class="na">getRawPieces</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">total</span><span class="o">+=</span><span class="n">piece</span><span class="o">.</span><span class="na">adapter</span><span class="o">.</span><span class="na">getViewTypeCount</span><span class="o">();</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">return</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">total</span><span class="o">,</span> <span class="mi">1</span><span class="o">));</span> <span class="c1">// needed for</span>
-</span><span class='line'>                              <span class="c1">// setListAdapter() before</span>
-</span><span class='line'>                              <span class="c1">// content add&#39;</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Everything is fine and dandy if you use the code like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">icicle</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">icicle</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">setContentView</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">main</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">MergeAdapter</span> <span class="n">adapter</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MergeAdapter</span><span class="o">();</span>
-</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addView</span><span class="o">(</span><span class="n">someView</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addAdapter</span><span class="o">(</span><span class="n">someAdapter</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">setListAdapter</span><span class="o">(</span><span class="n">adapter</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But sometimes you might want to attach the MergeAdapter to ListView and add fill it later (the real scenario for this case is adding stuff in <a href="http://developer.android.com/reference/android/support/v4/app/LoaderManager.LoaderCallbacks.html"><code>onLoadFinished</code></a> callback, I&rsquo;m using contrived example for sake of simplicity):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">icicle</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">icicle</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">setContentView</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">main</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">MergeAdapter</span> <span class="n">adapter</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MergeAdapter</span><span class="o">();</span>
-</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addAdapter</span><span class="o">(</span><span class="n">someAdapter</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">setListAdapter</span><span class="o">(</span><span class="n">adapter</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addAdapter</span><span class="o">(</span><span class="n">someOtherAdapter</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This code will work as long as the adapter&rsquo;s contents fit on one screen, but if you start scrolling the list and the item recycling kicks in your app will crash with <code>ClassCastException</code> from your adapters&#8217; <code>getView()</code>. If by some chance you use the same IDs for the Views of the same type the app won&rsquo;t crash, but your items probably won&rsquo;t look exactly as they should. Either way, you won&rsquo;t be happy.</p>
-
-<p>The root cause is the undocumented fact that the getViewTypeCount() is called only once after attaching it with <a href="http://developer.android.com/reference/android/widget/ListView.html"><code>ListView.setAdapter()</code></a>. In the example above, the MergeAdapter contains only one item type when the <code>setAdapter()</code> is called, <code>getViewTypeCount()</code> will return 1, and adding the second adapter with another item type won&rsquo;t change this.</p>
-
-<p>Why doesn&rsquo;t this crash right away? The ListView will call <code>getView()</code> in correct adapters, but then it will try to reuse items created by one adapter for items in the second adapter, because it assumes there is only one view type (<code>getViewTypeCount()</code> returned 1).</p>
-
-<p>So what&rsquo;s the lesson here? Do not change the MergeAdapter in loader callbacks, either construct it before <code>setAdapter()</code> call (for example add empty <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html"><code>CursorAdapters</code></a> and call <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html"><code>CursorAdapter.swapCursor()</code></a> later) or postpone the <code>setAdapter()</code> call until you load all the parts. The more general rule is that you may not calculate the number of item types from the actual data, for example the following code won&rsquo;t work:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyCursorAdapter</span> <span class="kd">extends</span> <span class="n">CursorAdapter</span> <span class="o">{</span>
-</span><span class='line'>  <span class="c1">// Implementation of bindView, newView, etc. skipped</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="kd">private</span> <span class="kt">int</span> <span class="n">mCalculatedItemTypeCount</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getViewTypeCount</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">mCalculatedItemTypeCount</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">changeCursor</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">cursor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">mCalculatedItemTypeCount</span> <span class="o">=</span> <span class="cm">/* some calculations */</span><span class="o">;</span>
-</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">changeCursor</span><span class="o">(</span><span class="n">cursor</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -858,6 +741,10 @@ Things get even funnier here: when I used the <a href="http://developer.android.
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
       </li>
     
@@ -871,10 +758,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
     
       <li class="post">
         <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
       </li>
     
   </ul>

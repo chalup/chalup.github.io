@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="This is a long overdue post after my Guava on Android post from February. Since then I&rsquo;ve been using Guava in pretty much every Java project I &hellip;">
+  <meta name="description" content="I&rsquo;ll give the presentation on this years Mobiliztion conference in Łódź on October 26th: I&rsquo;ll talk about challenges related to &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,51 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/09/30/mobilization-2013-and-android-tech/">Mobilization 2013 and Android Tech Talks Meetup</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-30T21:11:00+02:00" pubdate data-updated="true">Sep 30<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/09/30/mobilization-2013-and-android-tech/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/09/30/mobilization-2013-and-android-tech/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;ll give the presentation on this years Mobiliztion conference in Łódź on October 26th:</p>
+
+<p><a href="http://2013.mobilization.pl/"><img class="center" src="http://mobilization.pl/files/baner-speaking-at.png"></a></p>
+
+<p>I&rsquo;ll talk about challenges related to <code>ContentProvider</code> and data model in general we faced during 2 years of development of Base CRM for Android. Even if this particular topic does not concern you, the <a href="http://2013.mobilization.pl/agenda/">agenda</a> is ripe with other interesting Android topics: dependency injection with Dagger, Gradle, unit testing, continuous integration. It&rsquo;s not Android specific event &ndash; there are also several presentations about other mobile platforms.</p>
+
+<p>If you already have other plans for October 26th, you want to share some war stories related to data model on Android or you just want to talk about Android with fellow geeks, I recommend you a MeetUp happening next week in Kraków: <a href="http://www.meetup.com/GDG-Krakow/events/142021512/">Android Tech Talks #3</a>. I&rsquo;ll give a short topic intro, which (I hope) will be followed by deep, insightful discussion.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1377,81 +1422,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/06/06/sqlite-type-affinity-strikes-back/">SQLite Type Affinity Strikes Back</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-06T22:22:00+02:00" pubdate data-updated="true">Jun 6<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/06/06/sqlite-type-affinity-strikes-back/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/06/06/sqlite-type-affinity-strikes-back/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>About a year ago I have wrote about a certain <a href="/blog/2012/06/22/sqlite-unions-gotcha">SQLite gotcha on Android</a>. <strong>tl;dr</strong>: in some cases when you create a view with unions, SQLite cannot determine a type of the column, and since Android binds all selection arguments as strings, SQLite ends up comparing X with &ldquo;X&rdquo;, concludes those are not the same thing and returns fewer rows than you&rsquo;d expect.</p>
-
-<p>Recently the same problem reared it&rsquo;s ugly head. It turns out that it&rsquo;s very easy to create in a view a column with undefined type. It might happen in case of joins, using aggregation functions, subqueries, etc. pretty much anything more fancy than simple select. Therefore I recommend checking the columns type using the <code>pragma table_info(table)</code> command for <strong>every</strong> view:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sqlite&gt; .head on
-</span><span class='line'>sqlite&gt; .mode column
-</span><span class='line'>sqlite&gt; pragma table_info (v);
-</span><span class='line'>
-</span><span class='line'>cid         name        type        notnull     dflt_value  pk
-</span><span class='line'>----------  ----------  ----------  ----------  ----------  ----------
-</span><span class='line'>0           test                    0                       0</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If the type of a column is undefined and you need to use this column in your selection arguments, you should add the UNION with an empty row with well defined column types:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sqlite&gt; CREATE TABLE types (i INTEGER, t TEXT);
-</span><span class='line'>sqlite&gt; CREATE VIEW vfix AS SELECT i AS test FROM types WHERE 1=0 UNION SELECT * FROM v;
-</span><span class='line'>sqlite&gt; pragma table_info (vfix);
-</span><span class='line'>
-</span><span class='line'>cid         name        type        notnull     dflt_value  pk
-</span><span class='line'>----------  ----------  ----------  ----------  ----------  ----------
-</span><span class='line'>0           test        INTEGER     0                       0</span></code></pre></td></tr></table></div></figure>
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1469,6 +1439,10 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
       </li>
     
@@ -1482,10 +1456,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
     
       <li class="post">
         <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a>
       </li>
     
   </ul>

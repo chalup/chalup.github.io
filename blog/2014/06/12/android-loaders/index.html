@@ -1,0 +1,1165 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Android Loaders - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="If you fetch the data from any ContentProvider in your application, the most likely scenarios are: You&rsquo;re absolutely clueless and fetch the &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/06/12/android-loaders">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Android Loaders</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-12T21:52:43+02:00" pubdate data-updated="true">Jun 12<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>If you fetch the data from any <code>ContentProvider</code> in your application, the most likely scenarios are:</p>
+
+<ol>
+<li>You&rsquo;re absolutely clueless and fetch the data on UI thread.</li>
+<li>You&rsquo;re using an <code>AsyncTask</code> and:
+
+<ul>
+<li>Your app crashes on screen orientation change.</li>
+<li>You block the screen orientation, because you googled this &ldquo;solution&rdquo; on StackOverflow.</li>
+<li>You wrote error prone boilerplate code to detach and reattach the <code>AsyncTask</code> from the Activity.</li>
+</ul>
+</li>
+<li>You are using <code>CursorLoader</code>.</li>
+</ol>
+
+
+<p>But accessing <code>ContentProvider</code> is probably not the only type of asynchronous operations you perform. You might want to access <code>SharedPreferences</code>, read a file or query a web API. In that case you need <code>Loader&lt;SomeOtherDataThanCursor&gt;</code>, but implementing one correctly is a bit tricky.</p>
+
+<p>I&rsquo;ll walk you through the entire process of understanding how the Loaders work, implementing a sane base class for your Loaders, implementing <code>CursorLoader</code> with all issues fixed and extending it to allow multiple notification Uris. It&rsquo;ll be a long post so grab a cup of your favourite beverage.</p>
+
+<h2>Loaders 101</h2>
+
+<p>Loader should do three things:</p>
+
+<ol>
+<li>Load data in background thread.</li>
+<li>Cache the loaded data, so you won&rsquo;t reload it after screen orientation change.</li>
+<li>If applicable, monitor the data source and reload the data when necessary.</li>
+</ol>
+
+
+<p>The Loader class itself doesn&rsquo;t provide any mechanism for loading the data in background thread. You either have to implement this yourself, or you can subclass the <code>AsyncTaskLoader</code>. This covers the first point on our requirements list.</p>
+
+<p>The 2nd point is not handled by <code>AsyncTaskLoader</code>. In fact the <code>AsyncTaskLoader</code> is far from being fully functional, for example this perfectly reasonable looking implementation won&rsquo;t work:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DasLoader</span> <span class="kd">extends</span> <span class="n">AsyncTaskLoader</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">DasLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="nf">loadInBackground</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="s">&quot;Das&quot;</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>AbstractLoader v1</h2>
+
+<p>A good starting point for creating either <code>CursorLoader</code> implementation or LoaderCustom.java from SDK samples. Here&rsquo;s the common part of these two implementations, which provides all necessary boilerplate for loading and caching the data:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">AbstractLoader</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">extends</span> <span class="n">AsyncTaskLoader</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">T</span> <span class="n">mResult</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">AbstractLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">deliverResult</span><span class="o">(</span><span class="n">T</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isReset</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">releaseResources</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">T</span> <span class="n">oldResult</span> <span class="o">=</span> <span class="n">mResult</span><span class="o">;</span>
+</span><span class='line'>    <span class="n">mResult</span> <span class="o">=</span> <span class="n">result</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isStarted</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="kd">super</span><span class="o">.</span><span class="na">deliverResult</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">oldResult</span> <span class="o">!=</span> <span class="n">result</span> <span class="o">&amp;&amp;</span> <span class="n">oldResult</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">releaseResources</span><span class="o">(</span><span class="n">oldResult</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCanceled</span><span class="o">(</span><span class="n">T</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onCanceled</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">releaseResources</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onReset</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onReset</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Ensure the loader is stopped</span>
+</span><span class='line'>    <span class="n">onStopLoading</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">releaseResources</span><span class="o">(</span><span class="n">mResult</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mResult</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onStartLoading</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">mResult</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">deliverResult</span><span class="o">(</span><span class="n">mResult</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">takeContentChanged</span><span class="o">()</span> <span class="o">||</span> <span class="n">mResult</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">forceLoad</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onStopLoading</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">cancelLoad</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">releaseResources</span><span class="o">(</span><span class="n">T</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Why this class is not provided by the framework is a mystery to me, but hey, that&rsquo;s just one more thing you have to know when coding for Android platform. Now you can write your custom Loader like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DasLoader</span> <span class="kd">extends</span> <span class="n">AbstractLoader</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">DasLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="nf">loadInBackground</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="s">&quot;Das&quot;</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But why do we need all that code? The key to understanding the Loaders is understanding the expected Loader&rsquo;s behaviour in different states: started, stopped, abandoned and reset. Upon entering each state, the appropriate callback is executed:</p>
+
+<ul>
+<li><code>onStartLoading</code>: the Loader was created and should either load the data or return cached data.</li>
+<li><code>onStopLoading</code>: the Loader should keep the cached data and monitor the data source for changes, but it shouldn&rsquo;t load the data. This happens for example when users presses home button from your app.</li>
+<li><code>onAbandoned</code>: someone restarted the Loader. New instance of this Loader was created in <code>onCreateLoader</code> callback in your <code>Fragment</code>/<code>Activity</code>/whatever and loads new data. The abandoned Loader should keep the data until the new Loader loads and delivers it&rsquo;s data. There is no point of monitoring data source or reloading the data in abandoned Loader &ndash; the data will be loaded by the new instance. When new Loader delivers it&rsquo;s data this Loader will be reset.</li>
+<li><code>onReset</code>: the data previously loaded by this Loader are no longer used and should be cleaned up. This Loader might be started again, so make sure you clean up also any old state in your Loader implementation.</li>
+</ul>
+
+
+<p>The <code>AsyncTaskLoader</code> provides additional callback:</p>
+
+<ul>
+<li><code>onCancelled</code>: called after data loading when it turns out that this data is no longer needed, for example when the <code>AsyncTask</code> executing your <code>onLoadInBackground</code> was cancelled. In this callback you should take care of releasing resources.</li>
+</ul>
+
+
+<p>Since the releasing resources should be also performed in <code>onReset</code> callback and in our deliverResults implementation, our AbstractLoader class provides handy <code>releaseResources()</code> callback for closing your <code>Cursor</code>s, file handles, etc.</p>
+
+<p>Now let&rsquo;s walk through our <code>AbstractLoader</code> implementation. When someone starts our Loader using <code>LoaderManager.initLoader()</code>, the <code>onStartLoading</code> is called:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="n">T</span> <span class="n">mResult</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// ...</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onStartLoading</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">mResult</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">deliverResult</span><span class="o">(</span><span class="n">mResult</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">takeContentChanged</span><span class="o">()</span> <span class="o">||</span> <span class="n">mResult</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">forceLoad</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We keep the loaded data in <code>mResult</code> member of our <code>AbstractLoader</code>. If we have already loaded the data, we can just deliver the results to Loader clients. If the cache is empty or the Loader was notified about new data available for fetching, we force data reload by calling <code>forceLoad()</code> method. It starts <code>AsyncTask</code> which executes <code>loadInBackground</code> in background thread and the result is passed to <code>deliverResults</code> function:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">deliverResult</span><span class="o">(</span><span class="n">T</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isReset</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">releaseResources</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">T</span> <span class="n">oldResult</span> <span class="o">=</span> <span class="n">mResult</span><span class="o">;</span>
+</span><span class='line'>    <span class="n">mResult</span> <span class="o">=</span> <span class="n">result</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isStarted</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="kd">super</span><span class="o">.</span><span class="na">deliverResult</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">oldResult</span> <span class="o">!=</span> <span class="n">result</span> <span class="o">&amp;&amp;</span> <span class="n">oldResult</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">releaseResources</span><span class="o">(</span><span class="n">oldResult</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A lot of interesting things happen here. First, we check if the loader was put into <code>reset</code> state. In this state all the previous resources were already released, so we just need to take care of newly loaded data. Then we swap the data in cache, call <code>deliverResults</code> in Loader and then release the resources for previously cached data.</p>
+
+<p>When the Fragment or Activity with active Loader is stopped, the Loaders are also put in the stopped state. It means that they should keep the cached data, monitor if this data is still valid, but they should not actively load the data or deliver the results to UI thread. In terms of <code>AsyncTaskLoader</code> it means that any running <code>AsyncTasks</code> should be cancelled:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onStopLoading</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">cancelLoad</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Current implementation of <code>AsyncTaskLoader</code> do not interrupt the active tasks, it only marks that the results of these tasks should not be delivered to the UI thread. However, the results might require some resource releasing, so the <code>onCancelled</code> callback is called:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCanceled</span><span class="o">(</span><span class="n">T</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onCanceled</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">releaseResources</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The last callback we have to implement is <code>onReset</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onReset</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onReset</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Ensure the loader is stopped</span>
+</span><span class='line'>    <span class="n">onStopLoading</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">releaseResources</span><span class="o">(</span><span class="n">mResult</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mResult</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are two important things here. First, the Loader can be moved to reset state from started state, which means it can still have active <code>AsyncTasks</code> executing <code>loadInBackground</code>. We need to stop them first. Then, as per the specified contract, we have to release the resources and clear the cache.</p>
+
+<p>What about <code>onAbandoned</code> callback? AbstractLoader doesn&rsquo;t monitor any data source by itself, so this callback doesn&rsquo;t have to be implemented.</p>
+
+<h2>CursorLoader</h2>
+
+<p>So how would we implement observing a data source and automatic reloading? Let&rsquo;s see how would the <code>CursorLoader</code> implementation look like had we used our AbstractLoader as a base class (literally; if you merge MyCursorLoader and AbstractLoader code samples from this post, you&rsquo;ll get exactly the CursorLoader implementation from support-v4):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyCursorLoader</span> <span class="kd">extends</span> <span class="n">AbstractLoader</span><span class="o">&lt;</span><span class="n">Cursor</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">ForceLoadContentObserver</span> <span class="n">mObserver</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">MyCursorLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mObserver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ForceLoadContentObserver</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// bunch of setters for uri, projection, selection, etc. Omitted for brevity</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Cursor</span> <span class="nf">loadInBackground</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">Cursor</span> <span class="n">cursor</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getContentResolver</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="n">mUri</span><span class="o">,</span> <span class="n">mProjection</span><span class="o">,</span> <span class="n">mSelection</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">mSelectionArgs</span><span class="o">,</span> <span class="n">mSortOrder</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="c1">// Ensure the cursor window is filled</span>
+</span><span class='line'>      <span class="n">cursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">();</span>
+</span><span class='line'>      <span class="n">cursor</span><span class="o">.</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">mObserver</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cursor</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This implementation has two bugs and one kind-of-feature. Let&rsquo;s start with the last one.</p>
+
+<p><code>onStartLoading</code> contract specifies, that you should start monitoring the data source upon entering this state. But let&rsquo;s think what would happen if you had a query that takes 200ms to run and your data source would change every 150ms. The loader would never deliver any data, because every load request would be cancelled in middle of <code>loadInBackground</code> execution by our content observer.</p>
+
+<p>I guess that&rsquo;s why the Android implementation of <code>CursorLoader</code> registers the observer after the data is loaded. This way the first results are delivered as soon as possible, but for subsequent loads the data is delivered only when data didn&rsquo;t change during loading. I&rsquo;m not sure if it was intentional, or this behavior was implemented by accident, but it makes sense to me, so let&rsquo;s adjust our Loaders contract and implement this behavior in our AbstractLoader.</p>
+
+<p>But if you look closely, the <code>CursorLoader</code> implementation violates even this updated contract. Remember that <code>loadInBackground</code> and <code>deliverResults</code> are executed on separate threads. So what would happen if the data observer is triggered after <code>registerContentObserver</code> call, but before the <code>deliverResults</code>? We&rsquo;d get exactly the same behavior we&rsquo;d get had we registered the ContentObserver in <code>onStartLoading</code> &ndash; the loader would never deliver it&rsquo;s data. That&rsquo;s the first bug.</p>
+
+<p>The second issue with <code>CursorLoader</code> implementation is violation of <code>onAbandon</code> callback contract. If someone calls restartLoader and the content observer is triggered, the abandoned Loader instance will happily reload it&rsquo;s data just to throw it away.</p>
+
+<p>You can dismiss it as something that would happen only 1% of the time and has negligible impact, and if we were talking about application code, I&rsquo;d agree with you, but IMO library code that will be used by thousands of developers should be held to a higher standard.</p>
+
+<h2>Fixing CursorLoader</h2>
+
+<p>Here&rsquo;s the wrap up of changes in behavior:
+1. Register <code>ContentObserver</code> after the first data is delivered, not after the first data is loaded.
+2. Unregister <code>ContentObserver</code> in <code>onAbandon</code>.</p>
+
+<p>The first point requires changes to <code>deliverResult</code> method, so it makes sense to modify our AbstractLoader:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">deliverResult</span><span class="o">(</span><span class="n">T</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isReset</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">releaseResources</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">T</span> <span class="n">oldResult</span> <span class="o">=</span> <span class="n">mResult</span><span class="o">;</span>
+</span><span class='line'>    <span class="n">mResult</span> <span class="o">=</span> <span class="n">result</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">isStarted</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="o">(</span><span class="n">oldResult</span> <span class="o">!=</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">onNewDataDelivered</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>      <span class="kd">super</span><span class="o">.</span><span class="na">deliverResult</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">oldResult</span> <span class="o">!=</span> <span class="n">result</span> <span class="o">&amp;&amp;</span> <span class="n">oldResult</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">releaseResources</span><span class="o">(</span><span class="n">oldResult</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onNewDataDelivered</span><span class="o">(</span><span class="n">T</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Our <code>CursorLoader</code> implementation would look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyCursorLoader</span> <span class="kd">extends</span> <span class="n">AbstractLoader</span><span class="o">&lt;</span><span class="n">Cursor</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">ForceLoadContentObserver</span> <span class="n">mObserver</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">MyCursorLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mObserver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ForceLoadContentObserver</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// bunch of setters for uri, projection, selection, etc. Omitted for brevity</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Cursor</span> <span class="nf">loadInBackground</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">Cursor</span> <span class="n">cursor</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getContentResolver</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="n">mUri</span><span class="o">,</span> <span class="n">mProjection</span><span class="o">,</span> <span class="n">mSelection</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">mSelectionArgs</span><span class="o">,</span> <span class="n">mSortOrder</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="c1">// Ensure the cursor window is filled</span>
+</span><span class='line'>      <span class="n">cursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cursor</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onNewDataDelivered</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onNewDataDelivered</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">data</span><span class="o">.</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">mObserver</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The second part &ndash; unregistering observer in <code>onAbandon</code> &ndash; is tricky. It&rsquo;s illegal to call <code>Cursor.unregisterContentObserver</code> with observer that wasn&rsquo;t registered and the <code>onAbandon</code> can be called when the <code>deliverResults</code> wasn&rsquo;t called (see <code>AsyncTaskLoader.dispatchOnLoadComplete()</code> implementation). One solution would be keeping the set of Cursors that were registered, but it&rsquo;s not optimal. Instead, we can create a proxy ContentObserver that can be enabled or disabled:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DisableableContentObserver</span> <span class="kd">extends</span> <span class="n">ContentObserver</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">ContentObserver</span> <span class="n">mWrappedObserver</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kt">boolean</span> <span class="n">mIsEnabled</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">DisableableContentObserver</span><span class="o">(</span><span class="n">ContentObserver</span> <span class="n">wrappedObserver</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="k">new</span> <span class="n">Handler</span><span class="o">());</span>
+</span><span class='line'>    <span class="n">mWrappedObserver</span> <span class="o">=</span> <span class="n">wrappedObserver</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onChange</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">selfChange</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">mIsEnabled</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">mWrappedObserver</span><span class="o">.</span><span class="na">onChange</span><span class="o">(</span><span class="n">selfChange</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setEnabled</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">isEnabled</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mIsEnabled</span> <span class="o">=</span> <span class="n">isEnabled</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyCursorLoader</span> <span class="kd">extends</span> <span class="n">AbstractLoader</span><span class="o">&lt;</span><span class="n">Cursor</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">DisableableContentObserver</span> <span class="n">mObserver</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">MyCursorLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mObserver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DisableableContentObserver</span><span class="o">(</span><span class="k">new</span> <span class="n">ForceLoadContentObserver</span><span class="o">());</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// bunch of setters for uri, projection, selection, etc. Omitted for brevity</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onStartLoading</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mObserver</span><span class="o">.</span><span class="na">setEnabled</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onStartLoading</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onAbandon</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mObserver</span><span class="o">.</span><span class="na">setEnabled</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onReset</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mObserver</span><span class="o">.</span><span class="na">setEnabled</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onReset</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Cursor</span> <span class="nf">loadInBackground</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">Cursor</span> <span class="n">cursor</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getContentResolver</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="n">mUri</span><span class="o">,</span> <span class="n">mProjection</span><span class="o">,</span> <span class="n">mSelection</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">mSelectionArgs</span><span class="o">,</span> <span class="n">mSortOrder</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="c1">// Ensure the cursor window is filled</span>
+</span><span class='line'>      <span class="n">cursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cursor</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onNewDataDelivered</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onNewDataDelivered</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">data</span><span class="o">.</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">mObserver</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>AbstractObservingLoader</h2>
+
+<p>The <code>CursorLoader</code> is a bit special case, because the <code>Cursor</code> itself contains <code>ContentObservable</code>. In most cases however the content observers and loaded data would be completely separated. For these cases it would be useful to have a base class for Loader which registers some <code>ContentObservers</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">AbstractObservingLoader</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">extends</span> <span class="n">AbstractLoader</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kd">final</span> <span class="n">DisableableContentObserver</span> <span class="n">mObserver</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kt">boolean</span> <span class="n">mIsRegistered</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">AbstractObservingLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mObserver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DisableableContentObserver</span><span class="o">(</span><span class="k">new</span> <span class="n">ForceLoadContentObserver</span><span class="o">());</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onStartLoading</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mObserver</span><span class="o">.</span><span class="na">setEnabled</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onStartLoading</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onAbandon</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mObserver</span><span class="o">.</span><span class="na">setEnabled</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">unregisterObserver</span><span class="o">(</span><span class="n">mObserver</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mIsRegistered</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onReset</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mObserver</span><span class="o">.</span><span class="na">setEnabled</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">unregisterObserver</span><span class="o">(</span><span class="n">mObserver</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">mIsRegistered</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span><span class="n">z</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onReset</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onNewDataDelivered</span><span class="o">(</span><span class="n">T</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(!</span><span class="n">mIsRegistered</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">mIsRegistered</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>      <span class="n">registerObserver</span><span class="o">(</span><span class="n">mObserver</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kd">abstract</span> <span class="kt">void</span> <span class="nf">registerObserver</span><span class="o">(</span><span class="n">ContentObserver</span> <span class="n">observer</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kd">abstract</span> <span class="kt">void</span> <span class="nf">unregisterObserver</span><span class="o">(</span><span class="n">ContentObserver</span> <span class="n">observer</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We need to keep the registered state in our Loader, because the default <code>Observable</code> implementation doesn&rsquo;t like registering the same observer twice or unregistering not registered observer.</p>
+
+<p>Now we can use this class as a base for a Loader which should be reloaded when one of specified <code>Uri</code>s is triggered:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyCursorLoader</span> <span class="kd">extends</span> <span class="n">AbstractObservingLoader</span><span class="o">&lt;</span><span class="n">Cursor</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">MyCursorLoader</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// bunch of setters for uri, projection, selection, etc. Omitted for brevity</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Cursor</span> <span class="nf">loadInBackground</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">Cursor</span> <span class="n">cursor</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getContentResolver</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="n">mUri</span><span class="o">,</span> <span class="n">mProjection</span><span class="o">,</span> <span class="n">mSelection</span><span class="o">,</span>
+</span><span class='line'>        <span class="n">mSelectionArgs</span><span class="o">,</span> <span class="n">mSortOrder</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="c1">// Ensure the cursor window is filled</span>
+</span><span class='line'>      <span class="n">cursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cursor</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onNewDataDelivered</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onNewDataDelivered</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">data</span><span class="o">.</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">mObserver</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">registerObserver</span><span class="o">(</span><span class="n">ContentObserver</span> <span class="n">observer</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">for</span> <span class="o">(</span><span class="n">Uri</span> <span class="n">uri</span> <span class="o">:</span> <span class="n">mObservedUris</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">getContext</span><span class="o">().</span><span class="na">getContentResolver</span><span class="o">().</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">uri</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">observer</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">unregisterObserver</span><span class="o">(</span><span class="n">ContentObserver</span> <span class="n">observer</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">getContext</span><span class="o">().</span><span class="na">getContentResolver</span><span class="o">().</span><span class="na">unregisterContentObserver</span><span class="o">(</span><span class="n">observer</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Conclusions</h2>
+
+<p>I think the <code>Loaders</code> aren&rsquo;t as bad as some people think and say. Four Loader states might seem complicated at first, but if you think about Android <code>Activity</code> lifecycle they make perfect sense and they are something you&rsquo;d have to implement yourself, with a high probability of mucking things up. The only thing lacking is documentation and sane base classes for extensions, something I hope I delivered through this blog post.</p>
+
+<p><a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> wrote few weeks ago that <a href="http://commonsware.com/blog/2014/03/31/cwac-loaderex-failed-abstractions.html">he considers Loader to be a failed abstraction</a>, mostly because the interface assumes there is a single object which notifies the Loader about new data. He concluded his post with the following sentence:</p>
+
+<blockquote><p>In my case, if I am going to have some singleton manager object, with distinct data objects per operation, I am going to use something more flexible than Loader, such as an event bus.</p></blockquote>
+
+
+<p>Extending <code>AbstractObservingLoader</code> to load some data from <code>SQLiteDatabase</code> and subscribe to some event bus for model change events should be trivial, and you&rsquo;d get a lot of things for free &ndash; performing loads in background, cancelling loads, caching results, invalidating cache, and so on.</p>
+
+<p>Having said that, <code>Loaders</code> are not solution to every single problem. They are coupled with activity lifecycle, so they are not suitable for long running tasks that should not be interrupted when user navigates away. In these cases the <code>IntentService</code>, or some other <code>Service</code> implementation is a better choice.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-12T21:52:43+02:00" pubdate data-updated="true">Jun 12<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/loaders/'>Loaders</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/06/12/android-loaders/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/06/12/android-loaders/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/06/10/enabling-proguard-for-debug-builds/" title="Previous Post: ProGuard in ant debug builds">&laquo; ProGuard in ant debug builds</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 0,
+            skip_forks: true,
+            filter_repos: [ "microorm", "thneed", "dawggenerator", "cerberus" ],
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/106340839330487061995?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/06/12/android-loaders/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/06/12/android-loaders/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
