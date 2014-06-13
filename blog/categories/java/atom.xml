@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-12T21:53:17+02:00</updated>
+  <updated>2014-06-13T21:07:14+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,84 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Beatiful Code: ComparisonChain]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/"/>
+    <updated>2014-06-13T20:28:24+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/13/beatiful-code-comparisonchain-from-guava</id>
+    <content type="html"><![CDATA[<p>I usually tend to write about certain <a href="/blog/categories/gotcha">gotchas</a> and weird <a href="/blog/categories/android/">Android issues</a>, so if you expect yet another rant, I have a surprise for you &ndash; today, I&rsquo;m going to write about a piece of code I&rsquo;m very fond of.</p>
+
+<p>As you might have noticed, <a href="/blog/categories/guava">I&rsquo;m a big fan of Guava</a>. One of the classes I extensively use is <a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a>, which lets you turn this:</p>
+
+<p>``` java
+@Override
+public int compareTo(Person other) {
+  int cmp = lastName.compareTo(other.lastName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  cmp = firstName.compareTo(other.firstName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  return Integer.compare(zipCode, other.zipCode);
+}
+```</p>
+
+<p>Into this:</p>
+
+<p>``` java
+@Override
+public int compareTo(Person other) {
+  return ComparisonChain.start()</p>
+
+<pre><code>  .compare(lastName, other.lastName)
+  .compare(firstName, other.firstName)
+  .compare(zipCode, other.zipCode)
+  .result();
+</code></pre>
+
+<p>}
+```</p>
+
+<p>When I first saw this API I was a bit worried about performance, because this code is supposed to be used in <code>Comparator</code>s, which are executed multiple times during <code>Collection</code> sorting, and it looks like it could allocate a lot of objects. So I looked at the <a href="https://code.google.com/p/guava-libraries/source/browse/guava/src/com/google/common/collect/ComparisonChain.java">source code</a> and I was enlightened.</p>
+
+<p>ComparisonChain is an abstract class with few versions of <code>compare</code> method returning ComparisonChain object:</p>
+
+<p>``` java
+  public abstract ComparisonChain compare(Comparable&lt;?> left, Comparable&lt;?> right);
+  public abstract <T> ComparisonChain compare(@Nullable T left, @Nullable T right, Comparator<T> comparator);
+  public abstract ComparisonChain compare(int left, int right);
+  public abstract ComparisonChain compare(long left, long right);
+  public abstract ComparisonChain compare(float left, float right);
+  public abstract ComparisonChain compare(double left, double right);
+  public abstract ComparisonChain compareTrueFirst(boolean left, boolean right);
+  public abstract ComparisonChain compareFalseFirst(boolean left, boolean right);</p>
+
+<p>```</p>
+
+<p>To get the result of comparison you call another abstract method:</p>
+
+<p><code>java
+  public abstract int result();
+</code></p>
+
+<p>The trick is, there are only two implementations and three instances of ComparisonChain: anonymous <code>ACTIVE</code>, and <code>LESS</code> and <code>GREATER</code> instances of InactiveComparisonChain.</p>
+
+<p><code>ACTIVE</code> instance is the one you get from <code>ComparisonChain.start()</code> call. Various <code>compare</code> methods in <code>ACTIVE</code> instance perform comparison on supplied arguments, and depending on result return <code>ACTIVE</code>, <code>LESS</code> or <code>GREATER</code> object. Calling <code>result</code> on <code>ACTIVE</code> ComparisonChain yields 0.</p>
+
+<p>InactiveComparisonChain&rsquo;s instances &ndash; <code>LESS</code> and <code>GREATER</code> &ndash; do not perform any comparisons and return themselves &ndash; if you got this object, it means that earlier comparison already established the result. The role of this object is just to forward <code>result</code> call to appropriate instance. <code>LESS.result()</code> returns -1 and <code>GREATER.result()</code> +1.</p>
+
+<p>The whole class is elegant, provide beautiful API for a common task and the implementation is very efficient. The world needs more code like this.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[C# Feature I Miss in Java: Extension Methods]]></title>
@@ -391,197 +469,6 @@ assertThat(orderB.customer_id).isEqualTo(anotherCustomer.id);
 <p>Check out the <a href="https://github.com/futuresimple/forger">code on github</a> and don&rsquo;t <a href="https://github.com/futuresimple/forger/star">forget to star</a> this project if you find it interesting.</p>
 
 <p>The funny thing about this project is that it&rsquo;s a byproduct of <a href="https://github.com/chalup/thneed">Thneed</a>, which I originally wrote to solve another problem. It makes me think that the whole idea of defining the relationships as a visitable structure is more flexible than I originally anticipated and it might become the cornerstone of the whole set of useful tools.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Random Musings on Visitor Design Pattern in Java]]></title>
-    <link href="http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design/"/>
-    <updated>2013-08-25T13:21:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design</id>
-    <content type="html"><![CDATA[<p>First let&rsquo;s have a quick refresher on what is the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. This pattern consists of two elements: the Visitor, which in the Gang of Four book is defined as an &ldquo;operation to be performed on the elements of an object structure&rdquo;; the second element is the structure itself.</p>
-
-<p>``` java
-public interface Visitable {
-  void accept(Visitor visitor);
-}</p>
-
-<p>public interface Visitor {
-}
-```</p>
-
-<p>The Visitor interface is for now empty, because we haven&rsquo;t declared any Visitable types. In every class implementing Visitable interface we&rsquo;ll call a different method in Visitor:</p>
-
-<p>``` java
-public interface Visitable {
-  void accept(Visitor visitor);
-}</p>
-
-<p>public static class VisitableFoo implements Visitable {
-  @Override
-  public void accept(Visitor visitor) {</p>
-
-<pre><code>visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public static class VisitableBar implements Visitable {
-  @Override
-  public void accept(Visitor visitor) {</p>
-
-<pre><code>visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public interface Visitor {
-  void visit(VisitableBar visitableBar);
-  void visit(VisitableFoo visitableFoo);
-}
-```</p>
-
-<p>Sounds like a lot of work, but there is a reason for it. You could achieve something similar by simply adding another method to the Visitable pattern, but this means you&rsquo;d have to be able to modify the Visitable classes. The visit/accept double dispatch allows you to write a library like <a href="https://github.com/chalup/thneed">Thneed</a>, which defines the data structure, but leaves the operations implementation to the library users.</p>
-
-<p>The classic visitor pattern requires you to keep some kind of state and to write a method for getting and clearing this state. This might be what you want, but if you want to simply process your Visitable objects one by one and return independent computations, you might want just to return a value from visit() method. So the first twist you can add to classic Visitor pattern is to return a value from visit/accept method:</p>
-
-<p>``` java
-public interface Visitable {
-  <TReturn> TReturn accept(Visitor<TReturn> visitor);
-}</p>
-
-<p>public static class VisitableFoo implements Visitable {
-  @Override
-  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
-
-<pre><code>return visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public static class VisitableBar implements Visitable {
-  @Override
-  public <TReturn> TReturn accept(Visitor<TReturn> visitor) {</p>
-
-<pre><code>return visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public interface Visitor<TReturn> {
-  TReturn visit(VisitableBar visitableBar);
-  TReturn visit(VisitableFoo visitableFoo);
-}
-```</p>
-
-<p>Note that only Visitor interface is parametrized with a return type. The only thing that <code>Visitable.accept()</code> do is dispatching the call to Visitor, so there is no point in generifying the whole interface, it&rsquo;s sufficient to make an accept method generic. In fact, making the TReturn type a Visitable interface type would be a design mistake, because you wouldn&rsquo;t be able to create a Visitable that could be accepted by Visitors with different return types:</p>
-
-<p><code>java
-public interface Visitable&lt;TReturn&gt; {&lt;br/&gt;  TReturn accept(Visitor&lt;TReturn&gt; visitor);&lt;br/&gt;}
-</code></p>
-
-<p>Because of type erasure you wouldn&rsquo;t be able to create a Visitable that can accept two Visitors returning a different types:</p>
-
-<p><code>java
-public static class MyVisitable implements Visitable&lt;String&gt;, Visitable&lt;Integer&gt; {
-  // Invalid! "Duplicate class Visitable" compilation error.
-}
-</code></p>
-
-<p>Another thing you can do is generifying the whole pattern. The use case for this is when your Visitables are some kind of containers or wrappers over objects (again, see the <a href="https://github.com/chalup/thneed">Thneed</a> library, where the Visitables subclasses are the different kinds of relationships between data models and are parametrized with the type representing the data models). The naive way to do this is just adding the type parameters:</p>
-
-<p>``` java
-public interface Visitable<T> {
-  void accept(Visitor<T> visitor);
-}</p>
-
-<p>public static class VisitableFoo<T> implements Visitable<T> {
-  @Override
-  public void accept(Visitor<T> visitor) {</p>
-
-<pre><code>visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public static class VisitableBar<T> implements Visitable<T> {
-  @Override
-  public void accept(Visitor<T> visitor) {</p>
-
-<pre><code>visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public interface Visitor<T> {
-  void visit(VisitableBar<T> visitableBar);
-  void visit(VisitableFoo<T> visitableFoo);
-}
-```</p>
-
-<p>There is a problem with the signatures of those interfaces. Let&rsquo;s say that we want our Visitor to operate on Visitables containing Numbers:</p>
-
-<p>``` java
-Visitor<Number> visitor = new Visitor<Number>() {
-  @Override
-  public void visit(VisitableBar<Number> visitableBar) {
-  }</p>
-
-<p>  @Override
-  public void visit(VisitableFoo<Number> visitableFoo) {
-  }
-};
-```</p>
-
-<p>You should think about Visitor as the method accepting the Visitable. If our Visitor can handle something that contains Number, it should also handle something that contain any Number subclass &ndash; it&rsquo;s a classic example of <a href="https://sites.google.com/site/io/effective-java-reloaded">&ldquo;consumer extends, producer super&rdquo;</a> behaviour or <a href="http://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science">covariance and contravariance</a>) in general. In the implementation above however, the strict generics types are causing compilation errors. <a href="http://docs.oracle.com/javase/tutorial/extra/generics/wildcards.html">Generics wildcards</a> to the rescue:</p>
-
-<p>``` java
-public interface Visitable<T> {
-  void accept(Visitor&lt;? super T> visitor);
-}</p>
-
-<p>public static class VisitableFoo<T> implements Visitable<T> {
-  @Override
-  public void accept(Visitor&lt;? super T> visitor) {</p>
-
-<pre><code>visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public static class VisitableBar<T> implements Visitable<T> {
-  @Override
-  public void accept(Visitor&lt;? super T> visitor) {</p>
-
-<pre><code>visitor.visit(this);
-</code></pre>
-
-<p>  }
-}</p>
-
-<p>public interface Visitor<T> {
-  void visit(VisitableBar&lt;? extends T> visitableBar);
-  void visit(VisitableFoo&lt;? extends T> visitableFoo);
-}
-```</p>
-
-<p>Note that the change has to be symmetric, i.e. both the <code>accept()</code> and <code>visit()</code> signatures have to include the bounds. Now we can safely call:</p>
-
-<p>``` java
-VisitableBar<Integer> visitableBar = new VisitableBar<Integer>();
-Visitor<Number> visitor = new Visitor<Number>() {
-  // visit() implementations
-}</p>
-
-<p>visitableBar.accept(visitor);
-```</p>
 ]]></content>
   </entry>
   

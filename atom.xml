@@ -4,7 +4,7 @@
   <title><![CDATA[Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-12T21:53:17+02:00</updated>
+  <updated>2014-06-13T21:07:14+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,103 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Beatiful Code: ComparisonChain]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/"/>
+    <updated>2014-06-13T20:28:24+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/13/beatiful-code-comparisonchain-from-guava</id>
+    <content type="html"><![CDATA[<p>I usually tend to write about certain <a href="http://chalup.github.io/blog/categories/gotcha">gotchas</a> and weird <a href="http://chalup.github.io/blog/categories/android/">Android issues</a>, so if you expect yet another rant, I have a surprise for you &ndash; today, I&rsquo;m going to write about a piece of code I&rsquo;m very fond of.</p>
+
+<p>As you might have noticed, <a href="http://chalup.github.io/blog/categories/guava">I&rsquo;m a big fan of Guava</a>. One of the classes I extensively use is <a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a>, which lets you turn this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">cmp</span> <span class="o">=</span> <span class="n">lastName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="n">cmp</span> <span class="o">=</span> <span class="n">firstName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">Integer</span><span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Into this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">ComparisonChain</span><span class="o">.</span><span class="na">start</span><span class="o">()</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">lastName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">firstName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">result</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When I first saw this API I was a bit worried about performance, because this code is supposed to be used in <code>Comparator</code>s, which are executed multiple times during <code>Collection</code> sorting, and it looks like it could allocate a lot of objects. So I looked at the <a href="https://code.google.com/p/guava-libraries/source/browse/guava/src/com/google/common/collect/ComparisonChain.java">source code</a> and I was enlightened.</p>
+
+<p>ComparisonChain is an abstract class with few versions of <code>compare</code> method returning ComparisonChain object:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="n">Comparable</span><span class="o">&lt;?&gt;</span> <span class="n">left</span><span class="o">,</span> <span class="n">Comparable</span><span class="o">&lt;?&gt;</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">ComparisonChain</span> <span class="n">compare</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">T</span> <span class="n">left</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">T</span> <span class="n">right</span><span class="o">,</span> <span class="n">Comparator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">comparator</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">int</span> <span class="n">left</span><span class="o">,</span> <span class="kt">int</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">long</span> <span class="n">left</span><span class="o">,</span> <span class="kt">long</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">float</span> <span class="n">left</span><span class="o">,</span> <span class="kt">float</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">double</span> <span class="n">left</span><span class="o">,</span> <span class="kt">double</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compareTrueFirst</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">left</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compareFalseFirst</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">left</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">right</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To get the result of comparison you call another abstract method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">int</span> <span class="nf">result</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The trick is, there are only two implementations and three instances of ComparisonChain: anonymous <code>ACTIVE</code>, and <code>LESS</code> and <code>GREATER</code> instances of InactiveComparisonChain.</p>
+
+<p><code>ACTIVE</code> instance is the one you get from <code>ComparisonChain.start()</code> call. Various <code>compare</code> methods in <code>ACTIVE</code> instance perform comparison on supplied arguments, and depending on result return <code>ACTIVE</code>, <code>LESS</code> or <code>GREATER</code> object. Calling <code>result</code> on <code>ACTIVE</code> ComparisonChain yields 0.</p>
+
+<p>InactiveComparisonChain&rsquo;s instances &ndash; <code>LESS</code> and <code>GREATER</code> &ndash; do not perform any comparisons and return themselves &ndash; if you got this object, it means that earlier comparison already established the result. The role of this object is just to forward <code>result</code> call to appropriate instance. <code>LESS.result()</code> returns -1 and <code>GREATER.result()</code> +1.</p>
+
+<p>The whole class is elegant, provide beautiful API for a common task and the implementation is very efficient. The world needs more code like this.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Android Loaders]]></title>
@@ -2156,178 +2253,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 <p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
 
 <p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[More Guava Goodies - AbstractIterator]]></title>
-    <link href="http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator/"/>
-    <updated>2013-10-04T23:19:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2013/10/04/more-guava-goodies-abstractiterator</id>
-    <content type="html"><![CDATA[<p>A while ago I wanted to perform a certain operation for every subsequent pair of elements in collection, i.e. for list <code>[1, 2, 3, 4, 5]</code> I wanted to do something with pairs <code>[(1, 2), (2, 3), (3, 4), (4, 5)]</code>. In Haskell that would be easy:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='haskell'><span class='line'><span class="kt">Prelude</span><span class="o">&gt;</span> <span class="kr">let</span> <span class="n">frobnicate</span> <span class="n">list</span> <span class="ow">=</span> <span class="n">zip</span> <span class="p">(</span><span class="n">init</span> <span class="n">list</span><span class="p">)</span> <span class="p">(</span><span class="n">tail</span> <span class="n">list</span><span class="p">)</span>
-</span><span class='line'><span class="kt">Prelude</span><span class="o">&gt;</span> <span class="n">frobnicate</span> <span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="mi">5</span><span class="p">]</span>
-</span><span class='line'><span class="p">[(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">)]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The problem is, I needed this stuff in my Android app, which means Java. The easiest thing to write would be obviously:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">list</span><span class="o">;</span>
-</span><span class='line'><span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">list</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">T</span> <span class="n">left</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">T</span> <span class="n">right</span> <span class="o">=</span> <span class="n">list</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// do something useful</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But where&rsquo;s the fun with that? Fortunately, there is Guava. It doesn&rsquo;t have the <code>zip</code> or <code>init</code> functions, but it provides tool to write them yourself &ndash; the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/AbstractIterator.html"><code>AbstractIterator</code></a>. <strong>Tl;dr</strong> of the documentation: override one method returning an element or returning special marker from <code>endOfData()</code> method result.</p>
-
-<p>The zip implementation is pretty straightforward:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;</span> <span class="n">zip</span><span class="o">(</span><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">&gt;</span> <span class="n">left</span><span class="o">,</span> <span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">TRight</span><span class="o">&gt;</span> <span class="n">right</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="k">new</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="nd">@Override</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;</span> <span class="n">iterator</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>      <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">&gt;</span> <span class="n">leftIterator</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="na">iterator</span><span class="o">();</span>
-</span><span class='line'>      <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">TRight</span><span class="o">&gt;</span> <span class="n">rightIterator</span> <span class="o">=</span> <span class="n">right</span><span class="o">.</span><span class="na">iterator</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="k">return</span> <span class="k">new</span> <span class="n">AbstractIterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
-</span><span class='line'>        <span class="nd">@Override</span>
-</span><span class='line'>        <span class="kd">protected</span> <span class="n">Pair</span><span class="o">&lt;</span><span class="n">TLeft</span><span class="o">,</span> <span class="n">TRight</span><span class="o">&gt;</span> <span class="n">computeNext</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">leftIterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">()</span> <span class="o">&amp;&amp;</span> <span class="n">rightIterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">Pair</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">leftIterator</span><span class="o">.</span><span class="na">next</span><span class="o">(),</span> <span class="n">rightIterator</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
-</span><span class='line'>          <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="nf">endOfData</span><span class="o">();</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>      <span class="o">};</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>  <span class="o">};</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The tail can be achieved simply by calling the <code>Iterables.skip</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">getTail</span><span class="o">(</span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterable</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">Preconditions</span><span class="o">.</span><span class="na">checkArgument</span><span class="o">(</span><span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">().</span><span class="na">hasNext</span><span class="o">(),</span> <span class="s">&quot;Iterable cannot be empty&quot;</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">Iterables</span><span class="o">.</span><span class="na">skip</span><span class="o">(</span><span class="n">iterable</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>For init you could write similar function:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">getInit</span><span class="o">(</span><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterable</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">Preconditions</span><span class="o">.</span><span class="na">checkArgument</span><span class="o">(</span><span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">().</span><span class="na">hasNext</span><span class="o">(),</span> <span class="s">&quot;Iterable cannot be empty&quot;</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">Iterables</span><span class="o">.</span><span class="na">limit</span><span class="o">(</span><span class="n">iterable</span><span class="o">,</span> <span class="n">Iterables</span><span class="o">.</span><span class="na">size</span><span class="o">(</span><span class="n">iterable</span><span class="o">));</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But this will iterate through the entire iterable to count the size. We don&rsquo;t need the count however, we just need to know if there is another element in the iterable. Here is more efficient solution:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">getInit</span><span class="o">(</span><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterable</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">Preconditions</span><span class="o">.</span><span class="na">checkArgument</span><span class="o">(</span><span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">().</span><span class="na">hasNext</span><span class="o">(),</span> <span class="s">&quot;Iterable cannot be empty&quot;</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">return</span> <span class="k">new</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="nd">@Override</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">iterator</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>      <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">iterator</span> <span class="o">=</span> <span class="n">iterable</span><span class="o">.</span><span class="na">iterator</span><span class="o">();</span>
-</span><span class='line'>      <span class="k">return</span> <span class="k">new</span> <span class="n">AbstractIterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;()</span> <span class="o">{</span>
-</span><span class='line'>        <span class="nd">@Override</span>
-</span><span class='line'>        <span class="kd">protected</span> <span class="n">T</span> <span class="nf">computeNext</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">iterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">T</span> <span class="n">t</span> <span class="o">=</span> <span class="n">iterator</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
-</span><span class='line'>            <span class="k">if</span> <span class="o">(</span><span class="n">iterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>              <span class="k">return</span> <span class="n">t</span><span class="o">;</span>
-</span><span class='line'>            <span class="o">}</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>          <span class="k">return</span> <span class="nf">endOfData</span><span class="o">();</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>      <span class="o">};</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>  <span class="o">};</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>All methods used together look like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">list</span><span class="o">;</span>
-</span><span class='line'><span class="k">for</span> <span class="o">(</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">zipped</span> <span class="o">:</span> <span class="n">zip</span><span class="o">(</span><span class="n">getInit</span><span class="o">(</span><span class="n">list</span><span class="o">),</span> <span class="n">getTail</span><span class="o">(</span><span class="n">list</span><span class="o">)))</span> <span class="o">{</span>
-</span><span class='line'>  <span class="c1">// do something useful</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
 ]]></content>
   </entry>
   

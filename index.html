@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="If you fetch the data from any ContentProvider in your application, the most likely scenarios are: You&rsquo;re absolutely clueless and fetch the &hellip;">
+  <meta name="description" content="I usually tend to write about certain gotchas and weird Android issues, so if you expect yet another rant, I have a surprise for you &ndash; today, I &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,133 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-13T20:28:24+02:00" pubdate data-updated="true">Jun 13<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I usually tend to write about certain <a href="/blog/categories/gotcha">gotchas</a> and weird <a href="/blog/categories/android/">Android issues</a>, so if you expect yet another rant, I have a surprise for you &ndash; today, I&rsquo;m going to write about a piece of code I&rsquo;m very fond of.</p>
+
+<p>As you might have noticed, <a href="/blog/categories/guava">I&rsquo;m a big fan of Guava</a>. One of the classes I extensively use is <a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a>, which lets you turn this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">cmp</span> <span class="o">=</span> <span class="n">lastName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="n">cmp</span> <span class="o">=</span> <span class="n">firstName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">Integer</span><span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Into this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">ComparisonChain</span><span class="o">.</span><span class="na">start</span><span class="o">()</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">lastName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">firstName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">result</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When I first saw this API I was a bit worried about performance, because this code is supposed to be used in <code>Comparator</code>s, which are executed multiple times during <code>Collection</code> sorting, and it looks like it could allocate a lot of objects. So I looked at the <a href="https://code.google.com/p/guava-libraries/source/browse/guava/src/com/google/common/collect/ComparisonChain.java">source code</a> and I was enlightened.</p>
+
+<p>ComparisonChain is an abstract class with few versions of <code>compare</code> method returning ComparisonChain object:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="n">Comparable</span><span class="o">&lt;?&gt;</span> <span class="n">left</span><span class="o">,</span> <span class="n">Comparable</span><span class="o">&lt;?&gt;</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">ComparisonChain</span> <span class="n">compare</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">T</span> <span class="n">left</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">T</span> <span class="n">right</span><span class="o">,</span> <span class="n">Comparator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">comparator</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">int</span> <span class="n">left</span><span class="o">,</span> <span class="kt">int</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">long</span> <span class="n">left</span><span class="o">,</span> <span class="kt">long</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">float</span> <span class="n">left</span><span class="o">,</span> <span class="kt">float</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compare</span><span class="o">(</span><span class="kt">double</span> <span class="n">left</span><span class="o">,</span> <span class="kt">double</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compareTrueFirst</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">left</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">right</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="n">ComparisonChain</span> <span class="nf">compareFalseFirst</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">left</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">right</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To get the result of comparison you call another abstract method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">int</span> <span class="nf">result</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The trick is, there are only two implementations and three instances of ComparisonChain: anonymous <code>ACTIVE</code>, and <code>LESS</code> and <code>GREATER</code> instances of InactiveComparisonChain.</p>
+
+<p><code>ACTIVE</code> instance is the one you get from <code>ComparisonChain.start()</code> call. Various <code>compare</code> methods in <code>ACTIVE</code> instance perform comparison on supplied arguments, and depending on result return <code>ACTIVE</code>, <code>LESS</code> or <code>GREATER</code> object. Calling <code>result</code> on <code>ACTIVE</code> ComparisonChain yields 0.</p>
+
+<p>InactiveComparisonChain&rsquo;s instances &ndash; <code>LESS</code> and <code>GREATER</code> &ndash; do not perform any comparisons and return themselves &ndash; if you got this object, it means that earlier comparison already established the result. The role of this object is just to forward <code>result</code> call to appropriate instance. <code>LESS.result()</code> returns -1 and <code>GREATER.result()</code> +1.</p>
+
+<p>The whole class is elegant, provide beautiful API for a common task and the implementation is very efficient. The world needs more code like this.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -2136,63 +2263,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/01/03/offline-mode-in-android-apps-part-2/">Offline Mode in Android Apps, Part 2 - SQLite&#8217;s ALTER TABLE</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-01-03T20:29:00+01:00" pubdate data-updated="true">Jan 3<span>rd</span>, 2014</time>
-        
-           | <a href="/blog/2014/01/03/offline-mode-in-android-apps-part-2/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first part of this series</a> I showed that to implement offline mode in your Android app you have to implement data migrations. If you&rsquo;re using SQLite database, it means you&rsquo;ll have to use (or rather work around) it&rsquo;s ALTER TABLE syntax:</p>
-
-<p><a href="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"><img class="center" src="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"></a></p>
-
-<p>So all you can do with it is adding the column or renaming the table, but in reality you probably need to alter a single column, remove column or change the table constraints. You can achieve this by doing the following operation:</p>
-
-<ol>
-<li>Rename the table T with old schema to old_T.</li>
-<li>Create the table T with new schema.</li>
-<li>Use &ldquo;INSERT INTO T (new_columns) SELECT old_columns FROM old_T&rdquo; query to populate the table T with the data from the renamed table old_T.</li>
-<li>Drop old_T.</li>
-</ol>
-
-
-<p>Doing it manually is quite error prone though: for every migration you have to specify the new_columns and old_columns list. What&rsquo;s worse, in 95% of cases you just want to list the columns common for old and new schema. Fortunately we can automate such trivial migrations by executing <code>SELECT</code> with <code>LIMIT 0</code> (or <code>PRAGMA TABLE_INFO</code>) for both tables, getting the columns set using <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnNames%28%29"><code>Cursor.getColumnNames()</code></a>, and calculating these columns sets intersection.</p>
-
-<p>You can write a nice wrapper for this yourself, but a) I already did it, so you don&rsquo;t have to and b) there is a <a href="/blog/2014/01/12/android-sqlitedatabase-gotcha">very nasty gotcha</a> which would probably cost you few hours of teeth grinding, so do yourself a favor and check <a href="https://github.com/futuresimple/android-schema-utils">this repository</a> out, especially the <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java"><code>MigrationsHelper</code></a> class. It automates the trivial migrations and allows you to define a mappings for situations when you rename the column or add a non-nullable column in new schema.</p>
-
-<p>In the next two posts I&rsquo;ll <a href="/blog/2014/01/12/android-sqlitedatabase-gotcha">describe the gotcha I&rsquo;ve mentioned</a> in the previous paragraph and show some other non-obvious consequences of doing data migrations.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -2208,6 +2278,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
@@ -2221,10 +2295,6 @@
     
       <li class="post">
         <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
       </li>
     
   </ul>

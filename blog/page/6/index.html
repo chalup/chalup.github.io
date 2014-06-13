@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Unless you were writing your Android apps under some kind of digital rock, you heard about Mark Murphy a.k.a. commonsguy. Today I&rsquo;d like to &hellip;">
+  <meta name="description" content="I might have called this blog post &ldquo;Android sticky broadcasts considered harmful&rdquo;, but &ldquo;Considered harmful&rdquo; texts are &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,63 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/09/26/android-sticky-broadcast-perils/">Android Sticky Broadcast Perils</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-26T10:16:00+02:00" pubdate data-updated="true">Sep 26<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/09/26/android-sticky-broadcast-perils/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/09/26/android-sticky-broadcast-perils/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I might have called this blog post &ldquo;Android sticky broadcasts considered harmful&rdquo;, but <a href="http://meyerweb.com/eric/comment/chech.html">&ldquo;Considered harmful&rdquo; texts are considered harmful</a>, so I opted for a less linkbaity title.</p>
+
+<p>I was working on a bug in a legacy code which used sticky broadcasts for publishing the sync service state (BTW: if you thought &ldquo;Hello, <a href="http://developer.android.com/reference/android/content/ContentResolver.html#isSyncActive%28android.accounts.Account,%20java.lang.String%29"><code>ContentResolver.isSyncActive()</code></a>?&rdquo; you should subscribe to my blog feed &ndash; I&rsquo;m planning to write about the problems with sync state methods in ContentResolver). The bug manifested as a minor UI issue &ndash; sometimes the UI indicated that sync is in progress, even in situations when the sync could not be in progress, for example because the network connection was down. The QA team found an easy reproduction steps for it: start sync and reinstall the app before the sync finishes.</p>
+
+<p>I found much more troubling reproduction steps: start sync, uninstall app while sync is in progress and then install it again. The difference between those steps and the ones found by QA is the fact that I&rsquo;m performing uninstall, which means that all information about my app should be wiped from the system.</p>
+
+<p>I dug deeper and found out two scary facts:</p>
+
+<ul>
+<li>Sticky broadcasts are not connected in any way to app package, which means they are not removed on uninstallation. They <strong>are</strong> removed on phone restart, but that&rsquo;s not a scenario you should rely upon.</li>
+<li>Any application with <a href="http://developer.android.com/reference/android/Manifest.permission.html#BROADCAST_STICKY">BROADCAST_STICKY permission</a> may alter your sticky broadcasts.</li>
+</ul>
+
+
+<p>As long as you don&rsquo;t use sync status for anything more complicated than showing a spinner in Action Bar, you might get away with only minor UI issues, but if you want to use it for business logic, you&rsquo;re entering the world of pain.</p>
+
+<p>The sticky broadcasts might be garbage left over by the old version of your app or some other app if you&rsquo;ve chosen the action string poorly (protip: if you <strong>really</strong> have to use sticky broadcasts, include your app&rsquo;s package name in action string). Even if you ignore the latter case (and the very unlikely scenario of other app maliciously tinkering with your app&rsquo;s intents), I consider the former case to be a deal breaker &ndash; each sticky broadcast is an additional state which has to be migrated between app versions and app installations which further increases cognitive load of programming, which is high enough already.</p>
+
+<p>Let&rsquo;s summarize this blog post: remove <code>BROADCAST_STICKY</code> permission from your app&rsquo;s AndroidManifest.xml, test the app, fix all crashes from SecurityExceptions and never look back.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1151,63 +1208,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/04/04/background-operations-on-windows-phone/">Background Operations on Windows Phone 7</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-04T13:23:00+02:00" pubdate data-updated="true">Apr 4<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/04/04/background-operations-on-windows-phone/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/04/04/background-operations-on-windows-phone/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Few weeks ago I was complaining to another developer that Windows Phone applications cannot perform tasks in background when they are not running. That was true few months ago when I learned about Windows Phone 7.0, but he pointed me to MSDN documentation of new WP 7.1 feature: <a href="http://msdn.microsoft.com/en-us/library/hh202961(v=vs.92">Background Agents</a>.aspx).</p>
-
-<p>I clicked the link with my hopes up, but I was immediately shot down with the highlight on the first page: &ldquo;Background agents are not supported on 256-MB devices&rdquo;. I proceeded to the <a href="http://msdn.microsoft.com/en-us/library/hh202942(v=vs.92">overview page</a>.aspx) and it turned out the highlight from the first page was just the tip of the iceberg. The constraints listed there are just staggering.</p>
-
-<p>First there are the registration issues: you can register background task for the next two weeks and after that period your application have to reschedule the task. I&rsquo;m not sure why do I have to do this, and at the first glance it looks only like a minor nuisance, until you take into account two other constraints: tasks cannot reschedule themselves and there is a hard limit of scheduled periodic tasks, which can be ridiculously low. Relevant quote from MSDN:</p>
-
-<blockquote><p>To help maximize the battery life of the device, there is a hard limit on the number of periodic agents that can be scheduled on the phone. It varies per device configuration and can be as low as 6.</p></blockquote>
-
-
-<p>Not a minor nuisance anymore, huh?</p>
-
-<p>This limit is only imposed on periodic agents, which are intended for short, periodic tasks like polling some service or uploading a data. There are also Resource Intensive Agents which can be used for longer tasks like data synchronization, but they have their own set of constraints: the device have to be charging, the battery have to be almost fully charged and there should be a Wi-Fi or PC connection (no cellular data). I think the MSDN note summarizes it quite well:</p>
-
-<blockquote><p>Due to the constraints on the device that must be met for resource-intensive agents to run, it is possible that the agent will never be run on a particular device. </p><p>(&#8230;)Also, resource-intensive agents are run one at a time, so as more applications that use resource-intensive agents are installed on a device, the likelihood of an agent running becomes even less. You should consider this when designing your application.</p></blockquote>
-
-
-<p>I&rsquo;m going to add to the comment above my own observation: every application can register only one background agent, which can be both periodic agent and resource intensive agent. It means that if you need both types of agents, your resource intensive agent is also affected by the periodic agent hard limit.</p>
-
-<p>It all boils down to this: <strong>you can&rsquo;t rely on the background agents</strong>. You don&rsquo;t have the guarantee that you&rsquo;ll be able to register the agent, which means that you can&rsquo;t use them for critical functionality. So we&rsquo;re exactly where we were after 7.0 release.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/7/">&larr; Older</a>
@@ -1225,6 +1225,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
@@ -1238,10 +1242,6 @@
     
       <li class="post">
         <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a>
       </li>
     
   </ul>

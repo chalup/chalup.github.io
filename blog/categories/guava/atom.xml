@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Guava | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/guava/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-12T21:53:17+02:00</updated>
+  <updated>2014-06-13T21:07:14+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,84 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Beatiful Code: ComparisonChain]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/"/>
+    <updated>2014-06-13T20:28:24+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/13/beatiful-code-comparisonchain-from-guava</id>
+    <content type="html"><![CDATA[<p>I usually tend to write about certain <a href="/blog/categories/gotcha">gotchas</a> and weird <a href="/blog/categories/android/">Android issues</a>, so if you expect yet another rant, I have a surprise for you &ndash; today, I&rsquo;m going to write about a piece of code I&rsquo;m very fond of.</p>
+
+<p>As you might have noticed, <a href="/blog/categories/guava">I&rsquo;m a big fan of Guava</a>. One of the classes I extensively use is <a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a>, which lets you turn this:</p>
+
+<p>``` java
+@Override
+public int compareTo(Person other) {
+  int cmp = lastName.compareTo(other.lastName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  cmp = firstName.compareTo(other.firstName);
+  if (cmp != 0) {</p>
+
+<pre><code>return cmp;
+</code></pre>
+
+<p>  }
+  return Integer.compare(zipCode, other.zipCode);
+}
+```</p>
+
+<p>Into this:</p>
+
+<p>``` java
+@Override
+public int compareTo(Person other) {
+  return ComparisonChain.start()</p>
+
+<pre><code>  .compare(lastName, other.lastName)
+  .compare(firstName, other.firstName)
+  .compare(zipCode, other.zipCode)
+  .result();
+</code></pre>
+
+<p>}
+```</p>
+
+<p>When I first saw this API I was a bit worried about performance, because this code is supposed to be used in <code>Comparator</code>s, which are executed multiple times during <code>Collection</code> sorting, and it looks like it could allocate a lot of objects. So I looked at the <a href="https://code.google.com/p/guava-libraries/source/browse/guava/src/com/google/common/collect/ComparisonChain.java">source code</a> and I was enlightened.</p>
+
+<p>ComparisonChain is an abstract class with few versions of <code>compare</code> method returning ComparisonChain object:</p>
+
+<p>``` java
+  public abstract ComparisonChain compare(Comparable&lt;?> left, Comparable&lt;?> right);
+  public abstract <T> ComparisonChain compare(@Nullable T left, @Nullable T right, Comparator<T> comparator);
+  public abstract ComparisonChain compare(int left, int right);
+  public abstract ComparisonChain compare(long left, long right);
+  public abstract ComparisonChain compare(float left, float right);
+  public abstract ComparisonChain compare(double left, double right);
+  public abstract ComparisonChain compareTrueFirst(boolean left, boolean right);
+  public abstract ComparisonChain compareFalseFirst(boolean left, boolean right);</p>
+
+<p>```</p>
+
+<p>To get the result of comparison you call another abstract method:</p>
+
+<p><code>java
+  public abstract int result();
+</code></p>
+
+<p>The trick is, there are only two implementations and three instances of ComparisonChain: anonymous <code>ACTIVE</code>, and <code>LESS</code> and <code>GREATER</code> instances of InactiveComparisonChain.</p>
+
+<p><code>ACTIVE</code> instance is the one you get from <code>ComparisonChain.start()</code> call. Various <code>compare</code> methods in <code>ACTIVE</code> instance perform comparison on supplied arguments, and depending on result return <code>ACTIVE</code>, <code>LESS</code> or <code>GREATER</code> object. Calling <code>result</code> on <code>ACTIVE</code> ComparisonChain yields 0.</p>
+
+<p>InactiveComparisonChain&rsquo;s instances &ndash; <code>LESS</code> and <code>GREATER</code> &ndash; do not perform any comparisons and return themselves &ndash; if you got this object, it means that earlier comparison already established the result. The role of this object is just to forward <code>result</code> call to appropriate instance. <code>LESS.result()</code> returns -1 and <code>GREATER.result()</code> +1.</p>
+
+<p>The whole class is elegant, provide beautiful API for a common task and the implementation is very efficient. The world needs more code like this.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Use minSdkVersion=10 for Libraries]]></title>
@@ -273,30 +351,6 @@ public int compareTo(Person other) {
 <p>Guava introduces also some functional idioms in form of <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#transform%28java.util.Collection,%20com.google.common.base.Function%29"><code>Collections2.transform</code></a> and <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#filter%28java.util.Collection,%20com.google.common.base.Predicate%29"><code>Collections2.filter</code></a>, but I have mixed feelings about them. On one hand sometimes they are life savers, but usually they make the code much uglier than the good ol' imperative for loop, so ues them with caution. They get especially ugly when you need to chain multiple transformations and filters, but for this case the Guava provides the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/FluentIterable.html"><code>FluentIterable</code></a> interface.</p>
 
 <p>None of the APIs listed above is absolutely necessary, but seriously, you want to use Guava (<a href="/blog/2013/06/26/guava-and-minsdkversion">but sometimes not the latest version</a>). Each part of it raises the abstraction level of your code a tiny bit, improving it one line at the time.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Guava and minSdkVersion]]></title>
-    <link href="http://chalup.github.io/blog/2013/06/26/guava-and-minsdkversion/"/>
-    <updated>2013-06-26T23:03:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2013/06/26/guava-and-minsdkversion</id>
-    <content type="html"><![CDATA[<p>A while ago <a href="/blog/2013/02/20/guava-on-android">I wrote about pre-dexing</a> feature introduced at the end of 2012, which facilitates using large Java libraries like Guava for developing Android apps. Few months later, I&rsquo;m still discovering stuff in Guava that makes my life easier (BTW: I still owe you a blog post with a list of Guava goodies). But this week, for a change, I&rsquo;ve managed to make my life harder with Guava.</p>
-
-<p>I wanted to include the javadocs and source jars for Guava, and when I opened maven central I saw the new version and decided to upgrade from 13.0.1 to 14.0.1. Everything went smoothly except for the minor Proguard hiccup: you have to include <a href="https://code.google.com/p/atinject/">the jar with the <code>@Inject</code> annotation</a>. At least it went smoothly on the first few phones I&rsquo;ve tested our app on, but on some ancient crap with Android 2.2 the app crashed with <a href="http://developer.android.com/reference/java/lang/NoClassDefFoundError.html"><code>NoClassDefFoundError</code></a>.</p>
-
-<p>The usual suspect in this case is, of course, Proguard. I&rsquo;ve also suspected the issue similar to <a href="/blog/2013/03/23/libphonenumber-crash-on-android-32">the libphonenumber crash I wrote about in March</a>. When both leads turned out to be a dead end, I decided to run the debug build and to my surprise it crashed as well. And there was a logcat message which pinpointed the issue: the <code>ImmutableSet</code> in Guava 14.0.1 depends somehow on <a href="http://developer.android.com/reference/java/util/NavigableSet.html"><code>NavigableSet</code></a> interface, which is available from API level 9. Sad as I was, I downgraded the Guava back to 13.0.1 and everything started to work again.</p>
-
-<p>So what have I learned today?</p>
-
-<ul>
-<li>Upgrading the libraries for the sake of upgrading is bad (m'kay).</li>
-<li>Before you start wrestling with Proguard, test the debug build.</li>
-<li>Android 2.2 doesn&rsquo;t support all Java 1.6 classes.</li>
-</ul>
-
-
-<p>The scary thing is, the similar thing might happen again if some other class in Guava depends on APIs unavailable on older versions of Android. Sounds like a good idea for a weekend hack project: some way to mark or check the minSdkVersion needed to use a given class or method.</p>
 ]]></content>
   </entry>
   
