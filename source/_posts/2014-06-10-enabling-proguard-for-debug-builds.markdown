@@ -11,7 +11,7 @@ categories:
 
 The post title raises two questions: "why would you want to use ProGuard in debug builds?" and "why the hell are you still using ant?!".
 
-The answer for the first question is simple, so let's start with that one. A while ago we hit the [infamous 64k method limit](https://code.google.com/p/android/issues/detail?id=208140). The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson's comments in the linked bug report.
+The answer for the first question is simple, so let's start with that one. A while ago we hit the [infamous 64k method limit](https://code.google.com/p/android/issues/detail?id=20814). The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson's comments in the linked bug report.
 
 And why ant instead of Maven, gradle, buck or any other non-antique build tool? We've started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.
 
