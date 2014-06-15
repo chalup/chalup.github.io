@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I usually tend to write about certain gotchas and weird Android issues, so if you expect yet another rant, I have a surprise for you &ndash; today, I &hellip;">
+  <meta name="description" content="A year ago Jeff Gilfelt was giving away minSdkVersion=14 stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,57 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-15T09:29:50+02:00" pubdate data-updated="true">Jun 15<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/06/15/minsdkversion-equals-15/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>A year ago <a href="https://twitter.com/readyState">Jeff Gilfelt</a> was giving away <code>minSdkVersion=14</code> stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What seemed radical one year ago, today is a widely accepted. The <code>minSdkVersion</code> in new project wizard in latest Android Studio release is by default set to <code>15</code>. On the same screen you can click the &ldquo;help me choose&rdquo; hyperlink, which shows this screen:</p>
+
+<p><img class="center" src="/images/android_studio_min_sdk.png"></p>
+
+<p>The percentages are consistent with data from <a href="http://developer.android.com/about/dashboards/index.html">developer.android.com</a> dashboards, but I&rsquo;d say they are skewed towards old Android versions. <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a> app I&rsquo;m working on has only 3.7% active users on devices with api level &lt; 15 (compared to 17.4% from official Google dashboards). Moreover, if you look only at the new users, the Froyo, GingerBread and Honeycomb is used only by 1%. In this light, supporting pre-API15 devices is a criminal waste, and starting new projects with minSdkVersion lower than 15 a criminal idiocy.</p>
+
+<p>For me, as a delevoper, the <code>minSdkVersion=14</code> is a breakthrough, mostly because of Holo theme available everywhere. I no longer have to worry about <a href="http://localhost:4000/blog/2012/03/08/customizing-ui-controls-on-android/">HTC rounded green buttons and such when creating custom views</a> &ndash; I only have to make them look good with a single theme. Theoretically one could have used <a href="https://github.com/Prototik/HoloEverywhere">HoloEverywhere lib</a>, but it&rsquo;s not a drop-in replacement. First you have to switch to using their Views instead of native ones and adjusting any external UI library to use them as well.</p>
+
+<p>I looked through the <a href="https://developer.android.com/about/index.html">Android changelogs</a> wondering what could be the next version on <code>minSdkVersion</code> stickers. The next step is a small bump to JellyBean (API level 16), which gives us access to actions in system notifications and <code>condensed</code> and <code>light</code> Roboto font variants. Official statictics state that Ice Cream Sandwich is used by 12.3% of users, but this number is much higher than the one from Base statistics &ndash; 5.87%. I expect dropping support for ICS this year.</p>
+
+<p>But then? I don&rsquo;t see anything as groundbreaking as dropping Gingerbread. I don&rsquo;t even see anything with more impact than dropping ICS. Theoretically API level 17 gives access to nested fragments, but I think you should be using support-v4 classes anyways (and if you check the <a href="https://play.google.com/store/apps/details?id=com.google.samples.apps.iosched">Google I/O 2014</a> app sources, Google developers seem to think so too). Maybe there&rsquo;s something I missed or something crucial for specific use cases &ndash; do let me know if there&rsquo;s anything in API levels 17-19 you wish you could use already.</p>
+
+<p>Google I/O is coming though, and <a href="https://twitter.com/GabMarioPower/status/477040313832583168">some things indicate</a> we might see Android 5.0 (or at least Android 4.5). Maybe this Android &ldquo;L&rdquo; version will be another breakthrough in development? My personal wish is a new runtime without <a href="https://code.google.com/p/android/issues/detail?id=20814">ridiculous 64k method limit</a>. Of course this opens a lot of other possibilities. Maybe support for Java 8? Or first-class support for other JVM languages? We&rsquo;ll see&hellip;</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1139,7 +1190,7 @@
 
   <div class="entry-content"><p>The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using ant?!&rdquo;.</p>
 
-<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=208140">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
+<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=20814">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
 
 <p>And why ant instead of Maven, gradle, buck or any other non-antique build tool? We&rsquo;ve started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.</p>
 
@@ -2185,84 +2236,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/01/09/c-feature-i-miss-in-java-extension/">C# Feature I Miss in Java: Extension Methods</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-01-09T00:12:00+01:00" pubdate data-updated="true">Jan 9<span>th</span>, 2014</time>
-        
-           | <a href="/blog/2014/01/09/c-feature-i-miss-in-java-extension/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I&rsquo;m primarily an Android developer, so when I checked the <a href="http://openjdk.java.net/projects/jdk8/features">Java 8 features list</a> I thought there is a lot of cool stuff, by sadly I won&rsquo;t be able to use them anytime soon. It&rsquo;s the same case as <a href="http://developer.android.com/reference/java/lang/AutoCloseable.html"><code>AutoCloseable</code></a> interface from Java 7. It&rsquo;s available from API lvl 19, and seeing how long it takes Android community to unanimously drop the support for Froyo, Gingerbread and Honeycomb, I think won&rsquo;t be able to use it before 2017. Anyways, good stuff is added to Java, but there is one cool feature from C# I do not see there: extension methods.</p>
-
-<p>Let me explain to you what they are in case you haven&rsquo;t wrote any C# code. In almost every code base there are simple utility methods which operate on a single object.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">CollectionsUtils</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">filter</span><span class="o">(</span><span class="n">Collection</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">unfiltered</span><span class="o">,</span> <span class="n">Predicate</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">E</span><span class="o">&gt;</span> <span class="n">predicate</span><span class="o">)</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">};</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">F</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">transform</span><span class="o">(</span><span class="n">Collection</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;</span> <span class="n">fromCollection</span><span class="o">,</span> <span class="n">Function</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">F</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">function</span><span class="o">)</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">};</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// usage</span>
-</span><span class='line'><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">list</span><span class="o">,</span> <span class="n">IS_NOT_NULL</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Things get ugly when you want to call multiple utility methods:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">transform</span><span class="o">(</span><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">list</span><span class="o">,</span> <span class="n">IS_NOT_NULL</span><span class="o">),</span> <span class="n">TO_STRING</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>C# allows you to add &ldquo;this&rdquo; modifier to the first parameter of static method, which basically tells the compiler to pretend that the objects of that type have a method with the same signature as our static method, sans the &ldquo;this&rdquo; parameter. Underneath it&rsquo;s treated exactly as the ugly nested calls above, but it allows you to write the code this way:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">list</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">IS_NOT_NULL</span><span class="o">).</span><span class="na">transform</span><span class="o">(</span><span class="n">TO_STRING</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Syntactic sugar, but it goes a long way. I&rsquo;ve intentionally choose the methods for this examples &ndash; whole LINQ-to-objects interface is based on extension methods.</p>
-
-<p>Java 8 introduces a feature with similar name but completely different functionality: virtual extension methods. Simply put it allows merging the Foo interface and AbstractFoo abstract class with a reasonable implementation of some of Foo&rsquo;s methods. For example if your interface has <code>size()</code> method you can add the <code>isEmpty()</code> virtual extension method with default implementation returning true when <code>size()</code> returns 0. So it&rsquo;s a nice feature, but IMO less powerful than C# solution. Both solutions allow adding new methods with default implementation to interfaces you wrote without having to worry about backwards compatibility, but C# extension methods allows you also to extend 3rd party or even <code>java.lang</code> intefaces and classes to make their API cleaner or better suited to your particular problem.</p>
-
-<p>I wonder why the C#-style extension methods weren&rsquo;t added to Java 8. Maybe there are some implementation issues I do not see, maybe there is a conflict with another language features, maybe the powers that be think it would be inconsistent with the language philosophy. Do let me know if you have such information.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -2278,6 +2251,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
@@ -2291,10 +2268,6 @@
     
       <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
       </li>
     
   </ul>

@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: Nokia - Porcupine Programmer</title>
+  <title>minSdkVersion=15, What's Next? - Porcupine Programmer</title>
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Category: Nokia">
+  <meta name="description" content="A year ago Jeff Gilfelt was giving away minSdkVersion=14 stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://chalup.github.ioblog/categories/nokia">
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
@@ -76,120 +76,108 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Nokia</h1>
+    
+      <h1 class="entry-title">minSdkVersion=15, What's Next?</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-15T09:29:50+02:00" pubdate data-updated="true">Jun 15<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>A year ago <a href="https://twitter.com/readyState">Jeff Gilfelt</a> was giving away <code>minSdkVersion=14</code> stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What seemed radical one year ago, today is a widely accepted. The <code>minSdkVersion</code> in new project wizard in latest Android Studio release is by default set to <code>15</code>. On the same screen you can click the &ldquo;help me choose&rdquo; hyperlink, which shows this screen:</p>
 
-  
-  <h2>2012</h2>
+<p><img class="center" src="/images/android_studio_min_sdk.png"></p>
 
-<article>
-  
-<h1><a href="/blog/2012/10/03/screensaver-blocking-on-symbian/">Screensaver Blocking on Symbian</a></h1>
-<time datetime="2012-10-03T20:55:00+02:00" pubdate><span class='month'>Oct</span> <span class='day'>03</span> <span class='year'>2012</span></time>
+<p>The percentages are consistent with data from <a href="http://developer.android.com/about/dashboards/index.html">developer.android.com</a> dashboards, but I&rsquo;d say they are skewed towards old Android versions. <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a> app I&rsquo;m working on has only 3.7% active users on devices with api level &lt; 15 (compared to 17.4% from official Google dashboards). Moreover, if you look only at the new users, the Froyo, GingerBread and Honeycomb is used only by 1%. In this light, supporting pre-API15 devices is a criminal waste, and starting new projects with minSdkVersion lower than 15 a criminal idiocy.</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/game/'>Game</a>, <a class='category' href='/blog/categories/nokia/'>Nokia</a>, <a class='category' href='/blog/categories/printer-1d/'>Printer 1D</a>, <a class='category' href='/blog/categories/qml/'>QML</a>, <a class='category' href='/blog/categories/qt/'>Qt</a>, <a class='category' href='/blog/categories/qt-mobility/'>Qt Mobility</a>, <a class='category' href='/blog/categories/symbian/'>Symbian</a></span>
-</footer>
+<p>For me, as a delevoper, the <code>minSdkVersion=14</code> is a breakthrough, mostly because of Holo theme available everywhere. I no longer have to worry about <a href="http://localhost:4000/blog/2012/03/08/customizing-ui-controls-on-android/">HTC rounded green buttons and such when creating custom views</a> &ndash; I only have to make them look good with a single theme. Theoretically one could have used <a href="https://github.com/Prototik/HoloEverywhere">HoloEverywhere lib</a>, but it&rsquo;s not a drop-in replacement. First you have to switch to using their Views instead of native ones and adjusting any external UI library to use them as well.</p>
 
+<p>I looked through the <a href="https://developer.android.com/about/index.html">Android changelogs</a> wondering what could be the next version on <code>minSdkVersion</code> stickers. The next step is a small bump to JellyBean (API level 16), which gives us access to actions in system notifications and <code>condensed</code> and <code>light</code> Roboto font variants. Official statictics state that Ice Cream Sandwich is used by 12.3% of users, but this number is much higher than the one from Base statistics &ndash; 5.87%. I expect dropping support for ICS this year.</p>
 
-</article>
+<p>But then? I don&rsquo;t see anything as groundbreaking as dropping Gingerbread. I don&rsquo;t even see anything with more impact than dropping ICS. Theoretically API level 17 gives access to nested fragments, but I think you should be using support-v4 classes anyways (and if you check the <a href="https://play.google.com/store/apps/details?id=com.google.samples.apps.iosched">Google I/O 2014</a> app sources, Google developers seem to think so too). Maybe there&rsquo;s something I missed or something crucial for specific use cases &ndash; do let me know if there&rsquo;s anything in API levels 17-19 you wish you could use already.</p>
 
-
-
-<article>
-  
-<h1><a href="/blog/2012/09/12/screen-orientation-and-qt-applications/">Screen Orientation and QT Applications on Symbian Belle</a></h1>
-<time datetime="2012-09-12T22:05:00+02:00" pubdate><span class='month'>Sep</span> <span class='day'>12</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/nokia/'>Nokia</a>, <a class='category' href='/blog/categories/nokia-store/'>Nokia Store</a>, <a class='category' href='/blog/categories/qml/'>QML</a>, <a class='category' href='/blog/categories/qt/'>Qt</a>, <a class='category' href='/blog/categories/symbian/'>Symbian</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2012/05/30/qml-applications-on-nokia-belle/">QML Applications on Nokia Belle</a></h1>
-<time datetime="2012-05-30T20:06:00+02:00" pubdate><span class='month'>May</span> <span class='day'>30</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/nokia/'>Nokia</a>, <a class='category' href='/blog/categories/qml/'>QML</a>, <a class='category' href='/blog/categories/qt/'>Qt</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/">"Nu, Pogodi!" Bought by Over 2000 Users</a></h1>
-<time datetime="2012-02-24T22:53:00+01:00" pubdate><span class='month'>Feb</span> <span class='day'>24</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/game/'>Game</a>, <a class='category' href='/blog/categories/nokia/'>Nokia</a>, <a class='category' href='/blog/categories/nokia-store/'>Nokia Store</a>, <a class='category' href='/blog/categories/nupogodi/'>NuPogodi</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2012/02/23/nokia-belle-update-and-content/">Nokia Belle Update and Content Published in Nokia Store</a></h1>
-<time datetime="2012-02-23T16:22:00+01:00" pubdate><span class='month'>Feb</span> <span class='day'>23</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/nokia/'>Nokia</a>, <a class='category' href='/blog/categories/nokia-store/'>Nokia Store</a>, <a class='category' href='/blog/categories/nupogodi/'>NuPogodi</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2012/01/22/how-not-to-test-your-qml-application/">How (Not to) Test Your QML Application for Symbian</a></h1>
-<time datetime="2012-01-22T16:15:00+01:00" pubdate><span class='month'>Jan</span> <span class='day'>22</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/nokia/'>Nokia</a>, <a class='category' href='/blog/categories/qml/'>QML</a>, <a class='category' href='/blog/categories/qt/'>Qt</a>, <a class='category' href='/blog/categories/symbian/'>Symbian</a>, <a class='category' href='/blog/categories/testing/'>Testing</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2012/01/20/introducing-nu-pogodi/">Introducing: Nu, Pogodi!</a></h1>
-<time datetime="2012-01-20T12:05:00+01:00" pubdate><span class='month'>Jan</span> <span class='day'>20</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/game/'>Game</a>, <a class='category' href='/blog/categories/nokia/'>Nokia</a>, <a class='category' href='/blog/categories/nupogodi/'>NuPogodi</a>, <a class='category' href='/blog/categories/qml/'>QML</a>, <a class='category' href='/blog/categories/qt/'>Qt</a>, <a class='category' href='/blog/categories/release/'>Release</a></span>
-</footer>
-
-
-</article>
-
+<p>Google I/O is coming though, and <a href="https://twitter.com/GabMarioPower/status/477040313832583168">some things indicate</a> we might see Android 5.0 (or at least Android 4.5). Maybe this Android &ldquo;L&rdquo; version will be another breakthrough in development? My personal wish is a new runtime without <a href="https://code.google.com/p/android/issues/detail?id=20814">ridiculous 64k method limit</a>. Of course this opens a lot of other possibilities. Maybe support for Java 8? Or first-class support for other JVM languages? We&rsquo;ll see&hellip;</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-15T09:29:50+02:00" pubdate data-updated="true">Jun 15<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/minsdkversion/'>minSdkVersion</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/" title="Previous Post: Beatiful Code: ComparisonChain">&laquo; Beatiful Code: ComparisonChain</a>
+      
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -283,7 +271,10 @@
       var disqus_shortname = 'porcupineprogrammer';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

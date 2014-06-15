@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="In first part of this series I showed that to implement offline mode in your Android app you have to implement data migrations. If you&rsquo;re using &hellip;">
+  <meta name="description" content="I&rsquo;m primarily an Android developer, so when I checked the Java 8 features list I thought there is a lot of cool stuff, by sadly I won&rsquo;t &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,84 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/01/09/c-feature-i-miss-in-java-extension/">C# Feature I Miss in Java: Extension Methods</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-09T00:12:00+01:00" pubdate data-updated="true">Jan 9<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/01/09/c-feature-i-miss-in-java-extension/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/01/09/c-feature-i-miss-in-java-extension/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;m primarily an Android developer, so when I checked the <a href="http://openjdk.java.net/projects/jdk8/features">Java 8 features list</a> I thought there is a lot of cool stuff, by sadly I won&rsquo;t be able to use them anytime soon. It&rsquo;s the same case as <a href="http://developer.android.com/reference/java/lang/AutoCloseable.html"><code>AutoCloseable</code></a> interface from Java 7. It&rsquo;s available from API lvl 19, and seeing how long it takes Android community to unanimously drop the support for Froyo, Gingerbread and Honeycomb, I think won&rsquo;t be able to use it before 2017. Anyways, good stuff is added to Java, but there is one cool feature from C# I do not see there: extension methods.</p>
+
+<p>Let me explain to you what they are in case you haven&rsquo;t wrote any C# code. In almost every code base there are simple utility methods which operate on a single object.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">CollectionsUtils</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">filter</span><span class="o">(</span><span class="n">Collection</span><span class="o">&lt;</span><span class="n">E</span><span class="o">&gt;</span> <span class="n">unfiltered</span><span class="o">,</span> <span class="n">Predicate</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">E</span><span class="o">&gt;</span> <span class="n">predicate</span><span class="o">)</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">};</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">F</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">transform</span><span class="o">(</span><span class="n">Collection</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;</span> <span class="n">fromCollection</span><span class="o">,</span> <span class="n">Function</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">F</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">function</span><span class="o">)</span> <span class="o">{</span> <span class="cm">/* ... */</span> <span class="o">};</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// usage</span>
+</span><span class='line'><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">list</span><span class="o">,</span> <span class="n">IS_NOT_NULL</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Things get ugly when you want to call multiple utility methods:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">transform</span><span class="o">(</span><span class="n">CollectionsUtils</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">list</span><span class="o">,</span> <span class="n">IS_NOT_NULL</span><span class="o">),</span> <span class="n">TO_STRING</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>C# allows you to add &ldquo;this&rdquo; modifier to the first parameter of static method, which basically tells the compiler to pretend that the objects of that type have a method with the same signature as our static method, sans the &ldquo;this&rdquo; parameter. Underneath it&rsquo;s treated exactly as the ugly nested calls above, but it allows you to write the code this way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">list</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">IS_NOT_NULL</span><span class="o">).</span><span class="na">transform</span><span class="o">(</span><span class="n">TO_STRING</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Syntactic sugar, but it goes a long way. I&rsquo;ve intentionally choose the methods for this examples &ndash; whole LINQ-to-objects interface is based on extension methods.</p>
+
+<p>Java 8 introduces a feature with similar name but completely different functionality: virtual extension methods. Simply put it allows merging the Foo interface and AbstractFoo abstract class with a reasonable implementation of some of Foo&rsquo;s methods. For example if your interface has <code>size()</code> method you can add the <code>isEmpty()</code> virtual extension method with default implementation returning true when <code>size()</code> returns 0. So it&rsquo;s a nice feature, but IMO less powerful than C# solution. Both solutions allow adding new methods with default implementation to interfaces you wrote without having to worry about backwards compatibility, but C# extension methods allows you also to extend 3rd party or even <code>java.lang</code> intefaces and classes to make their API cleaner or better suited to your particular problem.</p>
+
+<p>I wonder why the C#-style extension methods weren&rsquo;t added to Java 8. Maybe there are some implementation issues I do not see, maybe there is a conflict with another language features, maybe the powers that be think it would be inconsistent with the language philosophy. Do let me know if you have such information.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -690,52 +768,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/10/28/mobilization-2013/">Mobilization 2013</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-28T09:30:00+01:00" pubdate data-updated="true">Oct 28<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/10/28/mobilization-2013/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/10/28/mobilization-2013/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at <a href="https://getbase.com/">Base CRM</a> to make the data model maintainable. Here are the slides:</p>
-
-<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
-
-
-<p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
-
-<p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -753,6 +785,10 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
@@ -766,10 +802,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
     
       <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
       </li>
     
   </ul>

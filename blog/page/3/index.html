@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="A while ago I wanted to perform a certain operation for every subsequent pair of elements in collection, i.e. for list [1, 2, 3, 4, 5] I wanted to do &hellip;">
+  <meta name="description" content="I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at Base CRM to make the data model &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,52 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/28/mobilization-2013/">Mobilization 2013</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-28T09:30:00+01:00" pubdate data-updated="true">Oct 28<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/10/28/mobilization-2013/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/10/28/mobilization-2013/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at <a href="https://getbase.com/">Base CRM</a> to make the data model maintainable. Here are the slides:</p>
+
+<script async="" class="speakerdeck-embed" data-id="c08beea021d4013102be12272eac3e5b" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+
+<p>Besides giving the talk, I have attended few other very interesting talks: <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> has shown the way they test Android apps at Polidea using <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a>; <a href="http://plus.google.com/110384974108475906298">+Mateusz Grzechociński</a> introduced Android devs to new build system and shared an awesome gradle protip: use &mdash;daemon command line parameter to shave off few seconds from gradle startup. <a href="http://plus.google.com/108555637824110226040">+Mateusz Herych</a> described the <a href="https://github.com/square/dagger">Dagger</a> basics and warned about few pitfalls. Mieszko Lassota described some UI blunders not only from the programming world. Finally, Krzysztof Kocel and Paweł Urban summarised the security pitfalls.</p>
+
+<p>All in all, this years Mobilization conference was a great place to be at. See you there next year!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1519,57 +1565,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/08/15/thneed-library/">Thneed Library</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-15T23:32:00+02:00" pubdate data-updated="true">Aug 15<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/08/15/thneed-library/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/08/15/thneed-library/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>The <a href="https://github.com/chalup/microorm">MicroOrm</a> library I started <a href="/blog/2013/05/28/weekend-hack-microorm-library">a while ago</a> solves only a tiny part of data model related problems &ndash; conversion between strongly typed objects and storage classes specific for Android. We discussed few existing libraries for data model implementation we might use at <a href="http://getbase.com/">Base CRM</a>, but we were not fully satisfied with any of them. There are two approaches to this problem:</p>
-
-<p>The first approach is to define the Data Access Objects / entity objects and create SQLite tables using this data. Almost every ORM solution for Android works this way. The deal breaker for those solutions is the complete disregard for data migrations. The <a href="http://ormlite.com/javadoc/ormlite-core/doc-files/ormlite_4.html#Upgrading-Schema">ORMLite docs</a> suggest that you should just fall back to the raw queries, but this means that you need to know the schema generated from DAOs, which is a classic case of <a href="http://www.joelonsoftware.com/articles/LeakyAbstractions.html">leaky abstraction</a>.</p>
-
-<p>The completely opposite approach is used in <a href="http://robotoworks.com/mechanoid/doc/db/">Mechanoid library</a>. You define the database schema as a sequence of migrations and the library generates the DAOs and some other stuff. I was initially very excited about this project, but it&rsquo;s in a very early state of development and the commit activity is not very high. The main problem with this concept is extensibility and customization. For both you probably have to change the way the code is generated from parsed SQLite schema. We also have some project specific issues that would makes this project hard to use.</p>
-
-<p>At the end we haven&rsquo;t found an acceptable solution among existing libraries and frameworks, but something good came out of our discussions. The sentence which came up again and again was &ldquo;It wouldn&rsquo;t be too hard to implement if we knew the relationships between our models&rdquo;. Wait a minute, we do know these relationships! We just need a way to represent them in the Java code!</p>
-
-<p>And so, the <a href="https://github.com/chalup/thneed">Thneed</a> was born.</p>
-
-<p>By itself the Thneed doesn&rsquo;t do anything useful &ndash; it just lets you tell that one X has many Ys and so on, to create a relationship graph of your data models. The trick is, this graph is a Visitable part of <a href="http://en.wikipedia.org/wiki/Visitor_pattern">Visitor design pattern</a>, which means that you can write any number of Visitors to do something useful with the information about declared relationships (see the <a href="https://github.com/chalup/thneed/blob/master/README.md">project&rsquo;s readme</a> for some ideas). Think about it as a tool for creating other tools.</p>
-
-<p>The project is in a very early stage, but I&rsquo;ve already started <a href="https://github.com/futuresimple/forger">another project</a> on top of Thneed and at this point the general idea seems sound. I&rsquo;ve also learned few tricks I&rsquo;ll write about in a little while. As usual, the feedback is welcome, and if you find this idea interesting, do not hesitate to <a href="https://github.com/chalup/thneed/star">star</a> the project <a href="https://github.com/chalup/thneed/">on Github</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1587,6 +1582,10 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
@@ -1600,10 +1599,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
     
       <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
       </li>
     
   </ul>

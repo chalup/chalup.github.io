@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ant | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/ant/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-13T21:07:14+02:00</updated>
+  <updated>2014-06-15T14:02:34+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -20,7 +20,7 @@
     <id>http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds</id>
     <content type="html"><![CDATA[<p>The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using ant?!&rdquo;.</p>
 
-<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=208140">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
+<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=20814">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
 
 <p>And why ant instead of Maven, gradle, buck or any other non-antique build tool? We&rsquo;ve started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.</p>
 

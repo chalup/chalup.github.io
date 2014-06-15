@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Recently I wanted to open a markdown email attachment on my Nexus 4, but after clicking &ldquo;readme.md&rdquo; instead of seeing the file contents I &hellip;">
+  <meta name="description" content="Last November I wrote about the new feature in rev11 of Android support package &ndash; Fragments nesting. Recently I had an opportunity to use this &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,112 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/16/android-nested-fragments-in-practice/">Android Nested Fragments in Practice</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-16T22:03:00+01:00" pubdate data-updated="true">Mar 16<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/03/16/android-nested-fragments-in-practice/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Last November I wrote about the new feature in rev11 of Android support package &ndash; <a href="/blog/2012/11/13/android-gets-nested-fragments">Fragments nesting</a>. Recently I had an opportunity to use this feature in practice and I&rsquo;d like to share my experience with it.</p>
+
+<p>The basics are simple: each <a href="http://developer.android.com/reference/android/support/v4/app/FragmentActivity.html"><code>FragmentActivity</code></a> and each <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html"><code>Fragment</code></a> has it&rsquo;s own <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html"><code>FragmentManager</code></a>. Inside the Fragment you may call <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getFragmentManager%28%29"><code>getFragmentManager()</code></a> to get the <code>FragmentManager</code> this <code>Fragment</code> was added to, or <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getChildFragmentManager%28%29"><code>getChildFragmentManager()</code></a> to get the <code>FragmentManager</code> which can be used to nest <code>Fragments</code> inside this <code>Fragment</code>. This basic flow works fine, but I have found two issues.</p>
+
+<p>If you have a <code>Fragment</code> with nested <code>Fragments</code> and you save its state with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#saveFragmentInstanceState%28android.support.v4.app.Fragment%29"><code>saveFragmentInstanceState()</code></a> and try to use it in <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#setInitialSavedState%28android.support.v4.app.Fragment.SavedState%29"><code>setInitialSavedState()</code></a> on another instance of this <code>Fragment</code>, you&rsquo;ll get the <code>BadParcelableException</code> from <code>onCreate</code>. Fortunately it&rsquo;s an obvious bug which is easy to fix: you just need to set the correct <code>ClassLoader</code> for a <code>Bundle</code> containing this <code>Fragment</code>&rsquo;s state. There is a <a href="https://android-review.googlesource.com/#/c/40760/">patch for it in support library project Gerrit</a>, and if you need this fix ASAP you may use <a href="https://github.com/futuresimple/android-support-v4">this fork of support lib on Github</a>.</p>
+
+<p>The second issue is related with the <code>Fragments</code> backstack. Inside each <code>FragmentManager</code> you may build stack of <code>Fragments</code> with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentTransaction.html#addToBackStack%28java.lang.String%29"><code>FragmentTransaction.addToBackStack()</code></a> and later on use <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#popBackStack%28%29"><code>popBackStack()</code></a> to go back to the previous state. Pressing hardware back key is also supposed to pop the <code>Fragments</code> from the back stack, but it doesn&rsquo;t take into account any nested <code>Fragments</code>, only <code>Fragments</code> added to the <code>Activity</code>&rsquo;s <code>FragmentManager</code>. This is not so easy to fix, but you may use the following workaround:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">String</span> <span class="n">FAKE_BACKSTACK_ENTRY</span> <span class="o">=</span> <span class="s">&quot;fakeBackstackEntry&quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">getFragmentManager</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>    <span class="c1">// call replace/add</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">setTransition</span><span class="o">(</span><span class="n">FragmentTransaction</span><span class="o">.</span><span class="na">TRANSIT_FRAGMENT_OPEN</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">final</span> <span class="n">FragmentManager</span> <span class="n">rootFragmentManager</span> <span class="o">=</span> <span class="n">getActivity</span><span class="o">().</span><span class="na">getSupportFragmentManager</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">rootFragmentManager</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Fragment</span><span class="o">(),</span> <span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">addOnBackStackChangedListener</span><span class="o">(</span><span class="k">new</span> <span class="n">OnBackStackChangedListener</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onBackStackChanged</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">findFragmentByTag</span><span class="o">(</span><span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">getFragmentManager</span><span class="o">().</span><span class="na">popBackStack</span><span class="o">();</span>
+</span><span class='line'>      <span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">removeOnBackStackChangedListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Quick explanation: together with the actual backstack entry we want to add, we also add the fake backstack entry with empty <code>Fragment</code> to top level <code>FragmentManager</code> and set up <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.OnBackStackChangedListener.html"><code>OnBackStackChangedListener</code></a>. When user presses hardware back button, the fake backstack entry is popped, the backstack listener is triggered and our implementation pops the backstack inside our <code>Fragment</code>. The backstack listeners are not persisted throughout the orientation change, so we need to setup it again inside <code>onCreate()</code>.</p>
+
+<p>Note that there are two issues with this workaround: it allows adding only one backstack entry and this setup won&rsquo;t be automatically recreated from state saved by <code>saveFragmentInstanceState()</code> (fortunately it does work with orientation change). Both issues probably can be solved by some additional hacks, but writing workarounds for workarounds is not something I do unless I really have to, and in this case I neither issue affected me.</p>
+
+<p>Besides those bumps the nested <code>Fragments</code> are a real blessing which allows much more cleaner and reusable code.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -651,167 +757,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/10/03/screensaver-blocking-on-symbian/">Screensaver Blocking on Symbian</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-10-03T20:55:00+02:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2012</time>
-        
-           | <a href="/blog/2012/10/03/screensaver-blocking-on-symbian/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/10/03/screensaver-blocking-on-symbian/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In my <a href="http://store.ovi.com/content/318428">latest game</a> the players spend significant amount of time just watching the screen and trying to figure the puzzle out. The first few levels are obvious and most players will sole them in a few seconds, but as the difficulty of the puzzles increases the players stare at the screen longer and longer. At some point the screensaver would kick in and piss the player off (fortunately my ragtag QA/betatester team found this issue before launch).</p>
-
-<p><a href="https://www.google.com/search?q=how+to+block+screensaver+symbian+qt">Google search results</a> are (as usual) helpful, but the most promising lead, the <a href="http://doc.qt.digia.com/qtmobility/qsystemscreensaver.html"><code>QSystemScreenSaver</code></a> class is not a solution. There are three problems with it:</p>
-
-<ol>
-<li>The API of the class itself is terrible.</li>
-<li>The API of the <a href="http://doc.qt.digia.com/qtmobility/qml-screensaver.html">related QML element</a> is even worse.</li>
-<li>Last, but not least, it doesn&rsquo;t work (at least not in the Qt Mobility version shipped with the Qt SDK).</li>
-</ol>
-
-
-<p>(BTW: these three points sums up pretty much every experience with Qt Mobility package I had. Qt devs should either kill this festering boil with fire or fix it and rename it, because I learned to dread everything remotely related to Qt Mobility, and I suspect I&rsquo;m not the only one).</p>
-
-<p>Anyways, let&rsquo;s get back to the core of the problem, i.e. &ldquo;how to block the screensaver&rdquo;. Qt Mobility failed, but the task doesn&rsquo;t seems like a rocket science to me. <a href="https://www.google.com/search?q=how+to+block+screensaver+s60+c%2B%2B">Slightly different Google search</a> suggested using native Symbian&rsquo;s <a href="http://library.developer.nokia.com/topic/Nokia_Belle_Developers_Library/GUID-C6E5F800-0637-419E-8FE5-1EBB40E725AA/GUID-C197C9A7-EA05-3F24-9854-542E984C612D.html#GUID-A98E1B31-00E0-3DF1-8D5A-8E815B073D81"><code>User::ResetInactivityTime()</code></a> method. Few minutes and one <code>QTimer</code> later, everything worked:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="cp">#ifndef SCREENSAVERBLOCKER_H</span>
-</span><span class='line'><span class="cp">#define SCREENSAVERBLOCKER_H</span>
-</span><span class='line'>
-</span><span class='line'><span class="cp">#include &lt;QObject&gt;</span>
-</span><span class='line'><span class="cp">#include &lt;QApplication&gt;</span>
-</span><span class='line'><span class="cp">#include &lt;QTimer&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">ScreenSaverBlocker</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QObject</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">Q_OBJECT</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">public</span><span class="o">:</span>
-</span><span class='line'>    <span class="k">explicit</span> <span class="n">ScreenSaverBlocker</span><span class="p">(</span><span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">:</span> <span class="n">QObject</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="n">mTimer</span><span class="p">.</span><span class="n">setInterval</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
-</span><span class='line'>        <span class="n">connect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mTimer</span><span class="p">,</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">timeout</span><span class="p">()),</span> <span class="k">this</span><span class="p">,</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">blockScreenSaver</span><span class="p">()));</span>
-</span><span class='line'>        <span class="n">changeScreenSaverState</span><span class="p">(</span><span class="n">QApplication</span><span class="o">::</span><span class="n">activeWindow</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">qApp</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>            <span class="n">qApp</span><span class="o">-&gt;</span><span class="n">installEventFilter</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">changeScreenSaverState</span><span class="p">(</span><span class="kt">bool</span> <span class="n">blockScreenSaver</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">blockScreenSaver</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">mTimer</span><span class="p">.</span><span class="n">isActive</span><span class="p">())</span> <span class="p">{</span>
-</span><span class='line'>            <span class="n">mTimer</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
-</span><span class='line'>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>            <span class="n">mTimer</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">protected</span><span class="o">:</span>
-</span><span class='line'>    <span class="kt">bool</span> <span class="n">eventFilter</span><span class="p">(</span><span class="n">QObject</span> <span class="o">*</span><span class="n">obj</span><span class="p">,</span> <span class="n">QEvent</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="n">Q_UNUSED</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">QEvent</span><span class="o">::</span><span class="n">ApplicationActivate</span>
-</span><span class='line'>         <span class="o">||</span> <span class="n">event</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">QEvent</span><span class="o">::</span><span class="n">ApplicationDeactivate</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>            <span class="n">changeScreenSaverState</span><span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">QEvent</span><span class="o">::</span><span class="n">ApplicationActivate</span><span class="p">);</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">private</span> <span class="nl">slots:</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">blockScreenSaver</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'><span class="cp">#ifdef Q_OS_SYMBIAN</span>
-</span><span class='line'>        <span class="n">User</span><span class="o">::</span><span class="n">ResetInactivityTime</span><span class="p">();</span>
-</span><span class='line'><span class="cp">#endif</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">private</span><span class="o">:</span>
-</span><span class='line'>    <span class="n">QTimer</span> <span class="n">mTimer</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="cp">#endif </span><span class="c1">// SCREENSAVERBLOCKER_H</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The important thing in the code above is watching the <code>ApplicationActivate</code> and <code>ApplicationDeactivate</code> events &ndash; after all, when your app is in background, you shouldn&rsquo;t affect the phone behavior. I&rsquo;m not sure if the app would fail the Nokia&rsquo;s QA process without this feature, but it seemed prudent to write the code this way.</p>
-
-<p>If you want to use this object in your QML UI just register it with <a href="http://doc.qt.digia.com/4.7/qdeclarativeengine.html#qmlRegisterType"><code>qmlRegisterType</code></a> and add the registered import and QML element to your root element.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -829,6 +774,10 @@ Things get even funnier here: when I used the <a href="http://developer.android.
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
@@ -842,10 +791,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
     
       <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
       </li>
     
   </ul>

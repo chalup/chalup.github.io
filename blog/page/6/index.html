@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I might have called this blog post &ldquo;Android sticky broadcasts considered harmful&rdquo;, but &ldquo;Considered harmful&rdquo; texts are &hellip;">
+  <meta name="description" content="In my latest game the players spend significant amount of time just watching the screen and trying to figure the puzzle out. The first few levels are &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,167 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/10/03/screensaver-blocking-on-symbian/">Screensaver Blocking on Symbian</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-03T20:55:00+02:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2012</time>
+        
+           | <a href="/blog/2012/10/03/screensaver-blocking-on-symbian/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/10/03/screensaver-blocking-on-symbian/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In my <a href="http://store.ovi.com/content/318428">latest game</a> the players spend significant amount of time just watching the screen and trying to figure the puzzle out. The first few levels are obvious and most players will sole them in a few seconds, but as the difficulty of the puzzles increases the players stare at the screen longer and longer. At some point the screensaver would kick in and piss the player off (fortunately my ragtag QA/betatester team found this issue before launch).</p>
+
+<p><a href="https://www.google.com/search?q=how+to+block+screensaver+symbian+qt">Google search results</a> are (as usual) helpful, but the most promising lead, the <a href="http://doc.qt.digia.com/qtmobility/qsystemscreensaver.html"><code>QSystemScreenSaver</code></a> class is not a solution. There are three problems with it:</p>
+
+<ol>
+<li>The API of the class itself is terrible.</li>
+<li>The API of the <a href="http://doc.qt.digia.com/qtmobility/qml-screensaver.html">related QML element</a> is even worse.</li>
+<li>Last, but not least, it doesn&rsquo;t work (at least not in the Qt Mobility version shipped with the Qt SDK).</li>
+</ol>
+
+
+<p>(BTW: these three points sums up pretty much every experience with Qt Mobility package I had. Qt devs should either kill this festering boil with fire or fix it and rename it, because I learned to dread everything remotely related to Qt Mobility, and I suspect I&rsquo;m not the only one).</p>
+
+<p>Anyways, let&rsquo;s get back to the core of the problem, i.e. &ldquo;how to block the screensaver&rdquo;. Qt Mobility failed, but the task doesn&rsquo;t seems like a rocket science to me. <a href="https://www.google.com/search?q=how+to+block+screensaver+s60+c%2B%2B">Slightly different Google search</a> suggested using native Symbian&rsquo;s <a href="http://library.developer.nokia.com/topic/Nokia_Belle_Developers_Library/GUID-C6E5F800-0637-419E-8FE5-1EBB40E725AA/GUID-C197C9A7-EA05-3F24-9854-542E984C612D.html#GUID-A98E1B31-00E0-3DF1-8D5A-8E815B073D81"><code>User::ResetInactivityTime()</code></a> method. Few minutes and one <code>QTimer</code> later, everything worked:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="cp">#ifndef SCREENSAVERBLOCKER_H</span>
+</span><span class='line'><span class="cp">#define SCREENSAVERBLOCKER_H</span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#include &lt;QObject&gt;</span>
+</span><span class='line'><span class="cp">#include &lt;QApplication&gt;</span>
+</span><span class='line'><span class="cp">#include &lt;QTimer&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">ScreenSaverBlocker</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QObject</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">Q_OBJECT</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>    <span class="k">explicit</span> <span class="n">ScreenSaverBlocker</span><span class="p">(</span><span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">:</span> <span class="n">QObject</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">mTimer</span><span class="p">.</span><span class="n">setInterval</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">connect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mTimer</span><span class="p">,</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">timeout</span><span class="p">()),</span> <span class="k">this</span><span class="p">,</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">blockScreenSaver</span><span class="p">()));</span>
+</span><span class='line'>        <span class="n">changeScreenSaverState</span><span class="p">(</span><span class="n">QApplication</span><span class="o">::</span><span class="n">activeWindow</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">qApp</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="n">qApp</span><span class="o">-&gt;</span><span class="n">installEventFilter</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">changeScreenSaverState</span><span class="p">(</span><span class="kt">bool</span> <span class="n">blockScreenSaver</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">blockScreenSaver</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">mTimer</span><span class="p">.</span><span class="n">isActive</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>            <span class="n">mTimer</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+</span><span class='line'>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>            <span class="n">mTimer</span><span class="p">.</span><span class="n">stop</span><span class="p">();</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">protected</span><span class="o">:</span>
+</span><span class='line'>    <span class="kt">bool</span> <span class="n">eventFilter</span><span class="p">(</span><span class="n">QObject</span> <span class="o">*</span><span class="n">obj</span><span class="p">,</span> <span class="n">QEvent</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">Q_UNUSED</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">QEvent</span><span class="o">::</span><span class="n">ApplicationActivate</span>
+</span><span class='line'>         <span class="o">||</span> <span class="n">event</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">QEvent</span><span class="o">::</span><span class="n">ApplicationDeactivate</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="n">changeScreenSaverState</span><span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">QEvent</span><span class="o">::</span><span class="n">ApplicationActivate</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="nl">slots:</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">blockScreenSaver</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'><span class="cp">#ifdef Q_OS_SYMBIAN</span>
+</span><span class='line'>        <span class="n">User</span><span class="o">::</span><span class="n">ResetInactivityTime</span><span class="p">();</span>
+</span><span class='line'><span class="cp">#endif</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span><span class="o">:</span>
+</span><span class='line'>    <span class="n">QTimer</span> <span class="n">mTimer</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#endif </span><span class="c1">// SCREENSAVERBLOCKER_H</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The important thing in the code above is watching the <code>ApplicationActivate</code> and <code>ApplicationDeactivate</code> events &ndash; after all, when your app is in background, you shouldn&rsquo;t affect the phone behavior. I&rsquo;m not sure if the app would fail the Nokia&rsquo;s QA process without this feature, but it seemed prudent to write the code this way.</p>
+
+<p>If you want to use this object in your QML UI just register it with <a href="http://doc.qt.digia.com/4.7/qdeclarativeengine.html#qmlRegisterType"><code>qmlRegisterType</code></a> and add the registered import and QML element to your root element.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1098,116 +1259,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/">The Dark Side of LINQ: LINQ to SQL on Windows Phone</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-10T08:23:00+02:00" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn LINQ, you won&rsquo;t be able to work with Java collections (Guava makes them bearable, but barely) or Qt/STL containers without throwing in your mouth every now and then.</p>
-
-<p>Here&rsquo;s tl;dr for the non-enlightened: LINQ is a sane way to query and alter the data. Instead of this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">PrintSortedEvenNumbers</span><span class="p">(</span><span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">unfiltered</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">filtered</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
-</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="k">in</span> <span class="n">unfiltered</span><span class="p">)</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">%</span> <span class="m">2</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
-</span><span class='line'>            <span class="n">filtered</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
-</span><span class='line'>    <span class="n">filtered</span><span class="p">.</span><span class="n">Sort</span><span class="p">();</span>
-</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="k">in</span> <span class="n">filtered</span><span class="p">)</span>
-</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="n">i</span> <span class="p">+</span> <span class="s">&quot; &quot;</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You can just write this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">PrintSortedEvenNumbers</span><span class="p">(</span><span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">unfiltered</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="k">in</span> <span class="n">unfiltered</span><span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">num</span> <span class="p">=&gt;</span> <span class="n">num</span> <span class="p">%</span> <span class="m">2</span> <span class="p">==</span> <span class="m">0</span><span class="p">).</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">n</span> <span class="p">=&gt;</span> <span class="n">n</span><span class="p">))</span>
-</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="n">i</span> <span class="p">+</span> <span class="s">&quot; &quot;</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This is a trivial example, but the more complicated code, the more benefit you get from using LINQ.</p>
-
-<p>I started using it for operations on collections and XML files and I immediately fell in love with it. Imagine my joy when I learned that Windows Phone 7.1 finally supports local relational database which can be queried through LINQ to SQL!</p>
-
-<p>I&rsquo;ve read the <a href="http://msdn.microsoft.com/en-us/library/hh286405(v=vs.92">tutorial</a>.aspx), thought a bit about the application I was writing at the time and decided that I need many-to-many relationship. Oops, that&rsquo;s not supported. Well, it&rsquo;s &ldquo;kinda&rdquo; supported, meaning you can create a data structure and insert some data, but when you remove the data the foreign key constraints won&rsquo;t be verified and cascade triggers won&rsquo;t work. I think I can simplify the above statement and just call it &ldquo;not supported feature&rdquo;.</p>
-
-<p>Fortunately I didn&rsquo;t absolutely had to use many-to-many relationship. It would be nicer and would allow us to relax some constraints, but the current data could be as well represented using a nested one-to-many relationships. I&rsquo;ve wrote the code based on aforementioned LINQ to SQL tutorial, wrote the tests, run them and watched in amazement as they fail. After googling a lot and experimenting I was able to make my code work, but it was quite different than the crap they posted on MSDN as tutorial. If you want to use LINQ to SQL, take a look at <a href="https://gist.github.com/1682648">this code on github</a>.</p>
-
-<p>I spent about two days reading about LINQ to SQL and experimenting with the code and in the end I didn&rsquo;t even had the data structure I wanted to. And we&rsquo;re not talking here about rocket science, the SQLite scheme I needed was something like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">create</span> <span class="k">table</span> <span class="n">x</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTOINCREMENT</span><span class="p">,</span> <span class="nb">text</span> <span class="n">STRING</span><span class="p">);</span>
-</span><span class='line'><span class="k">create</span> <span class="k">table</span> <span class="n">y</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTOINCREMENT</span><span class="p">,</span> <span class="nb">text</span> <span class="n">STRING</span><span class="p">);</span>
-</span><span class='line'><span class="k">create</span> <span class="k">table</span> <span class="n">z</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTOINCREMENT</span><span class="p">,</span>
-</span><span class='line'>                <span class="n">x_id</span> <span class="nb">INTEGER</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
-</span><span class='line'>                <span class="n">y_id</span> <span class="nb">INTEGER</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
-</span><span class='line'>                <span class="k">FOREIGN</span> <span class="k">KEY</span><span class="p">(</span><span class="n">x_id</span><span class="p">)</span> <span class="k">REFERENCES</span> <span class="n">x</span><span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span><span class="p">,</span>
-</span><span class='line'>                <span class="k">FOREIGN</span> <span class="k">KEY</span><span class="p">(</span><span class="n">y_id</span><span class="p">)</span> <span class="k">REFERENCES</span> <span class="n">y</span><span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Which leads me to conclusion: LINQ to SQL for Windows Phone just doesn&rsquo;t work. Consider also the amount of boilerplate code I had to write for simple foreign key relation: in case you didn&rsquo;t looked at the github link that&rsquo;s whooping 80 lines of code for every one-to-many relationship. I don&rsquo;t know, maybe there are some tools that generate this stuff for you, but in this case why does the official tutorial even mention writing the table classes by hand? And where are those tools?</p>
-
-<p>Recently I was also playing with Django which also features an ORM for the model definition. You need the foreign key? You use something called <code>ForeignKey</code>. You need the many-to-many relationship? You use the <code>ManyToManyField</code>. Dirt simple. I&rsquo;m sure there are some dark corners you have to be aware of, but the basic stuff just works.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/7/">&larr; Older</a>
@@ -1225,6 +1276,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
@@ -1238,10 +1293,6 @@
     
       <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
       </li>
     
   </ul>

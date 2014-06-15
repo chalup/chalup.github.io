@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="A while ago I wrote about pre-dexing feature introduced at the end of 2012, which facilitates using large Java libraries like Guava for developing &hellip;">
+  <meta name="description" content="The MicroOrm library I started a while ago solves only a tiny part of data model related problems &ndash; conversion between strongly typed objects &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,57 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/15/thneed-library/">Thneed Library</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-15T23:32:00+02:00" pubdate data-updated="true">Aug 15<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/08/15/thneed-library/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/08/15/thneed-library/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>The <a href="https://github.com/chalup/microorm">MicroOrm</a> library I started <a href="/blog/2013/05/28/weekend-hack-microorm-library">a while ago</a> solves only a tiny part of data model related problems &ndash; conversion between strongly typed objects and storage classes specific for Android. We discussed few existing libraries for data model implementation we might use at <a href="http://getbase.com/">Base CRM</a>, but we were not fully satisfied with any of them. There are two approaches to this problem:</p>
+
+<p>The first approach is to define the Data Access Objects / entity objects and create SQLite tables using this data. Almost every ORM solution for Android works this way. The deal breaker for those solutions is the complete disregard for data migrations. The <a href="http://ormlite.com/javadoc/ormlite-core/doc-files/ormlite_4.html#Upgrading-Schema">ORMLite docs</a> suggest that you should just fall back to the raw queries, but this means that you need to know the schema generated from DAOs, which is a classic case of <a href="http://www.joelonsoftware.com/articles/LeakyAbstractions.html">leaky abstraction</a>.</p>
+
+<p>The completely opposite approach is used in <a href="http://robotoworks.com/mechanoid/doc/db/">Mechanoid library</a>. You define the database schema as a sequence of migrations and the library generates the DAOs and some other stuff. I was initially very excited about this project, but it&rsquo;s in a very early state of development and the commit activity is not very high. The main problem with this concept is extensibility and customization. For both you probably have to change the way the code is generated from parsed SQLite schema. We also have some project specific issues that would makes this project hard to use.</p>
+
+<p>At the end we haven&rsquo;t found an acceptable solution among existing libraries and frameworks, but something good came out of our discussions. The sentence which came up again and again was &ldquo;It wouldn&rsquo;t be too hard to implement if we knew the relationships between our models&rdquo;. Wait a minute, we do know these relationships! We just need a way to represent them in the Java code!</p>
+
+<p>And so, the <a href="https://github.com/chalup/thneed">Thneed</a> was born.</p>
+
+<p>By itself the Thneed doesn&rsquo;t do anything useful &ndash; it just lets you tell that one X has many Ys and so on, to create a relationship graph of your data models. The trick is, this graph is a Visitable part of <a href="http://en.wikipedia.org/wiki/Visitor_pattern">Visitor design pattern</a>, which means that you can write any number of Visitors to do something useful with the information about declared relationships (see the <a href="https://github.com/chalup/thneed/blob/master/README.md">project&rsquo;s readme</a> for some ideas). Think about it as a tool for creating other tools.</p>
+
+<p>The project is in a very early stage, but I&rsquo;ve already started <a href="https://github.com/futuresimple/forger">another project</a> on top of Thneed and at this point the general idea seems sound. I&rsquo;ve also learned few tricks I&rsquo;ll write about in a little while. As usual, the feedback is welcome, and if you find this idea interesting, do not hesitate to <a href="https://github.com/chalup/thneed/star">star</a> the project <a href="https://github.com/chalup/thneed/">on Github</a>.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -802,112 +853,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/03/16/android-nested-fragments-in-practice/">Android Nested Fragments in Practice</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-16T22:03:00+01:00" pubdate data-updated="true">Mar 16<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/03/16/android-nested-fragments-in-practice/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/03/16/android-nested-fragments-in-practice/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Last November I wrote about the new feature in rev11 of Android support package &ndash; <a href="/blog/2012/11/13/android-gets-nested-fragments">Fragments nesting</a>. Recently I had an opportunity to use this feature in practice and I&rsquo;d like to share my experience with it.</p>
-
-<p>The basics are simple: each <a href="http://developer.android.com/reference/android/support/v4/app/FragmentActivity.html"><code>FragmentActivity</code></a> and each <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html"><code>Fragment</code></a> has it&rsquo;s own <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html"><code>FragmentManager</code></a>. Inside the Fragment you may call <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getFragmentManager%28%29"><code>getFragmentManager()</code></a> to get the <code>FragmentManager</code> this <code>Fragment</code> was added to, or <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#getChildFragmentManager%28%29"><code>getChildFragmentManager()</code></a> to get the <code>FragmentManager</code> which can be used to nest <code>Fragments</code> inside this <code>Fragment</code>. This basic flow works fine, but I have found two issues.</p>
-
-<p>If you have a <code>Fragment</code> with nested <code>Fragments</code> and you save its state with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#saveFragmentInstanceState%28android.support.v4.app.Fragment%29"><code>saveFragmentInstanceState()</code></a> and try to use it in <a href="http://developer.android.com/reference/android/support/v4/app/Fragment.html#setInitialSavedState%28android.support.v4.app.Fragment.SavedState%29"><code>setInitialSavedState()</code></a> on another instance of this <code>Fragment</code>, you&rsquo;ll get the <code>BadParcelableException</code> from <code>onCreate</code>. Fortunately it&rsquo;s an obvious bug which is easy to fix: you just need to set the correct <code>ClassLoader</code> for a <code>Bundle</code> containing this <code>Fragment</code>&rsquo;s state. There is a <a href="https://android-review.googlesource.com/#/c/40760/">patch for it in support library project Gerrit</a>, and if you need this fix ASAP you may use <a href="https://github.com/futuresimple/android-support-v4">this fork of support lib on Github</a>.</p>
-
-<p>The second issue is related with the <code>Fragments</code> backstack. Inside each <code>FragmentManager</code> you may build stack of <code>Fragments</code> with <a href="http://developer.android.com/reference/android/support/v4/app/FragmentTransaction.html#addToBackStack%28java.lang.String%29"><code>FragmentTransaction.addToBackStack()</code></a> and later on use <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.html#popBackStack%28%29"><code>popBackStack()</code></a> to go back to the previous state. Pressing hardware back key is also supposed to pop the <code>Fragments</code> from the back stack, but it doesn&rsquo;t take into account any nested <code>Fragments</code>, only <code>Fragments</code> added to the <code>Activity</code>&rsquo;s <code>FragmentManager</code>. This is not so easy to fix, but you may use the following workaround:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">String</span> <span class="n">FAKE_BACKSTACK_ENTRY</span> <span class="o">=</span> <span class="s">&quot;fakeBackstackEntry&quot;</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">getFragmentManager</span><span class="o">()</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
-</span><span class='line'>    <span class="c1">// call replace/add</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">setTransition</span><span class="o">(</span><span class="n">FragmentTransaction</span><span class="o">.</span><span class="na">TRANSIT_FRAGMENT_OPEN</span><span class="o">)</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">final</span> <span class="n">FragmentManager</span> <span class="n">rootFragmentManager</span> <span class="o">=</span> <span class="n">getActivity</span><span class="o">().</span><span class="na">getSupportFragmentManager</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">rootFragmentManager</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">beginTransaction</span><span class="o">()</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">addToBackStack</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Fragment</span><span class="o">(),</span> <span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span>
-</span><span class='line'>    <span class="o">.</span><span class="na">commit</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">addOnBackStackChangedListener</span><span class="o">(</span><span class="k">new</span> <span class="n">OnBackStackChangedListener</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onBackStackChanged</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">findFragmentByTag</span><span class="o">(</span><span class="n">FAKE_BACKSTACK_ENTRY</span><span class="o">)</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>      <span class="n">getFragmentManager</span><span class="o">().</span><span class="na">popBackStack</span><span class="o">();</span>
-</span><span class='line'>      <span class="n">rootFragmentManager</span><span class="o">.</span><span class="na">removeOnBackStackChangedListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">});</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Quick explanation: together with the actual backstack entry we want to add, we also add the fake backstack entry with empty <code>Fragment</code> to top level <code>FragmentManager</code> and set up <a href="http://developer.android.com/reference/android/support/v4/app/FragmentManager.OnBackStackChangedListener.html"><code>OnBackStackChangedListener</code></a>. When user presses hardware back button, the fake backstack entry is popped, the backstack listener is triggered and our implementation pops the backstack inside our <code>Fragment</code>. The backstack listeners are not persisted throughout the orientation change, so we need to setup it again inside <code>onCreate()</code>.</p>
-
-<p>Note that there are two issues with this workaround: it allows adding only one backstack entry and this setup won&rsquo;t be automatically recreated from state saved by <code>saveFragmentInstanceState()</code> (fortunately it does work with orientation change). Both issues probably can be solved by some additional hacks, but writing workarounds for workarounds is not something I do unless I really have to, and in this case I neither issue affected me.</p>
-
-<p>Besides those bumps the nested <code>Fragments</code> are a real blessing which allows much more cleaner and reusable code.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -925,6 +870,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
@@ -938,10 +887,6 @@
     
       <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
       </li>
     
   </ul>

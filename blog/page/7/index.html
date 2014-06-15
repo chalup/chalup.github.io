@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Few weeks ago I was complaining to another developer that Windows Phone applications cannot perform tasks in background when they are not running. &hellip;">
+  <meta name="description" content="In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,116 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/">The Dark Side of LINQ: LINQ to SQL on Windows Phone</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-10T08:23:00+02:00" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/04/10/dark-side-of-linq-linq-to-sql-on/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In case you don&rsquo;t know what&rsquo;s LINQ and you use C#, I suggest you drop everything you do and enlighten yourself. Be warned: when you learn LINQ, you won&rsquo;t be able to work with Java collections (Guava makes them bearable, but barely) or Qt/STL containers without throwing in your mouth every now and then.</p>
+
+<p>Here&rsquo;s tl;dr for the non-enlightened: LINQ is a sane way to query and alter the data. Instead of this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">PrintSortedEvenNumbers</span><span class="p">(</span><span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">unfiltered</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">filtered</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;();</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="k">in</span> <span class="n">unfiltered</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">%</span> <span class="m">2</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+</span><span class='line'>            <span class="n">filtered</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">filtered</span><span class="p">.</span><span class="n">Sort</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="k">in</span> <span class="n">filtered</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="n">i</span> <span class="p">+</span> <span class="s">&quot; &quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can just write this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">PrintSortedEvenNumbers</span><span class="p">(</span><span class="n">IList</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">unfiltered</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="k">in</span> <span class="n">unfiltered</span><span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">num</span> <span class="p">=&gt;</span> <span class="n">num</span> <span class="p">%</span> <span class="m">2</span> <span class="p">==</span> <span class="m">0</span><span class="p">).</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">n</span> <span class="p">=&gt;</span> <span class="n">n</span><span class="p">))</span>
+</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="n">i</span> <span class="p">+</span> <span class="s">&quot; &quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is a trivial example, but the more complicated code, the more benefit you get from using LINQ.</p>
+
+<p>I started using it for operations on collections and XML files and I immediately fell in love with it. Imagine my joy when I learned that Windows Phone 7.1 finally supports local relational database which can be queried through LINQ to SQL!</p>
+
+<p>I&rsquo;ve read the <a href="http://msdn.microsoft.com/en-us/library/hh286405(v=vs.92">tutorial</a>.aspx), thought a bit about the application I was writing at the time and decided that I need many-to-many relationship. Oops, that&rsquo;s not supported. Well, it&rsquo;s &ldquo;kinda&rdquo; supported, meaning you can create a data structure and insert some data, but when you remove the data the foreign key constraints won&rsquo;t be verified and cascade triggers won&rsquo;t work. I think I can simplify the above statement and just call it &ldquo;not supported feature&rdquo;.</p>
+
+<p>Fortunately I didn&rsquo;t absolutely had to use many-to-many relationship. It would be nicer and would allow us to relax some constraints, but the current data could be as well represented using a nested one-to-many relationships. I&rsquo;ve wrote the code based on aforementioned LINQ to SQL tutorial, wrote the tests, run them and watched in amazement as they fail. After googling a lot and experimenting I was able to make my code work, but it was quite different than the crap they posted on MSDN as tutorial. If you want to use LINQ to SQL, take a look at <a href="https://gist.github.com/1682648">this code on github</a>.</p>
+
+<p>I spent about two days reading about LINQ to SQL and experimenting with the code and in the end I didn&rsquo;t even had the data structure I wanted to. And we&rsquo;re not talking here about rocket science, the SQLite scheme I needed was something like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">create</span> <span class="k">table</span> <span class="n">x</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTOINCREMENT</span><span class="p">,</span> <span class="nb">text</span> <span class="n">STRING</span><span class="p">);</span>
+</span><span class='line'><span class="k">create</span> <span class="k">table</span> <span class="n">y</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTOINCREMENT</span><span class="p">,</span> <span class="nb">text</span> <span class="n">STRING</span><span class="p">);</span>
+</span><span class='line'><span class="k">create</span> <span class="k">table</span> <span class="n">z</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTOINCREMENT</span><span class="p">,</span>
+</span><span class='line'>                <span class="n">x_id</span> <span class="nb">INTEGER</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+</span><span class='line'>                <span class="n">y_id</span> <span class="nb">INTEGER</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+</span><span class='line'>                <span class="k">FOREIGN</span> <span class="k">KEY</span><span class="p">(</span><span class="n">x_id</span><span class="p">)</span> <span class="k">REFERENCES</span> <span class="n">x</span><span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span><span class="p">,</span>
+</span><span class='line'>                <span class="k">FOREIGN</span> <span class="k">KEY</span><span class="p">(</span><span class="n">y_id</span><span class="p">)</span> <span class="k">REFERENCES</span> <span class="n">y</span><span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which leads me to conclusion: LINQ to SQL for Windows Phone just doesn&rsquo;t work. Consider also the amount of boilerplate code I had to write for simple foreign key relation: in case you didn&rsquo;t looked at the github link that&rsquo;s whooping 80 lines of code for every one-to-many relationship. I don&rsquo;t know, maybe there are some tools that generate this stuff for you, but in this case why does the official tutorial even mention writing the table classes by hand? And where are those tools?</p>
+
+<p>Recently I was also playing with Django which also features an ORM for the model definition. You need the foreign key? You use something called <code>ForeignKey</code>. You need the many-to-many relationship? You use the <code>ManyToManyField</code>. Dirt simple. I&rsquo;m sure there are some dark corners you have to be aware of, but the basic stuff just works.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -846,47 +956,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/">&#8220;Nu, Pogodi!&#8221; Bought by Over 2000 Users</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-24T22:53:00+01:00" pubdate data-updated="true">Feb 24<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/02/24/nu-pogodi-bought-by-over-2000-users/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This week my <a href="http://store.ovi.com/content/219800">&ldquo;Nu, Pogodi!&rdquo;</a> game reached the 2000 downloads from Nokia Store. It might not be a lot if you compare it to the number of Angry Birds downloads, but considering that a) the game is paid, i.e. those 2000 Nokia phone users actually spent their money on my game, and b) it took about two weeks total to program it, I think it&rsquo;s a very good result.</p>
-
-<p>Despite the fact that the game is very simple, <a href="/blog/2012/01/22/how-not-to-test-your-qml-application">I&rsquo;ve learned</a> <a href="/blog/2012/01/31/updating-qt-applications-in-nokia-store/">a lot</a> <a href="/blog/2012/02/01/handling-qml-errors-101">while writing</a> <a href="/blog/2012/02/23/nokia-belle-update-and-content">and publishing it</a>, which makes me very excited about the next, more complex programs I&rsquo;m going to release and gives me enormous motivation boost. Now I just need to get to keep working before it wears off.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/8/">&larr; Older</a>
@@ -904,6 +973,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
@@ -917,10 +990,6 @@
     
       <li class="post">
         <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a>
       </li>
     
   </ul>
