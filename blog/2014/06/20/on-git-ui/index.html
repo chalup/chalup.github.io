@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Introducing: Word Judge - Porcupine Programmer</title>
+  <title>On Git - Porcupine Programmer</title>
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I enjoy playing Scrabble and other word games like WordSquared of Word with Friends and I think I&rsquo;m quite good at them for an amateur &ndash; &hellip;">
+  <meta name="description" content="As madeupstatistics.com report, 95% posts about git can be divided into three types: Whining about rebases, because &ldquo;git history is a bunch of &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://chalup.github.io/blog/2012/03/10/introducing-word-judge">
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/06/20/on-git-ui">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
@@ -80,7 +80,7 @@
   
   <header>
     
-      <h1 class="entry-title">Introducing: Word Judge</h1>
+      <h1 class="entry-title">On Git</h1>
     
     
       <p class="meta">
@@ -96,7 +96,7 @@
   
 
 
-<time datetime="2012-03-10T11:17:00+01:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+<time datetime="2014-06-20T13:40:12+02:00" pubdate data-updated="true">Jun 20<span>th</span>, 2014</time>
         
            | <a href="#disqus_thread"
              data-disqus-identifier="http://chalup.github.io">Comments</a>
@@ -106,24 +106,34 @@
   </header>
 
 
-<div class="entry-content"><p>I enjoy playing Scrabble and other word games like WordSquared of Word with Friends and I think I&rsquo;m quite good at them for an amateur &ndash; my average score in 2-player Scrabble game is around 330 points. I do not have a tournament aspirations, because memorizing word lists or best stems doesn&rsquo;t fit my definition of fun, but I&rsquo;m always in for a casual game.</p>
+<div class="entry-content"><p>As madeupstatistics.com report, 95% posts about git can be divided into three types:</p>
 
-<p>The only thing that bothers me during these casual games are occasional, but unpleasant arguments &ndash; how do you spell given word or what is some 3 letter combination an obscure word or gibberish. Polish language have both <a href="http://en.wikipedia.org/wiki/Declension">declension</a> and <a href="http://en.wikipedia.org/wiki/Conjugation">conjugation</a> with a lot of irregularities, so there are plenty of things to argue about.</p>
+<ol>
+<li><p>Whining about rebases, because &ldquo;git history is a bunch of lies&rdquo;.</p>
 
-<p>Most of the times we sort things out simply by checking the word spelling on the Internet, but there are situations when you can&rsquo;t do that, for example when you&rsquo;re abroad and don&rsquo;t have wi-fi access and roaming data access price is extraorbitant, or you&rsquo;re in the middle of the outback with no connectivity whatsoever. Without that possibility you have to find a compromise, and boy, that&rsquo;s not easy when you challenge someones 7-letter word on two triple-word bonus tiles.</p>
+<p>   Right, because everyone needs to see your &ldquo;fixed typo&rdquo; mistakes and early API design blunders.</p></li>
+<li><p>Whining about rebases, because you should document the &ldquo;roads not taken&rdquo;, not obliterate them.</p>
 
-<p>That&rsquo;s why I created Word Judge &ndash; an ultimate way to settle all word-related disputes. The application contains full dictionary of valid words and short word list with definitions. Dictionary is shipped with the application, so you don&rsquo;t need internet connectivity to check if the word can be used in a word game. Currently the application is available only for Android devices, but I&rsquo;m going to release Symbian (and maybe Harmattan?) version soon.</p>
+<p> This argument is actually pretty good, but from my experience these not taken roads, dead ends and detours do not tell the full story either. VCS is not the right tool for this.</p></li>
+<li><p>Whining about crappy CLI command names.</p>
 
-<table class="separator" style="clear: both; text-align: center;"><tbody><tr><td><img class="center" src="/images/screenshot1.png"></td><td><img class="center" src="/images/screenshot2.png"></td><td><img class="center" src="/images/screenshot3.png"></td></tr></tbody></table>
+<p> It&rsquo;s hard to defend some choices, but here&rsquo;s the thing: you need to memorize maybe a dozen commands and in return you get the most powerful VCS tool you can get today. So toughen up princess, stop whining and learn them.</p></li>
+</ol>
 
 
-<p>Unlike many other word game helpers, Word Judge doesn&rsquo;t contain anagrammer tool. It&rsquo;s not an oversight, it didn&rsquo;t add it for two reasons. First of all I don&rsquo;t think that such functionality should be bundled with the application, which is basically a dictionary. You use a dictionary to check the spelling, not to cheat. The second reason is more prosaic &ndash; I don&rsquo;t like the UI of any anagrammer tools I found. It&rsquo;s usually a jumble of checkboxes and radio buttons and two fields for board and rack tiles. Even if you figure out what all those controls do, these tools don&rsquo;t really solve the problem, which is finding the best move. It&rsquo;s not an easy problem, even if you find a convenient way to import current game state to the application (<a href="http://en.wikipedia.org/wiki/Augmented_reality">AR</a> maybe?). It&rsquo;s certainly a good idea for a separate application, but not for a part of a dictionary app.</p>
+<p>So today I was pleasantly surprised when I found today actually a <a href="http://tonsky.me/blog/reinventing-git-interface/">good blog post about git UI</a>. Go ahead and read it. While I do not agree with everything OP wrote, he got two things right: git model and <code>git log --graph</code> improvements.</p>
 
-<p>I released one version of my application for every supported language (currently only <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">English</a> and <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgePL">Polish</a>). I considered setting up a service with downloadable dictionaries, but I decided against it, because it would needlessly complicate the application and I think that using multiple dictionaries is quite rare use case. Let me know if I&rsquo;m wrong, I might change my mind. Also, if you like the idea of my application and want me to create a Word Judge for your language, <a href="mailto:jerzy.chalupski@gmail.com">send me an email</a>. Unfortunately, since the app is free I cannot offer you anything more than a mention in application description and &ldquo;About&rdquo; window.</p>
+<p><img class="center" src="http://tonsky.me/blog/reinventing-git-interface/overview@2x.png"></p>
 
-<p>I was sure from the start that I won&rsquo;t charge money for this app, but I pondered for quite a long time if I should use ads. On one hand they are visually displeasing and take scarce screen real estate. On the other hand, I want to see for myself how much revenue they generate &ndash; the testimonies of other developers vary from ecstatic to disappointed. In the end I decided to add a small banner as an experiment.</p>
+<h2>Git Mental Model</h2>
 
-<p>This post is already getting too long, so let me just mention that in the next week or so I&rsquo;m going to write about stuff I learned while working on this application. I hope you&rsquo;ll enjoy the reading. Meanwhile, dust of your Scrabble board, <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">download my app</a> and enjoy an argument-free game!</p>
+<p>People do not need to know that there are blobs, sha checksum calculated from whatnot and so one. What I say to every git newcomer is this: <strong>commits are connected with parent commits, and branches, tags, HEAD, etc. are all just pointers to commits</strong>. Then you just need to figure out that <code>git commit</code> doesn&rsquo;t do any magic, it just adds commit and moves HEAD and current branch pointers.</p>
+
+<h2>Commits Graph Representation</h2>
+
+<p>Every git workflow description contain a beautiful, clear diagram explaining where commits are added and merged &ndash; <a href="http://nvie.com/posts/a-successful-git-branching-model/">this is a good example</a>. Then you start using this workflow and after two weeks your <code>git log --graph --all</code> output looks like a failed knitting experiment. The difference is that the diagrams keep the commits from a single branch aligned in a column, and <code>git log</code> tries to reduce the space taken by graph, which mixes multiple branches in a single column.</p>
+
+<p>I&rsquo;m not sure if it&rsquo;s doable with current git data model though &ndash; the commits do not contain any information about the branch. I think the branch name could be derived from the current branches and merge commits messages, but I&rsquo;m sure it won&rsquo;t work for 100% of cases. For these edge cases it would be great to allow users to manually select the correct branch, but this means the branch information would have to be kept outside of commits, but inside git. Tricky stuff.</p>
 </div>
 
 
@@ -146,12 +156,12 @@
   
 
 
-<time datetime="2012-03-10T11:17:00+01:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+<time datetime="2014-06-20T13:40:12+02:00" pubdate data-updated="true">Jun 20<span>th</span>, 2014</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/release/'>Release</a>, <a class='category' href='/blog/categories/word-judge/'>Word Judge</a>
+    <a class='category' href='/blog/categories/git/'>git</a>
   
 </span>
 
@@ -160,7 +170,7 @@
     
       <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2012/03/10/introducing-word-judge/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2012/03/10/introducing-word-judge/" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/06/20/on-git-ui/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/06/20/on-git-ui/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -171,10 +181,8 @@
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2012/03/08/customizing-ui-controls-on-android/" title="Previous Post: Customizing UI controls on Android">&laquo; Customizing UI controls on Android</a>
+        <a class="basic-alignment left" href="/blog/2014/06/15/minsdkversion-equals-15/" title="Previous Post: minSdkVersion=15, what's next?">&laquo; minSdkVersion=15, what's next?</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2012/03/14/large-raw-assets-in-android-22/" title="Next Post: Large raw assets in Android 2.2">Large raw assets in Android 2.2 &raquo;</a>
       
     </p>
   </footer>
@@ -279,8 +287,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://chalup.github.io/blog/2012/03/10/introducing-word-judge/';
-        var disqus_url = 'http://chalup.github.io/blog/2012/03/10/introducing-word-judge/';
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/06/20/on-git-ui/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/06/20/on-git-ui/';
         var disqus_script = 'embed.js';
       
     (function () {

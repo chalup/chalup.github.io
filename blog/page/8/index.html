@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="This week my &ldquo;Nu, Pogodi!&rdquo; game reached the 2000 downloads from Nokia Store. It might not be a lot if you compare it to the number of &hellip;">
+  <meta name="description" content="During testing of a Windows Phone 7 application I write during my day job I noticed strange thing: when I disabled network connection, I received 404 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,92 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/28/wp7-webrequest-oddity/">WP7 WebRequest Oddity</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-28T09:50:00+01:00" pubdate data-updated="true">Feb 28<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/28/wp7-webrequest-oddity/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/28/wp7-webrequest-oddity/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>During testing of a Windows Phone 7 application I write during my day job I noticed strange thing: when I disabled network connection, I received 404 NotFound error. More precisely, the WebRequest threw WebException with Status = UnknownError, Response.Uri = {} and Response.StatusCode = NotFound.</p>
+
+<p><img class="center" src="/images/no+connection.jpg"></p>
+
+<p>So you get 404 in two cases: when either connection endpoint is down or when server actually responds with 404 NotFound. It would be nice to separate those two cases though, for example to display to the user the message that actually helps them fix the problem.</p>
+
+<p><img class="center" src="/images/wrong+url.jpg"></p>
+
+<p>Fortunately you can tell those two situations apart by checking WebException.Response.ResponseUri &ndash; in case of connection failure it contains empty Uri object (not null, just empty). Here&rsquo;s the extension method I use to convert the exception to the one that makes more sense to me:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">WebResponse</span> <span class="nf">SaneEndGetResponse</span><span class="p">(</span><span class="k">this</span> <span class="n">WebRequest</span> <span class="n">request</span><span class="p">,</span> <span class="n">IAsyncResult</span> <span class="n">asyncResult</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">try</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">request</span><span class="p">.</span><span class="n">EndGetResponse</span><span class="p">(</span><span class="n">asyncResult</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">catch</span> <span class="p">(</span><span class="n">WebException</span> <span class="n">wex</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">wex</span><span class="p">.</span><span class="n">Response</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>            <span class="p">((</span><span class="n">HttpWebResponse</span><span class="p">)</span><span class="n">wex</span><span class="p">.</span><span class="n">Response</span><span class="p">).</span><span class="n">StatusCode</span> <span class="p">==</span> <span class="n">HttpStatusCode</span><span class="p">.</span><span class="n">NotFound</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>            <span class="n">wex</span><span class="p">.</span><span class="n">Response</span><span class="p">.</span><span class="n">ResponseUri</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>            <span class="n">String</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">wex</span><span class="p">.</span><span class="n">Response</span><span class="p">.</span><span class="n">ResponseUri</span><span class="p">.</span><span class="n">ToString</span><span class="p">()))</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="k">throw</span> <span class="k">new</span> <span class="nf">WebException</span><span class="p">(</span><span class="s">&quot;Network error&quot;</span><span class="p">,</span> <span class="n">WebExceptionStatus</span><span class="p">.</span><span class="n">ConnectFailure</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">throw</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1455,60 +1541,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/01/22/how-not-to-test-your-qml-application/">How (Not to) Test Your QML Application for Symbian</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-22T16:15:00+01:00" pubdate data-updated="true">Jan 22<span>nd</span>, 2012</time>
-        
-           | <a href="/blog/2012/01/22/how-not-to-test-your-qml-application/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/01/22/how-not-to-test-your-qml-application/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>First of all by QML I do not mean <a href="http://sneezy.cs.nott.ac.uk/QML/">this</a>, I mean <a href="http://developer.qt.nokia.com/doc/qt-4.8/qtquick.html">this</a>: a UI module of Qt, the cross-platform framework. The gals and guys at Nokia figured out that modern user interface cannot be fully described by static layout in a XML file. Microsoft figured out that too, but they chickened out and only extended XML a bit and added an &lsquo;a&rsquo; to file extension to make it look like something new. Nokians took a step further and created new language for declarative UI based on JavaScript called QML.</p>
-
-<p>The QML UI components can be defined in two ways: it can be a QML file composed of other components (for instance that&rsquo;s the usual way to define the main UI file) or it can be a C++ extension. Both ways can be used together to create a plugin, which can be imported to your project.</p>
-
-<p>And at last we reach the intended topic of this post: testing. What happens if some QML file defining a component is missing? What happens if the whole plugin is missing or the version of this plugin is lower than the one required by application? QML files are interpreted during runtime, so of course you get the runtime error. In the best scenario it limits the functionality of your app, in the worst case it renders it completely unusable.</p>
-
-<p>But hey, you can catch most of those errors simply by clicking through your application, right? Not exactly, doing so only tells you that in works on one particular device. You might have some plugins already installed, but not included in application&rsquo;s package and your app will work only on the devices which happen to have those plugins, which is not very likely.</p>
-
-<p><img class="center" src="/images/works-on-my-machine-starburst_2.png">
-That&rsquo;s exactly the error I made when I published the first version of &ldquo;Nu, Pogodi!&rdquo;. I submitted for Q&amp;A process an application with dependencies to Qt Components 1.1, build with the latest Qt SDK. I&rsquo;ve tested it thoroughly on some devices I had access to and via <a href="http://www.developer.nokia.com/Devices/Remote_device_access/">Remote Device Access</a> service (which BTW rocks; I wish there was a similar service for Android) and everything worked fine. The application was rejected by Q&amp;A, because at the end of 2011 there was some <a href="http://support.publish.nokia.com/?p=3766&amp;type=news">technical issues with Nokia Store and latest Qt</a> and I was told to rebuild my application with old SDK, which included only Qt Components 1.0. I&rsquo;ve tested my game again and everything worked so I published it to Nokia Store. Few days later I received first reviews &ndash; all negative, along the lines &ldquo;doesn&rsquo;t work, beware&rdquo;.</p>
-
-<p>Qt Smart Installer partially prevents those errors, but you still might shoot yourself in the foot in some cases. My game had dependencies to Qt Components 1.1, but the pkg file declared dependency to version 1.0, because it was created with old SDK. When my customers installed the game, the smart installer ensured only that version 1.0 is installed, but my game needed newer version and failed during runtime. I didn&rsquo;t caught this during testing, because all of my devices had latest Qt Components installed.</p>
-
-<p>That was the &ldquo;How not to test your QML application&rdquo; part, now let&rsquo;s get to solution. It&rsquo;s really simple: downgrade all the stuff needed by your application to versions defined in pkg file. To check the current versions of Qt libraries and plugins I recommend using an excellent <a href="http://projects.developer.nokia.com/qtinfo">QtInfo tool</a>. To downgrade Qt you need the sis files distributed with <a href="ftp://ftp.qt.nokia.com/qtsdk/">old Qt SDK versions</a>.</p>
-
-<p>This simple steps should ensure that your application will work properly on all supported devices. Nevertheless, you should prepare for failure and handle all runtime errors in a user friendly way. But that&rsquo;s the topic for another post&hellip;</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/9/">&larr; Older</a>
@@ -1526,6 +1558,10 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
@@ -1539,10 +1575,6 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
     
       <li class="post">
         <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
   </ul>

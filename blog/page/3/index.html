@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I gave the talk at the Mobilization 2013 conference this weekend. I have presented few libraries created at Base CRM to make the data model &hellip;">
+  <meta name="description" content="We&rsquo;re starting to find more and more interesting use cases for Thneed in Base CRM codebase. The first release using it, and few other libraries &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,154 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/11/03/thneed-notes-and-db-design/">Thneed, Notes and Db Design</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-03T18:59:00+01:00" pubdate data-updated="true">Nov 3<span>rd</span>, 2013</time>
+        
+           | <a href="/blog/2013/11/03/thneed-notes-and-db-design/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>We&rsquo;re starting to find more and more interesting use cases for <a href="https://github.com/chalup/thneed">Thneed</a> in Base CRM codebase. The first release using it, and <a href="https://github.com/chalup/microorm">few</a> <a href="https://github.com/futuresimple/forger">other</a> <a href="https://github.com/futuresimple/android-db-commons">libraries</a> <a href="https://github.com/futuresimple/android-autoindexer">we</a> <a href="https://github.com/futuresimple/android-schema-utils">recently</a> <a href="https://github.com/futuresimple/sqlitemaster">developed</a>, was released just before the Halloween and we haven&rsquo;t registered any critical issues related to it. All in all, the results look very promising. I won&rsquo;t recommend using <a href="https://github.com/chalup/thneed">Thneed</a> in your production builds yet, but I urge you to <a href="https://github.com/chalup/thneed/star">star the project on Github</a> and watch its progress.</p>
+
+<p>The <a href="https://github.com/chalup/thneed">Thneed</a> was created as an answer to some issues we faced when developing and maintaining <a href="https://getbase.com/">Base CRM</a>, and this fact is sometimes reflected by the API. The example of this is something we internally called PolyModels.</p>
+
+<p>Let&rsquo;s start with a scenario, where we have a some objects and we&rsquo;d like to add notes to. It&rsquo;s a classic one-to-many relationship, which I&rsquo;d model with a foreign key in notes table:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">some_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">some_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now let&rsquo;s introduce another type of objects, which also can have notes attached to it. We have few options now. The simplest thing to do is to keep these notes in a completely separate table:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_enity_notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">other_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">other_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The issue with this solution is that we have two separate schemas that need to be updated in parallel, and in 95% of cases would be exactly the same. Another approach is making the objects which contain notes sort of inherit a base class:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notables</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span> <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span> <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These two solutions work perfectly in the &ldquo;give me all notes for object X&rdquo; scenario, but it gets ugly if you want to display a single note with the simple &ldquo;Associated with object X&rdquo; info. In this case you have to query every model which can contain notes, to see if this particular association references the objects from this model. On top of that, the Noteable table approach requires some additional work to create the entry in</p>
+
+<p>You can always have a several mutually exclusive foreing keys in your notes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">some_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">some_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">other_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">other_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But this solution doesn&rsquo;t really scale well as the number of the models which can contain notes increases. Also, your DBAs will love you if you go this way.</p>
+
+<p>The solution to this problem we used in Base was to have two columns in Notes table: one holding the type of the &ldquo;noteable&rdquo; object, i.e. and the other for the id of this object:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
+</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">noteable_id</span> <span class="nb">INTEGER</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">noteable_type</span> <span class="nb">TEXT</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
+</span><span class='line'><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The glaring issue with this approach is losing the consistency guarantee &ndash; no database I know of support this kind of foreign keys. But when you have SOA on the backend and the notes are stored in a separate database than the noteable objects, this is not your top concern. On mobile apps, even though we have a single database, we use the same structure, because all the other have some implementation issues and worse performance characteristics.</p>
+
+<p>I&rsquo;m not a db expert, and I haven&rsquo;t found any discussion of similar cases, which means that a) we&rsquo;re doing something very wrong or b) we have just very specific requirements. Let me know if it&rsquo;s a former case.</p>
+
+<p>I needed to model this relationships in Thneed, which tured out to be quite tricky, but that&rsquo;s the topic for another blog post.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1499,72 +1647,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/08/17/microorm-and-thneed-available-on-maven/">MicroOrm and Thneed Available on Maven Central</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-17T21:56:00+02:00" pubdate data-updated="true">Aug 17<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/08/17/microorm-and-thneed-available-on-maven/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/08/17/microorm-and-thneed-available-on-maven/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I&rsquo;ve uploaded my two experimental projects, <a href="https://github.com/chalup/microorm">MicroOrm</a> and <a href="https://github.com/chalup/thneed">Thneed</a>, to <a href="http://search.maven.org/#search%7Cga%7C1%7Corg.chalup">Maven Central</a>. If you want to try them out, just add the following lines to your pom.xml:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;dependency&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;groupId&gt;</span>org.chalup.thneed<span class="nt">&lt;/groupId&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;artifactId&gt;</span>thneed<span class="nt">&lt;/artifactId&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;version&gt;</span>0.3<span class="nt">&lt;/version&gt;</span>
-</span><span class='line'><span class="nt">&lt;/dependency&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;dependency&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;groupId&gt;</span>org.chalup.microorm<span class="nt">&lt;/groupId&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;artifactId&gt;</span>microorm<span class="nt">&lt;/artifactId&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;version&gt;</span>0.2<span class="nt">&lt;/version&gt;</span>
-</span><span class='line'><span class="nt">&lt;/dependency&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Don&rsquo;t hesitate to <a href="mailto:jerzy.chalupski@gmail.com"><code>email me</code></a>, create an issue on github or propose a pull request. Any form of feedback is welcome!</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1582,6 +1664,10 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
@@ -1595,10 +1681,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
     
       <li class="post">
         <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
   </ul>

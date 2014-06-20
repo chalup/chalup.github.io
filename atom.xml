@@ -4,7 +4,7 @@
   <title><![CDATA[Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-15T14:02:34+02:00</updated>
+  <updated>2014-06-20T20:12:45+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,42 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[On Git]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/20/on-git-ui/"/>
+    <updated>2014-06-20T13:40:12+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/20/on-git-ui</id>
+    <content type="html"><![CDATA[<p>As madeupstatistics.com report, 95% posts about git can be divided into three types:</p>
+
+<ol>
+<li><p>Whining about rebases, because &ldquo;git history is a bunch of lies&rdquo;.</p>
+
+<p>   Right, because everyone needs to see your &ldquo;fixed typo&rdquo; mistakes and early API design blunders.</p></li>
+<li><p>Whining about rebases, because you should document the &ldquo;roads not taken&rdquo;, not obliterate them.</p>
+
+<p> This argument is actually pretty good, but from my experience these not taken roads, dead ends and detours do not tell the full story either. VCS is not the right tool for this.</p></li>
+<li><p>Whining about crappy CLI command names.</p>
+
+<p> It&rsquo;s hard to defend some choices, but here&rsquo;s the thing: you need to memorize maybe a dozen commands and in return you get the most powerful VCS tool you can get today. So toughen up princess, stop whining and learn them.</p></li>
+</ol>
+
+
+<p>So today I was pleasantly surprised when I found today actually a <a href="http://tonsky.me/blog/reinventing-git-interface/">good blog post about git UI</a>. Go ahead and read it. While I do not agree with everything OP wrote, he got two things right: git model and <code>git log --graph</code> improvements.</p>
+
+<p><img class="center" src="http://tonsky.me/blog/reinventing-git-interface/overview@2x.png"></p>
+
+<h2>Git Mental Model</h2>
+
+<p>People do not need to know that there are blobs, sha checksum calculated from whatnot and so one. What I say to every git newcomer is this: <strong>commits are connected with parent commits, and branches, tags, HEAD, etc. are all just pointers to commits</strong>. Then you just need to figure out that <code>git commit</code> doesn&rsquo;t do any magic, it just adds commit and moves HEAD and current branch pointers.</p>
+
+<h2>Commits Graph Representation</h2>
+
+<p>Every git workflow description contain a beautiful, clear diagram explaining where commits are added and merged &ndash; <a href="http://nvie.com/posts/a-successful-git-branching-model/">this is a good example</a>. Then you start using this workflow and after two weeks your <code>git log --graph --all</code> output looks like a failed knitting experiment. The difference is that the diagrams keep the commits from a single branch aligned in a column, and <code>git log</code> tries to reduce the space taken by graph, which mixes multiple branches in a single column.</p>
+
+<p>I&rsquo;m not sure if it&rsquo;s doable with current git data model though &ndash; the commits do not contain any information about the branch. I think the branch name could be derived from the current branches and merge commits messages, but I&rsquo;m sure it won&rsquo;t work for 100% of cases. For these edge cases it would be great to allow users to manually select the correct branch, but this means the branch information would have to be kept outside of commits, but inside git. Tricky stuff.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[minSdkVersion=15, What's Next?]]></title>
@@ -2140,124 +2176,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 <p>The minimal example which demonstrates the issue are two solid <a href="http://developer.android.com/guide/topics/resources/drawable-resource.html#Shape">XML shape drawables</a> (which are parsed into <a href="http://developer.android.com/reference/android/graphics/drawable/GradientDrawable.html"><code>GradientDrawables</code></a>), one with radius defined in radius attribute, the other one with four radii defined (can be the same).</p>
 
 <p>Besides satisfying my idle curiosity and honing my AOSP code diving skills, I have learned something useful: do not mix paths and round rects on <code>Canvas</code> and use <code>Path.addRoundRect</code> with radii array when your path contains other curved shapes.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Thneed, Notes and Db Design]]></title>
-    <link href="http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design/"/>
-    <updated>2013-11-03T18:59:00+01:00</updated>
-    <id>http://chalup.github.io/blog/2013/11/03/thneed-notes-and-db-design</id>
-    <content type="html"><![CDATA[<p>We&rsquo;re starting to find more and more interesting use cases for <a href="https://github.com/chalup/thneed">Thneed</a> in Base CRM codebase. The first release using it, and <a href="https://github.com/chalup/microorm">few</a> <a href="https://github.com/futuresimple/forger">other</a> <a href="https://github.com/futuresimple/android-db-commons">libraries</a> <a href="https://github.com/futuresimple/android-autoindexer">we</a> <a href="https://github.com/futuresimple/android-schema-utils">recently</a> <a href="https://github.com/futuresimple/sqlitemaster">developed</a>, was released just before the Halloween and we haven&rsquo;t registered any critical issues related to it. All in all, the results look very promising. I won&rsquo;t recommend using <a href="https://github.com/chalup/thneed">Thneed</a> in your production builds yet, but I urge you to <a href="https://github.com/chalup/thneed/star">star the project on Github</a> and watch its progress.</p>
-
-<p>The <a href="https://github.com/chalup/thneed">Thneed</a> was created as an answer to some issues we faced when developing and maintaining <a href="https://getbase.com/">Base CRM</a>, and this fact is sometimes reflected by the API. The example of this is something we internally called PolyModels.</p>
-
-<p>Let&rsquo;s start with a scenario, where we have a some objects and we&rsquo;d like to add notes to. It&rsquo;s a classic one-to-many relationship, which I&rsquo;d model with a foreign key in notes table:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
-</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
-</span><span class='line'>    <span class="n">some_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">some_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
-</span><span class='line'><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now let&rsquo;s introduce another type of objects, which also can have notes attached to it. We have few options now. The simplest thing to do is to keep these notes in a completely separate table:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_enity_notes</span> <span class="p">(</span>
-</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
-</span><span class='line'>    <span class="n">other_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">other_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
-</span><span class='line'><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The issue with this solution is that we have two separate schemas that need to be updated in parallel, and in 95% of cases would be exactly the same. Another approach is making the objects which contain notes sort of inherit a base class:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notables</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span> <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span> <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
-</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
-</span><span class='line'>    <span class="n">notable_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">notables</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
-</span><span class='line'><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>These two solutions work perfectly in the &ldquo;give me all notes for object X&rdquo; scenario, but it gets ugly if you want to display a single note with the simple &ldquo;Associated with object X&rdquo; info. In this case you have to query every model which can contain notes, to see if this particular association references the objects from this model. On top of that, the Noteable table approach requires some additional work to create the entry in</p>
-
-<p>You can always have a several mutually exclusive foreing keys in your notes:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
-</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
-</span><span class='line'>    <span class="n">some_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">some_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-</span><span class='line'>    <span class="n">other_entity_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">other_entity</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
-</span><span class='line'><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But this solution doesn&rsquo;t really scale well as the number of the models which can contain notes increases. Also, your DBAs will love you if you go this way.</p>
-
-<p>The solution to this problem we used in Base was to have two columns in Notes table: one holding the type of the &ldquo;noteable&rdquo; object, i.e. and the other for the id of this object:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">some_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">other_entity</span> <span class="p">(</span><span class="n">id</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">notes</span> <span class="p">(</span>
-</span><span class='line'>    <span class="n">id</span> <span class="nb">INTEGER</span><span class="p">,</span>
-</span><span class='line'>    <span class="n">noteable_id</span> <span class="nb">INTEGER</span><span class="p">,</span>
-</span><span class='line'>    <span class="n">noteable_type</span> <span class="nb">TEXT</span><span class="p">,</span>
-</span><span class='line'>    <span class="n">content</span> <span class="nb">TEXT</span>
-</span><span class='line'><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The glaring issue with this approach is losing the consistency guarantee &ndash; no database I know of support this kind of foreign keys. But when you have SOA on the backend and the notes are stored in a separate database than the noteable objects, this is not your top concern. On mobile apps, even though we have a single database, we use the same structure, because all the other have some implementation issues and worse performance characteristics.</p>
-
-<p>I&rsquo;m not a db expert, and I haven&rsquo;t found any discussion of similar cases, which means that a) we&rsquo;re doing something very wrong or b) we have just very specific requirements. Let me know if it&rsquo;s a former case.</p>
-
-<p>I needed to model this relationships in Thneed, which tured out to be quite tricky, but that&rsquo;s the topic for another blog post.</p>
 ]]></content>
   </entry>
   

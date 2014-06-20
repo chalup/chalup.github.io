@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="In my latest game the players spend significant amount of time just watching the screen and trying to figure the puzzle out. The first few levels are &hellip;">
+  <meta name="description" content="Recently I was working on a custom View with overridden onDraw() method and at some point I needed to center some text vertically. Unfortunately &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,53 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/10/09/android-font-metrics-for-dummies/">Android Font Metrics for Dummies</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-09T22:59:00+02:00" pubdate data-updated="true">Oct 9<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/10/09/android-font-metrics-for-dummies/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/10/09/android-font-metrics-for-dummies/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I was working on a custom View with overridden <a href="http://developer.android.com/reference/android/view/View.html#onDraw%28android.graphics.Canvas%29"><code>onDraw()</code></a> method and at some point I needed to center some text vertically. Unfortunately <a href="http://developer.android.com/reference/android/graphics/Paint.html#setTextAlign%28android.graphics.Paint.Align%29"><code>Paint.setTextAlign()</code></a> supports only horizontal orientation, so I tried calculating the y-coordinate of the origin myself, but I couldn&rsquo;t get it exactly right. After two failed attempts I decided that I need a program which visualizes the available font metrics, because it seems that I do not understand the <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> documentation, or the aforementioned class and it&rsquo;s documentation sucks.</p>
+
+<p>You can find the <a href="https://github.com/chalup/android-fontmetricstest">source code on my GitHub</a>, and here&rsquo;s the screenshot for other typographically challenged programmers:</p>
+
+<p><img class="center" src="/images/fontsfordummies.png"></p>
+
+<p>(BTW: the word &ldquo;Żyłę&rdquo; used there is not a complete gibberish, it&rsquo;s an accusative case of word &ldquo;vein&rdquo; in Polish; it&rsquo;s nice, because it&rsquo;s short, but it covers all cases of the metrics class).</p>
+
+<p>Let&rsquo;s get back to vertical alignment. In general you should center text vertically either on <a href="http://en.wikipedia.org/wiki/X-height">x-height</a> or on half the <a href="http://en.wikipedia.org/wiki/Cap_height">cap height</a> above the <a href="http://en.wikipedia.org/wiki/Baseline_%28typography%29">baseline</a> (at least that&rsquo;s the info I found). Neither metric is directly available in <a href="http://developer.android.com/reference/android/graphics/Paint.FontMetrics.html"><code>FontMetrics</code></a> class, but you can approximate the cap height as a <code>textSize - descent</code> or calculate x-height yourself using Rect height returned by <a href="http://developer.android.com/reference/android/graphics/Paint.html#getTextBounds%28java.lang.String,%20int,%20int,%20android.graphics.Rect%29"><code>Paint.getTextBounds</code></a> for string &ldquo;x&rdquo;.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1187,78 +1234,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/04/17/git-killer-feature-content-tracking/">Git Killer Feature: Content Tracking</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-17T16:20:00+02:00" pubdate data-updated="true">Apr 17<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/04/17/git-killer-feature-content-tracking/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/04/17/git-killer-feature-content-tracking/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>At my current day job I was the first adopter of git and one of the most frequently question I&rsquo;m asked as &ldquo;the git guy&rdquo; is the variation of &ldquo;why do you use git instead of mercurial?&rdquo;. I usually responded that git was the first distributed VCS I used, and I played for a while with hg and bazaar, but I haven&rsquo;t discovered any significant feature that would make me change my initial choice. Today I have found the case that allows me to give a better answer.</p>
-
-<p>About a month ago I released the <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">Word Judge</a> application &ndash; an offline word validator for Scrabble and other word games. Initially I was working only on one version of Word Judge with polish dictionary, so I had one line of code in my git repository:</p>
-
-<p><img class="center" src="/images/1.png"></p>
-
-<p>When polish version was ready, I decided that I might as well release the english version, because it would require only minor changes: changing app icon and dictionary file. It turned out that I also have to change the application package, so both versions of Word Judge could be installed at the same time. The changes were in fact minor, but included a lot of renaming (package name is mirrored by the directory structure):</p>
-
-<p><img class="center" src="/images/2.png"></p>
-
-<p>Later on I decided to add ads to my application. First, I&rsquo;ve added the necessary code to master (i.e. polish) branch:</p>
-
-<p><img class="center" src="/images/3.png"></p>
-
-<p>I switched to english branch, typed <code>git merge master --no-commit</code>, and was very surprised to see just a few conflicts in binary files (icons). All the changes made in java code, <strong>in the renamed files</strong>, were automatically merged. If you still don&rsquo;t get how awesome this is, consider what would I had to do without it:</p>
-
-<ol>
-<li>Start the merge</li>
-<li>Resolve the conflict by selecting &ldquo;keep deleted files&rdquo; for every java file changed in the master branch</li>
-<li>Manually merge every java file from &ldquo;pl&rdquo; package and &ldquo;en&rdquo; package</li>
-<li>Delete &ldquo;pl&rdquo; package</li>
-<li>Commit changes</li>
-</ol>
-
-
-<p>And I would have to do this <strong>every single time</strong> I port the changes between language branches. It&rsquo;s a tedious and error-prone job, and git automatically (automagically?) does it for me. How cool is that? Mightily cool IMHO. Of course if I add some java files in one branch, I have to do move them to correct package in the other branch (hence the <code>--no-commit</code> switch in git command above), but most of the conflicts are caused by binary files.</p>
-
-<p>It&rsquo;s also more common case than you might think, i.e. you don&rsquo;t have to write a dictionary supporting multiple languages to run into it. For example if you have a lite and full version of an app, you have exactly the same situation.</p>
-
-<p>Right now my repository looks like this (or it would look like this if the git gui tools didn&rsquo;t suck, but that&rsquo;s another story):</p>
-
-<p><img class="center" src="/images/4.png"></p>
-
-<p>I can&rsquo;t imagine supporting such structure without automatic merges provided by git, because it tracks <strong>content</strong> instead of <strong>files</strong>. And that&rsquo;s the real killer feature that distinguishes git from other DVCS.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/7/">&larr; Older</a>
@@ -1276,6 +1251,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
@@ -1289,10 +1268,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
   </ul>

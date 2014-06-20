@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="The MicroOrm library I started a while ago solves only a tiny part of data model related problems &ndash; conversion between strongly typed objects &hellip;">
+  <meta name="description" content="I&rsquo;ve uploaded my two experimental projects, MicroOrm and Thneed, to Maven Central. If you want to try them out, just add the following lines to &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,72 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/17/microorm-and-thneed-available-on-maven/">MicroOrm and Thneed Available on Maven Central</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-17T21:56:00+02:00" pubdate data-updated="true">Aug 17<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/08/17/microorm-and-thneed-available-on-maven/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/08/17/microorm-and-thneed-available-on-maven/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;ve uploaded my two experimental projects, <a href="https://github.com/chalup/microorm">MicroOrm</a> and <a href="https://github.com/chalup/thneed">Thneed</a>, to <a href="http://search.maven.org/#search%7Cga%7C1%7Corg.chalup">Maven Central</a>. If you want to try them out, just add the following lines to your pom.xml:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;dependency&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;groupId&gt;</span>org.chalup.thneed<span class="nt">&lt;/groupId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;artifactId&gt;</span>thneed<span class="nt">&lt;/artifactId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;version&gt;</span>0.3<span class="nt">&lt;/version&gt;</span>
+</span><span class='line'><span class="nt">&lt;/dependency&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;dependency&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;groupId&gt;</span>org.chalup.microorm<span class="nt">&lt;/groupId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;artifactId&gt;</span>microorm<span class="nt">&lt;/artifactId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;version&gt;</span>0.2<span class="nt">&lt;/version&gt;</span>
+</span><span class='line'><span class="nt">&lt;/dependency&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Don&rsquo;t hesitate to <a href="mailto:jerzy.chalupski@gmail.com"><code>email me</code></a>, create an issue on github or propose a pull request. Any form of feedback is welcome!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -634,225 +700,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/03/23/android-ui-struggles-making-button-with/">Android UI Struggles: Making a Button With Centered Text and Icon</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-23T14:04:00+01:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
-        
-           | <a href="/blog/2013/03/23/android-ui-struggles-making-button-with/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/03/23/android-ui-struggles-making-button-with/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Every time I work on the UI of Android app I get the feeling that there is either something terribly wrong with the Android UI framework or with my understanding of how it works. I can reason about how the app works on the higher level, but I cannot apply the same methodology to Android UI, except for the simplest designs. I have read a lot of Android source code, I have written few dozens of sample-like apps, but I still cannot just think of the views structure, type it in and be done &ndash; for complicated layouts with some optional elements (i.e. which are sometimes visible and sometimes gone) I need at least few attempts and, I confess, sometimes I&rsquo;m desperate enough to do the &ldquo;let&rsquo;s change this and see what happens&rdquo; coding. Extremely frustrating.</p>
-
-<p>I&rsquo;m going to describe my struggles with Android UI on this blog, so if I&rsquo;m doing something terribly wrong, hopefully someone will enlighten me by posting a comment; and in case something is terribly wrong with Android UI framework, I might be able to help other programmers in distress.</p>
-
-<p>Today I have a simple task for you: create a button with some text and icon to the left of the text. The contents (both icon and text) should be centered inside the button.</p>
-
-<p><img class="center" src="/images/challenge.png"></p>
-
-<p>That&rsquo;s simple right? Here&rsquo;s the XML layout which comes to mind first:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;LinearLayout</span> <span class="na">xmlns:android=</span><span class="s">&quot;http://schemas.android.com/apk/res/android&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>    <span class="na">android:orientation=</span><span class="s">&quot;vertical&quot;</span> <span class="nt">&gt;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nt">&lt;Button</span>
-</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
-</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
-</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;/LinearLayout&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Unfortunately, no cookie for you:</p>
-
-<p><img class="center" src="/images/try1.png"></p>
-
-<p>Someone decided that compound drawables should be always draw next to the <code>View</code>&rsquo;s padding, so we have to try something else. For example <code>TextView</code> centered inside the <code>FrameLayout</code>.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;FrameLayout</span>
-</span><span class='line'>    <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">&gt;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nt">&lt;TextView</span>
-</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center&quot;</span>
-</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
-</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
-</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;/FrameLayout&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><img class="center" src="/images/try2.png"></p>
-
-<p>Almost there, but the text has a wrong size and color. There is something called <code>textAppearanceButton</code>, but apparently it&rsquo;s not what the <code>Button</code>s use:</p>
-
-<p><img class="center" src="/images/try3.png"></p>
-
-<p>OK, so let&rsquo;s use the buttonStyle again, this time on <code>TextView</code>:</p>
-
-<p><img class="center" src="/images/try4.png"></p>
-
-<p>Now we need to get rid of the extra background, reset minimum height and width and make it not focusable and not clickable (otherwise tapping the caption won&rsquo;t have any effect):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;FrameLayout</span>
-</span><span class='line'>    <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">&gt;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nt">&lt;TextView</span>
-</span><span class='line'>        <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center&quot;</span>
-</span><span class='line'>        <span class="na">android:background=</span><span class="s">&quot;@null&quot;</span>
-</span><span class='line'>        <span class="na">android:clickable=</span><span class="s">&quot;false&quot;</span>
-</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
-</span><span class='line'>        <span class="na">android:focusable=</span><span class="s">&quot;false&quot;</span>
-</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
-</span><span class='line'>        <span class="na">android:minHeight=</span><span class="s">&quot;0dp&quot;</span>
-</span><span class='line'>        <span class="na">android:minWidth=</span><span class="s">&quot;0dp&quot;</span>
-</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;/FrameLayout&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Lo and behold, it works!</p>
-
-<p><img class="center" src="/images/challenge.png"></p>
-
-<p>We&rsquo;d really like to use is something like <code>textAppearance="?android:attr/buttonStyle.textAppearance"</code>, but there is no such syntax. How about extracting all the attributes from <code>TextView</code> into some <code>buttonCaption</code> style with <code>?android:attr/buttonStyle</code> parent? No can do either: you can only inherit your style from the concrete <code>@style</code>, not from the styleable attribute.</p>
-
-<p>But what we can do is to use <code>Button</code> and create a style with no parent: Android will use the default button style and apply our captionOnly style:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;style</span> <span class="na">name=</span><span class="s">&quot;captionOnly&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:background&quot;</span><span class="nt">&gt;</span>@null<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:clickable&quot;</span><span class="nt">&gt;</span>false<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:focusable&quot;</span><span class="nt">&gt;</span>false<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:minHeight&quot;</span><span class="nt">&gt;</span>0dp<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:minWidth&quot;</span><span class="nt">&gt;</span>0dp<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'><span class="nt">&lt;/style&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;FrameLayout</span>
-</span><span class='line'>    <span class="na">style=</span><span class="s">&quot;?android:attr/buttonStyle&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">&gt;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nt">&lt;Button</span>
-</span><span class='line'>        <span class="na">style=</span><span class="s">&quot;@style/captionOnly&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center&quot;</span>
-</span><span class='line'>        <span class="na">android:drawableLeft=</span><span class="s">&quot;@android:drawable/ic_delete&quot;</span>
-</span><span class='line'>        <span class="na">android:gravity=</span><span class="s">&quot;center&quot;</span>
-</span><span class='line'>        <span class="na">android:text=</span><span class="s">&quot;Button Challenge&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;/FrameLayout&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -870,6 +717,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
@@ -883,10 +734,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
   </ul>

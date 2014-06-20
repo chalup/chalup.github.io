@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="A year ago Jeff Gilfelt was giving away minSdkVersion=14 stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What &hellip;">
+  <meta name="description" content="As madeupstatistics.com report, 95% posts about git can be divided into three types: Whining about rebases, because &ldquo;git history is a bunch of &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,72 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/06/20/on-git-ui/">On Git</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-20T13:40:12+02:00" pubdate data-updated="true">Jun 20<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/06/20/on-git-ui/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/06/20/on-git-ui/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>As madeupstatistics.com report, 95% posts about git can be divided into three types:</p>
+
+<ol>
+<li><p>Whining about rebases, because &ldquo;git history is a bunch of lies&rdquo;.</p>
+
+<p>   Right, because everyone needs to see your &ldquo;fixed typo&rdquo; mistakes and early API design blunders.</p></li>
+<li><p>Whining about rebases, because you should document the &ldquo;roads not taken&rdquo;, not obliterate them.</p>
+
+<p> This argument is actually pretty good, but from my experience these not taken roads, dead ends and detours do not tell the full story either. VCS is not the right tool for this.</p></li>
+<li><p>Whining about crappy CLI command names.</p>
+
+<p> It&rsquo;s hard to defend some choices, but here&rsquo;s the thing: you need to memorize maybe a dozen commands and in return you get the most powerful VCS tool you can get today. So toughen up princess, stop whining and learn them.</p></li>
+</ol>
+
+
+<p>So today I was pleasantly surprised when I found today actually a <a href="http://tonsky.me/blog/reinventing-git-interface/">good blog post about git UI</a>. Go ahead and read it. While I do not agree with everything OP wrote, he got two things right: git model and <code>git log --graph</code> improvements.</p>
+
+<p><img class="center" src="http://tonsky.me/blog/reinventing-git-interface/overview@2x.png"></p>
+
+<h2>Git Mental Model</h2>
+
+<p>People do not need to know that there are blobs, sha checksum calculated from whatnot and so one. What I say to every git newcomer is this: <strong>commits are connected with parent commits, and branches, tags, HEAD, etc. are all just pointers to commits</strong>. Then you just need to figure out that <code>git commit</code> doesn&rsquo;t do any magic, it just adds commit and moves HEAD and current branch pointers.</p>
+
+<h2>Commits Graph Representation</h2>
+
+<p>Every git workflow description contain a beautiful, clear diagram explaining where commits are added and merged &ndash; <a href="http://nvie.com/posts/a-successful-git-branching-model/">this is a good example</a>. Then you start using this workflow and after two weeks your <code>git log --graph --all</code> output looks like a failed knitting experiment. The difference is that the diagrams keep the commits from a single branch aligned in a column, and <code>git log</code> tries to reduce the space taken by graph, which mixes multiple branches in a single column.</p>
+
+<p>I&rsquo;m not sure if it&rsquo;s doable with current git data model though &ndash; the commits do not contain any information about the branch. I think the branch name could be derived from the current branches and merge commits messages, but I&rsquo;m sure it won&rsquo;t work for 100% of cases. For these edge cases it would be great to allow users to manually select the correct branch, but this means the branch information would have to be kept outside of commits, but inside git. Tricky stuff.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -2088,154 +2154,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/01/12/android-sqlitedatabase-gotcha/">Android SQLiteDatabase Gotcha</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-01-12T22:15:00+01:00" pubdate data-updated="true">Jan 12<span>th</span>, 2014</time>
-        
-           | <a href="/blog/2014/01/12/android-sqlitedatabase-gotcha/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2014/01/12/android-sqlitedatabase-gotcha/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In my <a href="/blog/2014/01/03/offline-mode-in-android-apps-part-2">previous post</a> I mentioned a nasty <code>SQLiteDatabase</code> gotcha and recommended using the <code>MigrationHelper</code> utility I wrote. If you have checked this <a href="https://github.com/futuresimple/android-schema-utils/blob/master/src/main/java/com/getbase/android/schema/MigrationsHelper.java">class&rsquo;s sources</a>, you might have noticed a weird code. Before getting the list of columns the table is renamed to the temporary name and then renamed back:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">final</span> <span class="n">String</span> <span class="n">tempTable</span> <span class="o">=</span> <span class="s">&quot;tmp_&quot;</span> <span class="o">+</span> <span class="n">tempTableIndex</span><span class="o">++;</span>
-</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">tempTable</span><span class="o">);</span>
-</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">oldColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">tempTable</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="n">migration</span><span class="o">.</span><span class="na">createTableStatement</span><span class="o">);</span>
-</span><span class='line'><span class="kd">final</span> <span class="n">String</span> <span class="n">tempNewTable</span> <span class="o">=</span> <span class="s">&quot;tmp_&quot;</span> <span class="o">+</span> <span class="n">tempTableIndex</span><span class="o">++;</span>
-</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">tempNewTable</span><span class="o">);</span>
-</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">newColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">tempNewTable</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">tempNewTable</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">getColumns</span><span class="o">(</span><span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="n">String</span> <span class="n">table</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">Cursor</span> <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="n">table</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s">&quot;0&quot;</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>      <span class="k">return</span> <span class="n">ImmutableSet</span><span class="o">.</span><span class="na">copyOf</span><span class="o">(</span><span class="n">cursor</span><span class="o">.</span><span class="na">getColumnNames</span><span class="o">());</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-</span><span class='line'>      <span class="n">cursor</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">ImmutableSet</span><span class="o">.</span><span class="na">of</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Initially the <code>MigrationHelper</code>&rsquo;s code looked like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TEMP_TABLE</span> <span class="o">=</span> <span class="s">&quot;tmp&quot;</span><span class="o">;</span>
-</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="s">&quot;ALTER TABLE &quot;</span> <span class="o">+</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span> <span class="o">+</span> <span class="s">&quot; RENAME TO &quot;</span> <span class="o">+</span> <span class="n">TEMP_TABLE</span><span class="o">);</span>
-</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">oldColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">TEMP_TABLE</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">db</span><span class="o">.</span><span class="na">execSQL</span><span class="o">(</span><span class="n">migration</span><span class="o">.</span><span class="na">createTableStatement</span><span class="o">);</span>
-</span><span class='line'><span class="n">ImmutableSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">newColumns</span> <span class="o">=</span> <span class="n">getColumns</span><span class="o">(</span><span class="n">db</span><span class="o">,</span> <span class="n">migration</span><span class="o">.</span><span class="na">tableName</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It worked for a single migration, but didn&rsquo;t work for multiple migrations &ndash; the helper method for getting the column set always returned the columns of first table. Since the query was always the same, I suspected the results are cached somewhere. To verify this hypothesis I added to the temporary table name an index incremented with every migration. It worked, but then I realized I need to do the same for getting the columns of the new schema &ndash; otherwise the helper wouldn&rsquo;t work if the same table were migrated twice. This way the weird code was born.</p>
-
-<p>But the same thing could happen outside of <code>MigrationHelper</code> operations, for example if you need to iterate through rows of the same table in two different migrations:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onUpgrade</span><span class="o">(</span><span class="kd">final</span> <span class="n">SQLiteDatabase</span> <span class="n">db</span><span class="o">,</span> <span class="kt">int</span> <span class="n">oldVersion</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newVersion</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;=</span> <span class="mi">1500</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">Cursor</span> <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;some_table&quot;</span><span class="o">,</span> <span class="cm">/* null, null, null... */</span><span class="o">);</span>
-</span><span class='line'>    <span class="c1">// use Cursor c</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// other migrations, including ones that change the some_table table&#39;s columns</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">oldVersion</span> <span class="o">&lt;=</span> <span class="mi">2900</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">Cursor</span> <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;some_table&quot;</span><span class="o">,</span> <span class="cm">/* null, null, null... */</span><span class="o">);</span>
-</span><span class='line'>    <span class="c1">// try to use Cursor c and crash terribly</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So I checked the AOSP code for the suspected cache to see how the entries can be evicted or if the cache can be disabled. There are no methods for this, so you can&rsquo;t do it with straightforward call, but maybe you can exploit the implementation details?</p>
-
-<p>On ICS the cache is implemented as <a href="http://developer.android.com/reference/android/util/LruCache.html"><code>LruCache</code></a>, so theoretically you could evict old entries by filling the cache with new ones, but there is one hiccup &ndash; you don&rsquo;t know the cache size, so you&rsquo;d always have to go with <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html#MAX_SQL_CACHE_SIZE"><code>MAX_SQL_CACHE_SIZE</code></a>.</p>
-
-<p>Before ICS you couldn&rsquo;t do even that &ndash; the implementation of this &ldquo;cache&rdquo; is just a fixed size buffer for <code>SQLiteStatements</code>. Once that buffer is full, no more statements are cached. This also has one more consequence &ndash; your app might work much slower on Android 2.x after upgrade from old version than after fresh install, because the db cache will be filled with queries used in migrations.</p>
-
-<p>Fortunately the keys of this cache are raw SQL strings, so we can disable cache for migration queries by adding <code>WHERE n==n</code> clause with n incremented for every query (note that you musn&rsquo;t pass n as a bound parameter &ndash; the whole point of adding this selection is to make the queries different and force <code>SQLiteDatabase</code> to compile another statement).</p>
-
-<p>The question you should ask yourself is why do I have to know and care about all this. Isn&rsquo;t SQLite smart enough to see that I&rsquo;m trying to access the database using prepared statement compiled against old schema? It turns out the SQLite detects this issues and raises <code>SQLITE_SCHEMA</code> error (commented with &ldquo;The database schema changed&rdquo;), but Android&rsquo;s <code>SQLiteDatabase</code> wrapper drops this error and happily uses the old, invalid statements. Bad Android.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -2251,6 +2169,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
@@ -2264,10 +2186,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a>
       </li>
     
   </ul>

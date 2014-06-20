@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Git | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/git/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-15T14:02:34+02:00</updated>
+  <updated>2014-06-20T20:12:45+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,42 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[On Git]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/20/on-git-ui/"/>
+    <updated>2014-06-20T13:40:12+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/20/on-git-ui</id>
+    <content type="html"><![CDATA[<p>As madeupstatistics.com report, 95% posts about git can be divided into three types:</p>
+
+<ol>
+<li><p>Whining about rebases, because &ldquo;git history is a bunch of lies&rdquo;.</p>
+
+<p>   Right, because everyone needs to see your &ldquo;fixed typo&rdquo; mistakes and early API design blunders.</p></li>
+<li><p>Whining about rebases, because you should document the &ldquo;roads not taken&rdquo;, not obliterate them.</p>
+
+<p> This argument is actually pretty good, but from my experience these not taken roads, dead ends and detours do not tell the full story either. VCS is not the right tool for this.</p></li>
+<li><p>Whining about crappy CLI command names.</p>
+
+<p> It&rsquo;s hard to defend some choices, but here&rsquo;s the thing: you need to memorize maybe a dozen commands and in return you get the most powerful VCS tool you can get today. So toughen up princess, stop whining and learn them.</p></li>
+</ol>
+
+
+<p>So today I was pleasantly surprised when I found today actually a <a href="http://tonsky.me/blog/reinventing-git-interface/">good blog post about git UI</a>. Go ahead and read it. While I do not agree with everything OP wrote, he got two things right: git model and <code>git log --graph</code> improvements.</p>
+
+<p><img class="center <a" src="href="http://tonsky.me/blog/reinventing-git-interface/overview@2x.png">http://tonsky.me/blog/reinventing-git-interface/overview@2x.png</a>"></p>
+
+<h2>Git Mental Model</h2>
+
+<p>People do not need to know that there are blobs, sha checksum calculated from whatnot and so one. What I say to every git newcomer is this: <strong>commits are connected with parent commits, and branches, tags, HEAD, etc. are all just pointers to commits</strong>. Then you just need to figure out that <code>git commit</code> doesn&rsquo;t do any magic, it just adds commit and moves HEAD and current branch pointers.</p>
+
+<h2>Commits Graph Representation</h2>
+
+<p>Every git workflow description contain a beautiful, clear diagram explaining where commits are added and merged &ndash; <a href="http://nvie.com/posts/a-successful-git-branching-model/">this is a good example</a>. Then you start using this workflow and after two weeks your <code>git log --graph --all</code> output looks like a failed knitting experiment. The difference is that the diagrams keep the commits from a single branch aligned in a column, and <code>git log</code> tries to reduce the space taken by graph, which mixes multiple branches in a single column.</p>
+
+<p>I&rsquo;m not sure if it&rsquo;s doable with current git data model though &ndash; the commits do not contain any information about the branch. I think the branch name could be derived from the current branches and merge commits messages, but I&rsquo;m sure it won&rsquo;t work for 100% of cases. For these edge cases it would be great to allow users to manually select the correct branch, but this means the branch information would have to be kept outside of commits, but inside git. Tricky stuff.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Git Killer Feature: Content Tracking]]></title>
