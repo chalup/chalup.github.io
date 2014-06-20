@@ -1,0 +1,33 @@
+---
+layout: post
+title: "On git"
+date: 2014-06-20 13:40:12 +0200
+comments: true
+categories: git
+---
+
+As madeupstatistics.com report, 95% posts about git can be divided into three types:
+
+1. Whining about rebases, because "git history is a bunch of lies".
+	
+	  Right, because everyone needs to see your "fixed typo" mistakes and early API design blunders.
+
+2. Whining about rebases, because you should document the "roads not taken", not obliterate them.
+  
+    This argument is actually pretty good, but from my experience these not taken roads, dead ends and detours do not tell the full story either. VCS is not the right tool for this.
+
+3. Whining about crappy CLI command names.
+  
+    It's hard to defend some choices, but here's the thing: you need to memorize maybe a dozen commands and in return you get the most powerful VCS tool you can get today. So toughen up princess, stop whining and learn them.
+
+So today I was pleasantly surprised when I found today actually a [good blog post about git UI](http://tonsky.me/blog/reinventing-git-interface/). Go ahead and read it. While I do not agree with everything OP wrote, he got two things right: git model and `git log --graph` improvements.
+
+{% img center http://tonsky.me/blog/reinventing-git-interface/overview@2x.png %}
+
+## Git Mental Model
+People do not need to know that there are blobs, sha checksum calculated from whatnot and so one. What I say to every git newcomer is this: **commits are connected with parent commits, and branches, tags, HEAD, etc. are all just pointers to commits**. Then you just need to figure out that `git commit` doesn't do any magic, it just adds commit and moves HEAD and current branch pointers.
+
+## Commits Graph Representation
+Every git workflow description contain a beautiful, clear diagram explaining where commits are added and merged - [this is a good example](http://nvie.com/posts/a-successful-git-branching-model/). Then you start using this workflow and after two weeks your `git log --graph --all` output looks like a failed knitting experiment. The difference is that the diagrams keep the commits from a single branch aligned in a column, and `git log` tries to reduce the space taken by graph, which mixes multiple branches in a single column.
+
+I'm not sure if it's doable with current git data model though - the commits do not contain any information about the branch. I think the branch name could be derived from the current branches and merge commits messages, but I'm sure it won't work for 100% of cases. For these edge cases it would be great to allow users to manually select the correct branch, but this means the branch information would have to be kept outside of commits, but inside git. Tricky stuff.
