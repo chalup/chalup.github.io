@@ -9,7 +9,8 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Every time I work on the UI of Android app I get the feeling that there is either something terribly wrong with the Android UI framework or with my &hellip;">
+  <meta name="description" content="Few days ago I saw the most peculiar crash on a tablet with Android 3.2: 1
+java.lang.NoSuchFieldError: com.google.i18n.phonenumbers.PhoneNumberUtil$ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +78,64 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/23/libphonenumber-crash-on-android-32/">Libphonenumber Crash on Android 3.2</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-23T18:54:00+01:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
+        
+           | <a href="/blog/2013/03/23/libphonenumber-crash-on-android-32/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/03/23/libphonenumber-crash-on-android-32/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Few days ago I saw the most peculiar crash on a tablet with Android 3.2:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>java.lang.NoSuchFieldError: com.google.i18n.phonenumbers.PhoneNumberUtil$PhoneNumberFormat.RFC3966</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Of course there is such field in this class, it works on every other Android hardware I have access to. This was a debug build, so it couldn&rsquo;t have been the Proguard issue. The other functionality from the com.google.i18n.phonenumbers package worked fine, the issue only appeared if I wanted to format a phone number using this specific format.</p>
+
+<p>Long story short, it turns out that some old version of libphonenumber, which doesn&rsquo;t support this particular phone number format, is included in the Android build on my 3.2 device. You can verify such thing by calling:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;com.google.i18n.phonenumbers.PhoneNumberUtil&quot;</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>inside a project without any libs &ndash; on this single 3.2 device it will return the valid <code>Class</code> object, on every other device I tried it throws <code>ClassNotFoundException</code>.</p>
+
+<p>I started to wonder if any other libraries are affected, so I picked up some class names from the most popular libraries (<a href="http://www.appbrain.com/stats/libraries/dev">as reported by AppBrain</a>) and it seems there might be a similar issue with <a href="http://commons.apache.org/codec/">Apache Commons Codec jar</a>. Fortunately there are no issues with stuff like Guava, GSON or support lib.</p>
+
+<p>What&rsquo;s the workaround for this issue? Fork the library and change the package name.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -859,76 +918,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/10/17/android-protip-remove-debug-logs-from/">Android Protip: Remove Debug Logs From Release Builds With Proguard</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-10-17T22:59:00+02:00" pubdate data-updated="true">Oct 17<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/10/17/android-protip-remove-debug-logs-from/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/10/17/android-protip-remove-debug-logs-from/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I use the <code>android.util.Log</code> extensively &ndash; often it&rsquo;s faster than starting the debugger and (unlike debugging) it&rsquo;s always on, which is invaluable when you&rsquo;re trying to track the root cause of some hard to reproduce bugs. Logging is also nice for release candidate builds you give to the QA team &ndash; if they find some bugs you&rsquo;ll have more information than just a stack trace.</p>
-
-<p>On the other hand you don&rsquo;t want to keep all those logs for release builds, mostly for performance and privacy reasons. If you google around for a solution to this issue you&rsquo;ll probably find a dozen ideas like using a wrapper for logging class, using a dedicated logging framework or even some sed/awk scripts to ant build process. Among those ideas is the one I&rsquo;d like to recommend: customizing <a href="http://developer.android.com/tools/help/proguard.html">Proguard</a> configuration.</p>
-
-<p>Proguard is automatically run in release builds by ant and Export wizards from Eclipse and there is an <a href="http://proguard.sourceforge.net/index.html#manual/usage.html">optimization option</a>, which can be used to disable logs:</p>
-
-<blockquote><p>-assumenosideeffects</p><p>Specifies methods that don&#8217;t have any side effects (other than maybe returning a value). In the optimization step, ProGuard will then remove calls to such methods, if it can determine that the return values aren&#8217;t used.</p></blockquote>
-
-
-<p>I wouldn&rsquo;t use this tool for the purpose stated in the manual, because even if my code doesn&rsquo;t have any side effects, the methods called from it might have ones; I&rsquo;d rather use some static code analysis tool to find the unnecessary calls and manually remove them. It looks perfect for suppressing the logs though and it&rsquo;s very simple to set up &ndash; just add the following lines to the proguard-project.txt file generated by <a href="http://developer.android.com/tools/help/android.html">android command line tool</a>:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>-assumenosideeffects class android.util.Log {
-</span><span class='line'>    public static *** d(...);
-</span><span class='line'>    public static *** v(...);
-</span><span class='line'>    public static *** i(...);
-</span><span class='line'>    public static *** w(...);
-</span><span class='line'>    public static *** e(...);
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You can of course keep some of the priority levels by removing lines from this config.</p>
-
-<p>The nice thing about this solution is that you have to set it only once and it will just work for all further release builds.</p>
-
-<p><strong>UPDATE (August 2013):</strong> do not assume that Proguard will remove any code other than the methods listed in assumenosideeffects setting. See <a href="/blog/2013/08/20/proguard-gotcha">&ldquo;Proguard gotcha&rdquo;</a> post for more details.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -946,6 +935,10 @@ Things get even funnier here: when I used the <a href="http://developer.android.
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
@@ -959,10 +952,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
     
       <li class="post">
         <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
       </li>
     
   </ul>

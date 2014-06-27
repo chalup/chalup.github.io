@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Markdown | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/markdown/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -20,15 +20,15 @@
     <id>http://chalup.github.io/blog/2013/03/05/weekend-hack-viewing-markdown</id>
     <content type="html"><![CDATA[<p>Recently I wanted to open a markdown email attachment on my Nexus 4, but after clicking &ldquo;readme.md&rdquo; instead of seeing the file contents I saw this message:</p>
 
-<p><img class="center" src="/images/no_app_dialog.png"></p>
+<p>{% img center /images/no_app_dialog.png %}</p>
 
 <p>I downloaded few apps from Google Play, but the message was still appearing. The same applications could open a local markdown file, so I went back to GMail app to download the attachment, but another unpleasant surprise awaited me:</p>
 
-<p><img class="center" src="/images/no_overflow.png"></p>
+<p>{% img center /images/no_overflow.png %}</p>
 
 <p>There is no &ldquo;overflow&rdquo; menu on the attachment (see the screenshot below), which means I couldn&rsquo;t access the &ldquo;Save&rdquo; option, so I could open it as a local file.</p>
 
-<p><img class="center" src="/images/save_menu.png"></p>
+<p>{% img center /images/save_menu.png %}</p>
 
 <p>At this point I was:</p>
 

@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I&rsquo;ve uploaded my two experimental projects, MicroOrm and Thneed, to Maven Central. If you want to try them out, just add the following lines to &hellip;">
+  <meta name="description" content="Android Studio kept nagging me about make implementation deprecation, so I decided to try the new build system based on Gradle. At first I obviously &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,231 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/18/gradle-first-impressions/">Gradle - First Impressions</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-18T22:36:00+02:00" pubdate data-updated="true">Aug 18<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/08/18/gradle-first-impressions/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/08/18/gradle-first-impressions/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Android Studio kept nagging me about make implementation deprecation, so I decided to try the new build system based on Gradle. At first I obviously hit the <a href="http://developer.android.com/sdk/installing/studio.html#Troubleshooting">missing Android Support Repository issue</a>, but after installing missing component in Android SDK Manager everything was created correctly (AFAIK the v0.2.3 of Android Studio doesn&rsquo;t have this issue anymore). On Mac I also had to set the ANDROID_HOME env variable to be able to build stuff from command line.</p>
+
+<p>The app templates are a bit outdated, for example you might get rid of the libs/android-support-v4.jar, because gradle will anyways use the jar from aforementioned Android Support Repository. The build.gradle also references older support lib and build tools so you should probably bump it to the latest versions.</p>
+
+<p>Adding the dependency to the local jar is trivially easy &ndash; we need just one line in dependencies section:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">dependencies</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">compile</span> <span class="nf">files</span><span class="o">(</span><span class="s2">&quot;libs/gson-2.2.4.jar&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can also define dependency to every jar in libs directory:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">dependencies</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">compile</span> <span class="nf">fileTree</span><span class="o">(</span><span class="nl">dir:</span> <span class="s1">&#39;libs&#39;</span><span class="o">,</span> <span class="nl">include:</span> <span class="s1">&#39;*.jar&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Using code annotation processors (like <a href="https://github.com/JakeWharton/butterknife">butterknife</a>) is also trivial:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">repositories</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">mavenCentral</span><span class="o">()</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dependencies</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">compile</span> <span class="s1">&#39;com.jakewharton:butterknife:2.0.1&#39;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The fist of the gradle&rsquo;s ugly warts is related to the native libs support. You can add the directory with *.so files, the build will succeed, but you&rsquo;ll get the runtime errors when your app will try to call native method. The workaround found on teh interwebs is to copy your native libs into the following directory structure:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">lib</span>
+</span><span class='line'><span class="n">lib</span><span class="s">/mips/</span><span class="o">*.</span><span class="na">so</span>
+</span><span class='line'><span class="n">lib</span><span class="s">/other_architectures/</span><span class="o">*.</span><span class="na">so</span>
+</span><span class='line'><span class="n">lib</span><span class="s">/x86/</span><span class="o">*.</span><span class="na">so</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>NOTE: there is no typo, the top level directory should be a singular &ldquo;lib&rdquo;. Then you have to zip the whole thing, rename it to *.jar and include as a regular jar library. Lame, but does the trick.</p>
+
+<p>Let&rsquo;s get back to the good parts. The list of the tasks returned by &ldquo;gradlew tasks&rdquo; command contains the installDebug task, but not the installRelease one. This happens, because there is no default apk signing configuration for release builds. The simplest workaround is to use the same configuration as debug builds:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">android</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">buildTypes</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">release</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">signingConfig</span> <span class="n">signingConfigs</span><span class="o">.</span><span class="na">debug</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But in the real project you should of course define the real signing configuration along the lines:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">android</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">signingConfigs</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">release</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">storeFile</span> <span class="nf">file</span><span class="o">(</span><span class="s2">&quot;release.keystore&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="n">storePassword</span> <span class="s2">&quot;XXX&quot;</span>
+</span><span class='line'>      <span class="n">keyAlias</span> <span class="s2">&quot;XXX&quot;</span>
+</span><span class='line'>      <span class="n">keyPassword</span> <span class="s2">&quot;XXX&quot;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">buildTypes</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">release</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">signingConfig</span> <span class="n">signingConfigs</span><span class="o">.</span><span class="na">release</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The other useful setting that goes into the buildTypes section is the Proguard configuration. Proguard is disabled by default in gradle builds so we need to turn it on for release builds; we also need to specify the rules to be used by Proguard:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">android</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">buildTypes</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">release</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">runProguard</span> <span class="kc">true</span>
+</span><span class='line'>      <span class="n">proguardFiles</span> <span class="nf">getDefaultProguardFile</span><span class="o">(</span><span class="s1">&#39;proguard-android-optimize.txt&#39;</span><span class="o">),</span> <span class="n">file</span><span class="o">(</span><span class="s1">&#39;proguard&#39;</span><span class="o">).</span><span class="na">listFiles</span><span class="o">()</span>
+</span><span class='line'>      <span class="n">signingConfig</span> <span class="n">signingConfigs</span><span class="o">.</span><span class="na">release</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are two nice things about this configuration: we can easily specify that we want to use the default rules defined in Android SDK and we can specify multiple additional files. In the configuration above I use all files from &lsquo;proguard&rsquo; directory, but you can defined a simple list of files as well. It allows you to create a reusable Proguard config files for the commonly used libraries like <a href="http://actionbarsherlock.com/">ActionBarSherlock</a> or <a href="https://code.google.com/p/google-gson/">google-gson</a>.
+So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. module):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="n">dependencies</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">compile</span> <span class="nf">project</span><span class="o">(</span><span class="s1">&#39;:submoduleA&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that this is also declared in the app project&rsquo;s build.gradle. It&rsquo;s perfectly fine to include this kind of dependency in your app project, but I&rsquo;m not happy with this solution for declaring dependencies between subprojects, because we&rsquo;re introducing dependencies to main project&rsquo;s structure.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="c1">// in build.gradle in main project</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dependencies</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">compile</span> <span class="nf">project</span><span class="o">(</span><span class="s1">&#39;:submoduleA&#39;</span><span class="o">)</span>
+</span><span class='line'>  <span class="n">compile</span> <span class="nf">project</span><span class="o">(</span><span class="s1">&#39;:submoduleB&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// in build.gradle of submoduleB, which depends on submoduleA</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dependencies</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">compile</span> <span class="nf">project</span><span class="o">(</span><span class="s1">&#39;:submoduleA&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s especially bad when those subprojects are reusable libraries which should be completely separate from your main project. The workaround I read about, but haven&rsquo;t tested myself is creating a local Maven repository and publishing the artifacts from subprojects. AFAIK you still have to publish the artifacts in the right order, so you still have to kind of manually manage your dependencies, which IMO defeats the purpose of having .</p>
+
+<p>I feel I&rsquo;m missing something elementary. The way I expect it to work is to define in each project what kind of artifacts are created, define artifacts each project depends on and let Gradle figure out the order of building subprojects. Please drop me a line if what I just wrote doesn&rsquo;t make any sense, I expect too much from the build system, or I missed some basic stuff.</p>
+
+<p>Another thing that&rsquo;s not so great is the long startup time. Even getting the list of available tasks for a simple project takes between 5 and 8 seconds on 2012 MBP every single time. I understand why this happens &ndash; build configs theoretically can check the weather forecast and use different configuration on a rainy days &ndash; and that this overhead is negligible when compared to the actual build time, but every time I stare a this &ldquo;Loading&rdquo; prompt I think that this should be somehow cached.</p>
+
+<p>It&rsquo;s time to wrap this blog post up. The main question I asked myself was: is it worth to move to gradle? I&rsquo;d say that if you have a manageable Maven build, then you shouldn&rsquo;t bother (yet), but it&rsquo;s a huge step forward when compared to ant builds.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -642,64 +867,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/03/23/libphonenumber-crash-on-android-32/">Libphonenumber Crash on Android 3.2</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-23T18:54:00+01:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
-        
-           | <a href="/blog/2013/03/23/libphonenumber-crash-on-android-32/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/03/23/libphonenumber-crash-on-android-32/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Few days ago I saw the most peculiar crash on a tablet with Android 3.2:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>java.lang.NoSuchFieldError: com.google.i18n.phonenumbers.PhoneNumberUtil$PhoneNumberFormat.RFC3966</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Of course there is such field in this class, it works on every other Android hardware I have access to. This was a debug build, so it couldn&rsquo;t have been the Proguard issue. The other functionality from the com.google.i18n.phonenumbers package worked fine, the issue only appeared if I wanted to format a phone number using this specific format.</p>
-
-<p>Long story short, it turns out that some old version of libphonenumber, which doesn&rsquo;t support this particular phone number format, is included in the Android build on my 3.2 device. You can verify such thing by calling:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;com.google.i18n.phonenumbers.PhoneNumberUtil&quot;</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>inside a project without any libs &ndash; on this single 3.2 device it will return the valid <code>Class</code> object, on every other device I tried it throws <code>ClassNotFoundException</code>.</p>
-
-<p>I started to wonder if any other libraries are affected, so I picked up some class names from the most popular libraries (<a href="http://www.appbrain.com/stats/libraries/dev">as reported by AppBrain</a>) and it seems there might be a similar issue with <a href="http://commons.apache.org/codec/">Apache Commons Codec jar</a>. Fortunately there are no issues with stuff like Guava, GSON or support lib.</p>
-
-<p>What&rsquo;s the workaround for this issue? Fork the library and change the package name.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -717,6 +884,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
@@ -730,10 +901,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
       </li>
     
   </ul>

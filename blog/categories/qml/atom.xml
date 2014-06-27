@@ -4,7 +4,7 @@
   <title><![CDATA[Category: QML | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/qml/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -18,7 +18,7 @@
     <link href="http://chalup.github.io/blog/2013/08/19/introducing-merry-cook/"/>
     <updated>2013-08-19T21:10:00+02:00</updated>
     <id>http://chalup.github.io/blog/2013/08/19/introducing-merry-cook</id>
-    <content type="html"><![CDATA[<p><img class="center" src="/images/ss3.png"></p>
+    <content type="html"><![CDATA[<p>{% img center /images/ss3.png %}</p>
 
 <p>After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I knew that the &ldquo;Nu, Pogodi!&rdquo; code wasn&rsquo;t my top achievement, and I had to force myself into diving into it, but I feel it was worth it. Few things I think I did right this time:</p>
 
@@ -208,15 +208,20 @@ return app-&gt;exec();
     <id>http://chalup.github.io/blog/2012/05/30/qml-applications-on-nokia-belle</id>
     <content type="html"><![CDATA[<p>After the latest update of &ldquo;Nu, Pogodi!&rdquo;, I received few negative reviews saying that the game doesn&rsquo;t work. I&rsquo;ve tested the game thoroughly on all devices I was able to get my hands on, but I wasn&rsquo;t able to reproduce the error, so I decided to wait until I get more info. Few days ago with the help of one customer I was able to pin down the problem &ndash; the game failed to display any UI on new Belle firmware with Qt 4.8.0. I don&rsquo;t have such device myself, but fortunately the great <a href="http://www.developer.nokia.com/Devices/Remote_device_access/">Remote Device Access</a> service allows testing on Nokia 808 PureView with latest Belle firmware. I&rsquo;ve reproduced the error, wrote the Nokia Developers Support, and they sent me a very helpful link: <a href="http://www.developer.nokia.com/Community/Wiki/Changes_in_Symbian_Belle_and_Qt_4.7.4#Changes_in_Nokia_Belle_FP1">Changes in Nokia Belle FP1</a>. One issue listed there caught my eye:</p>
 
-<p><blockquote><p>If application does not specify a size for the root QML object and doesn’t use the Qt components Window as root element (Window component should not be used as a child item), it might cause the root window not to be shown.</p></p><p><p><b>Solution / Workaround:</b><br/>Always declare a size for your custom QML root element.</p></blockquote></p>
+<p>{% blockquote %}
+If application does not specify a size for the root QML object and doesn’t use the Qt components Window as root element (Window component should not be used as a child item), it might cause the root window not to be shown.</p>
+
+<p><b>Solution / Workaround:</b>
+Always declare a size for your custom QML root element.
+{% endblockquote %}</p>
 
 <p>I&rsquo;ve checked my main QML file and indeed, I did not set the root element size, instead I&rsquo;ve set the resize mode to SizeRootObjectToView and maximized the QDeclarativeView. I think it&rsquo;s the better solution than setting the root element size explicitly, because the display resolution is not the same on all Nokia phones (I&rsquo;m looking at you, E6). Instead of doing that, I wrapped my entire UI into Window element from Qt Components and lo and behold, my game displayed something, although it wasn&rsquo;t exactly what I expected:</p>
 
-<p><img class="center" src="/images/Nokia+808+PureView.png"></p>
+<p>{% img center /images/Nokia+808+PureView.png %}</p>
 
 <p>My code locked the screen orientation after loading main QML file, and it looked like the only thing that might cause this problem, so I changed the calls order. On Belle FP1 devices everything worked fine, but this change broke the display on devices with Anna and older Belle firmware:</p>
 
-<p><img class="center" src="/images/Nokia+N8-00.png"></p>
+<p>{% img center /images/Nokia+N8-00.png %}</p>
 
 <p>Wat? The only solution I came up with was creating the utility method for detecting version of Qt during runtime and locking screen orientation after and before loading main QML file, depending on the Qt version. Relevant piece of code:</p>
 

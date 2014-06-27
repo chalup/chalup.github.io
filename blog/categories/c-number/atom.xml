@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C# | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/c-number/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -125,11 +125,11 @@ create table z (id INTEGER PRIMARY KEY AUTOINCREMENT,</p>
     <id>http://chalup.github.io/blog/2012/02/28/wp7-webrequest-oddity</id>
     <content type="html"><![CDATA[<p>During testing of a Windows Phone 7 application I write during my day job I noticed strange thing: when I disabled network connection, I received 404 NotFound error. More precisely, the WebRequest threw WebException with Status = UnknownError, Response.Uri = {} and Response.StatusCode = NotFound.</p>
 
-<p><img class="center" src="/images/no+connection.jpg"></p>
+<p>{% img center /images/no+connection.jpg %}</p>
 
 <p>So you get 404 in two cases: when either connection endpoint is down or when server actually responds with 404 NotFound. It would be nice to separate those two cases though, for example to display to the user the message that actually helps them fix the problem.</p>
 
-<p><img class="center" src="/images/wrong+url.jpg"></p>
+<p>{% img center /images/wrong+url.jpg %}</p>
 
 <p>Fortunately you can tell those two situations apart by checking WebException.Response.ResponseUri &ndash; in case of connection failure it contains empty Uri object (not null, just empty). Here&rsquo;s the extension method I use to convert the exception to the one that makes more sense to me:</p>
 

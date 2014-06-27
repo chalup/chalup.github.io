@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Release | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/release/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -20,15 +20,15 @@
     <id>http://chalup.github.io/blog/2013/03/05/weekend-hack-viewing-markdown</id>
     <content type="html"><![CDATA[<p>Recently I wanted to open a markdown email attachment on my Nexus 4, but after clicking &ldquo;readme.md&rdquo; instead of seeing the file contents I saw this message:</p>
 
-<p><img class="center" src="/images/no_app_dialog.png"></p>
+<p>{% img center /images/no_app_dialog.png %}</p>
 
 <p>I downloaded few apps from Google Play, but the message was still appearing. The same applications could open a local markdown file, so I went back to GMail app to download the attachment, but another unpleasant surprise awaited me:</p>
 
-<p><img class="center" src="/images/no_overflow.png"></p>
+<p>{% img center /images/no_overflow.png %}</p>
 
 <p>There is no &ldquo;overflow&rdquo; menu on the attachment (see the screenshot below), which means I couldn&rsquo;t access the &ldquo;Save&rdquo; option, so I could open it as a local file.</p>
 
-<p><img class="center" src="/images/save_menu.png"></p>
+<p>{% img center /images/save_menu.png %}</p>
 
 <p>At this point I was:</p>
 
@@ -129,7 +129,7 @@ finish();
 
 <p>That&rsquo;s why I created Word Judge &ndash; an ultimate way to settle all word-related disputes. The application contains full dictionary of valid words and short word list with definitions. Dictionary is shipped with the application, so you don&rsquo;t need internet connectivity to check if the word can be used in a word game. Currently the application is available only for Android devices, but I&rsquo;m going to release Symbian (and maybe Harmattan?) version soon.</p>
 
-<table class="separator" style="clear: both; text-align: center;"><tbody><tr><td><img class="center" src="/images/screenshot1.png"></td><td><img class="center" src="/images/screenshot2.png"></td><td><img class="center" src="/images/screenshot3.png"></td></tr></tbody></table>
+<table class="separator" style="clear: both; text-align: center;"><tbody><tr><td>{% img center /images/screenshot1.png %}</td><td>{% img center /images/screenshot2.png %}</td><td>{% img center /images/screenshot3.png %}</td></tr></tbody></table>
 
 
 <p>Unlike many other word game helpers, Word Judge doesn&rsquo;t contain anagrammer tool. It&rsquo;s not an oversight, it didn&rsquo;t add it for two reasons. First of all I don&rsquo;t think that such functionality should be bundled with the application, which is basically a dictionary. You use a dictionary to check the spelling, not to cheat. The second reason is more prosaic &ndash; I don&rsquo;t like the UI of any anagrammer tools I found. It&rsquo;s usually a jumble of checkboxes and radio buttons and two fields for board and rack tiles. Even if you figure out what all those controls do, these tools don&rsquo;t really solve the problem, which is finding the best move. It&rsquo;s not an easy problem, even if you find a convenient way to import current game state to the application (<a href="http://en.wikipedia.org/wiki/Augmented_reality">AR</a> maybe?). It&rsquo;s certainly a good idea for a separate application, but not for a part of a dictionary app.</p>
@@ -147,13 +147,13 @@ finish();
     <link href="http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi/"/>
     <updated>2012-01-20T12:05:00+01:00</updated>
     <id>http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi</id>
-    <content type="html"><![CDATA[<p><img class="center" src="/images/nupogodi.png"></p>
+    <content type="html"><![CDATA[<p>{% img center /images/nupogodi.png %}</p>
 
 <p>&ldquo;Nu, pogodi!&rdquo; is the first application I&rsquo;ve published in Nokia Store (or any other app store, in fact). It&rsquo;s a remake of a classic handheld console game I used to play in my childhood: you had to place a wolf with a basket under one of four roosts to catch the eggs rolling from them. Despite the extreme simplicity and the obvious flaw in the game plot (namely: what the hell does the wolf need the eggs for?) the game was quite addictive and I spent many hours listening to the hypnotizing ticking of the falling eggs (if you played this game you know what I&rsquo;m talking about).</p>
 
 <p>The handheld console I based my game on is actually a Russian clone of &ldquo;Egg&rdquo; game from Nintendo&rsquo;s &ldquo;Game &amp; Watch&rdquo; game series. The main difference is the graphics &ndash; instead of fox and hen the Russian clone featured the Wolf and the Hare from a &ldquo;Nu, pogodi!&rdquo; cartoon &ndash; hence the name of the game.</p>
 
-<p><img class="center" src="/images/handhelds.jpg"></p>
+<p>{% img center /images/handhelds.jpg %}</p>
 
 <p>At the beginning of 2011 I wanted to check out the Qt Quick, which was advertised by Nokia as the best thing since sliced bread. I never liked the go-through-a-boring-tutorials way of learning new things, so I started writing UI for a simple game instead. Few weeks later Nokia announced <a href="http://www.developer.nokia.com/Community/Wiki/The_Quick_Competition_2011Q1">Qt Quick Competition</a> &ndash; an event promoting Qt Quick introduced in Qt 4.7. I&rsquo;ve entered the competition with the early version of my game under the name <a href="http://projects.developer.nokia.com/PAGADI">&ldquo;Nu, Pagadi!&rdquo;</a> (which is, as I learned later, incorrect &ndash; apparently in Russian sometimes you write an &lsquo;o&rsquo;, but pronounce it as &lsquo;a&rsquo;), which didn&rsquo;t won me anything, but at least I had a motivation to work on the game. In accordance with the competition rules I&rsquo;ve published my code under OSS license and forgot about the whole deal.</p>
 
@@ -161,7 +161,7 @@ finish();
 
 <p>Despite the initial issues the game reached top 10 bestseller list in two weeks and stayed there ever since. Try it yourself!</p>
 
-<p><a href="http://store.ovi.com/content/219800"><img class="center" src="/images/nupogodi-banner.png"></a></p>
+<p><a href="http://store.ovi.com/content/219800">{% img center /images/nupogodi-banner.png %}</a></p>
 ]]></content>
   </entry>
   

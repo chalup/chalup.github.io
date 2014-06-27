@@ -4,7 +4,7 @@
   <title><![CDATA[Category: BlackBerry | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/blackberry/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -22,7 +22,7 @@
 
 <p>Why is it important? Because if you design your UI in px on high resolution device and then run it on low resolution device, you&rsquo;ll end up with gigantic buttons which take 50% of the screen. If you do the opposite, you&rsquo;ll end up with button, which are too small to click on high res device.</p>
 
-<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png"><img class="center" src="http://developer.android.com/images/screens_support/density-test-bad.png"></a></p>
+<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png">{% img center http://developer.android.com/images/screens_support/density-test-bad.png %}</a></p>
 
 <p>Unfortunately the BlackBerry doesn&rsquo;t support this concept out of the box. By default you specify the size and position of UI controls in regular pixels. The <a href="http://docs.blackberry.com/en/developers/deliverables/29251/Developing_apps_for_different_screen_sizes_1579421_11.jsp">BlackBerry documentation</a> suggests using this nugget of a code:</p>
 

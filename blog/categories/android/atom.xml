@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Android | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -14,13 +14,60 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Google I/O 2014 Summary]]></title>
+    <link href="http://chalup.github.io/blog/2014/06/27/google-i-slash-o-2014-summary/"/>
+    <updated>2014-06-27T21:34:11+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/06/27/google-i-slash-o-2014-summary</id>
+    <content type="html"><![CDATA[<p>Here are my thoughts after watching the keynote and few Android related sessions.</p>
+
+<h2>Highlights</h2>
+
+<h3>Android One</h3>
+
+<p>This might be a huge, not only because it means expanding the potential user base for your apps. The most important thing is that all these new devices will run the latest Android and software updates will be provided by Google. If this kind of support becomes standard, we might be able to use <code>minSdkVersion=20</code> pretty soon.</p>
+
+<h3>ART</h3>
+
+<p>The Dalvik was decomissioned, the new runtime is the only runtime. I do hope this means that the 64k method limit is no longer a problem and there are no technical roadblocks for Java 8 support. Maybe this questions were answersed during <a href="https://www.google.com/events/io/schedule/session/b750c8da-aebe-e311-b297-00155d5066d7">The ART runtime</a> session, unfortunately there was no live stream of it.</p>
+
+<h3><a href="https://plus.google.com/+XavierDucrohet/posts">+Xavier Ducrohet</a></h3>
+
+<p>I got the feeling that he&rsquo;s the only Google employee who acknowledges that there are serious issues with developing on Android. Great answers about unit tests and robolectric support, good answer about Scala support.</p>
+
+<h2>Dunno what to make of it</h2>
+
+<h3>RecyclerView</h3>
+
+<p><code>ListViews</code> are far from perfect. I know, because in our codebase we have few workarounds for the issues or poor APIs. It&rsquo;s good that something more flexible is available, it&rsquo;s great that it&rsquo;s a part of support library, but some parts of the <code>RecyclerView</code> API look incredibly complex.</p>
+
+<h3>Unlock bypass with Wear device</h3>
+
+<p>Call me paranoid, but this feature means that if I get mugged, I&rsquo;m totally screwed. Someone gets access to my email, and through that he gets access to every piece of my data on the web and my digital idendity. Thanks, I&rsquo;ll pass.</p>
+
+<p>On the other hand there are users who do not use pin or pattern on the lockscreens. For these people, this feature is a significant security improvement.</p>
+
+<h2>Lowlights</h2>
+
+<h3>Always running, big-ass TVs</h3>
+
+<p>During keynote one speaker mentioned that in average household the TV is on for 5 hours every day and suggested that for the other 19 hours it can be used as a digital canvas for your content. I&rsquo;m not sure if encouraging people to keep the huge, power hungry device all the time to display nice pictures is very thoughtful and enviromentally aware.</p>
+
+<h3>Fireside chat</h3>
+
+<p>There were some über lame questions from the audience, but that&rsquo;s expected when questions are not moderated. However there were also über lame answers for valid questions, and there is no excuse for it.</p>
+
+<p>The very first question, about Java 8 support, was answered with smirks and a slimy answer from Chet Haase. Dear Google, after WWDC the Java 8 support is no longer a huge news, so if you&rsquo;re saving it for the future, don&rsquo;t bother. And if there are any issues with Java 8 support &ndash; legal, technical, whatever &ndash; just let the developers know.</p>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[minSdkVersion=15, What's Next?]]></title>
     <link href="http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15/"/>
     <updated>2014-06-15T09:29:50+02:00</updated>
     <id>http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15</id>
     <content type="html"><![CDATA[<p>A year ago <a href="https://twitter.com/readyState">Jeff Gilfelt</a> was giving away <code>minSdkVersion=14</code> stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What seemed radical one year ago, today is a widely accepted. The <code>minSdkVersion</code> in new project wizard in latest Android Studio release is by default set to <code>15</code>. On the same screen you can click the &ldquo;help me choose&rdquo; hyperlink, which shows this screen:</p>
 
-<p><img class="center" src="/images/android_studio_min_sdk.png"></p>
+<p>{% img center /images/android_studio_min_sdk.png %}</p>
 
 <p>The percentages are consistent with data from <a href="http://developer.android.com/about/dashboards/index.html">developer.android.com</a> dashboards, but I&rsquo;d say they are skewed towards old Android versions. <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a> app I&rsquo;m working on has only 3.7% active users on devices with api level &lt; 15 (compared to 17.4% from official Google dashboards). Moreover, if you look only at the new users, the Froyo, GingerBread and Honeycomb is used only by 1%. In this light, supporting pre-API15 devices is a criminal waste, and starting new projects with minSdkVersion lower than 15 a criminal idiocy.</p>
 
@@ -668,7 +715,9 @@ data.registerContentObserver(mObserver);
 
 <p><a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> wrote few weeks ago that <a href="http://commonsware.com/blog/2014/03/31/cwac-loaderex-failed-abstractions.html">he considers Loader to be a failed abstraction</a>, mostly because the interface assumes there is a single object which notifies the Loader about new data. He concluded his post with the following sentence:</p>
 
-<p><blockquote><p>In my case, if I am going to have some singleton manager object, with distinct data objects per operation, I am going to use something more flexible than Loader, such as an event bus.</p></blockquote></p>
+<p>{% blockquote %}
+In my case, if I am going to have some singleton manager object, with distinct data objects per operation, I am going to use something more flexible than Loader, such as an event bus.
+{% endblockquote %}</p>
 
 <p>Extending <code>AbstractObservingLoader</code> to load some data from <code>SQLiteDatabase</code> and subscribe to some event bus for model change events should be trivial, and you&rsquo;d get a lot of things for free &ndash; performing loads in background, cancelling loads, caching results, invalidating cache, and so on.</p>
 
@@ -867,131 +916,6 @@ $ adb shell monkey -p org.chalup.dialmformonkey.app -v 500
 </code></p>
 
 <p>So what can we do? First option is checking the <code>Adapter.isEnabled()</code> in your <code>onListItemClick</code> listener, which is yet another kind of boilerplate you have to add to your Android code, but it&rsquo;s super easy to add. The other option is going with the first sectioning approach, i.e. putting section as a part of the clickable list item, but it might not work for your use case (for example adapter with multiple item types).</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Android App Widgets Issues]]></title>
-    <link href="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues/"/>
-    <updated>2014-05-10T15:42:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues</id>
-    <content type="html"><![CDATA[<p>This week I spend few days analyzing and fixing various issues of app widget in Base CRM application.</p>
-
-<p>This part of our codebase was created over a year ago during one of our internal hackathons and was released soon after that. Most of the times it worked. Every once in a while we received a weird crash report from Google Analytics, but it never caused much trouble. Recently though we received few complaints from customers. I happened to have few hours available for bug hunting, so I took a dive.</p>
-
-<p>The widget is really a simple todo list backed by <code>ContentProvider</code>. The code looks like it was based on the WeatherWidget from SDK samples. What can possibly go wrong?</p>
-
-<h2>Issue #1: gazillions of threads started</h2>
-
-<p>Take a look at the code of WeatherWidgetProvider:
-<code>java
-public WeatherWidgetProvider() {
-  // Start the worker thread
-  sWorkerThread = new HandlerThread("WeatherWidgetProvider-worker");
-  sWorkerThread.start();
-  sWorkerQueue = new Handler(sWorkerThread.getLooper());
-}
-</code></p>
-
-<p>The WeatherWidgetProvider is an <code>AppWidgetProvider</code> implementation, which extends a regular <code>BroadcastReceiver</code>. It means that for every action a new instance of WeatherWidgetProvider is created, and the current implementation spawns new thread which is never closed.</p>
-
-<p>The sample author obviously intended to create only one worker thread &ndash; the sWorkerThread is the static &ndash; but forgot to do the null check before creating a new thread. So let&rsquo;s fix it:
-``` java
-public WeatherWidgetProvider() {
-  if (sWorkerThread == null) {</p>
-
-<pre><code>// Start the worker thread
-sWorkerThread = new HandlerThread("WeatherWidgetProvider-worker");
-sWorkerThread.start();
-sWorkerQueue = new Handler(sWorkerThread.getLooper());
-</code></pre>
-
-<p>  }
-}
-```</p>
-
-<h2>Issue #2: no refresh after application update</h2>
-
-<p>The widget shows data from the same <code>ContentProvider</code> as the main app, so when the user creates a task inside in the main app and then goes back to homescreen, the task should be displayed on the widget. To achieve this we did the same thing the WeatherWidget sample does &ndash; we register the <code>ContentObserver</code> in <code>onEnabled</code> callback of <code>AppWidgetProvider</code>:</p>
-
-<p>``` java
-@Override
-public void onEnabled(Context context) {
-  final ContentResolver r = context.getContentResolver();
-  if (sDataObserver == null) {</p>
-
-<pre><code>final AppWidgetManager mgr = AppWidgetManager.getInstance(context);
-final ComponentName cn = new ComponentName(context, WeatherWidgetProvider.class);
-sDataObserver = new WeatherDataProviderObserver(mgr, cn, sWorkerQueue);
-r.registerContentObserver(WeatherDataProvider.CONTENT_URI, true, sDataObserver);
-</code></pre>
-
-<p>  }
-}
-```</p>
-
-<p>The <code>onEnabled</code> callback is called when the first instance of the widget is added to homescreen, so the code looks fine. Unfortunately the callback is not called at your process startup. So if your app is updated and the process is restarted, the <code>ContentObserver</code> won&rsquo;t be registered. The same thing happens if your app crashes or is stopped by the OS to free resources.</p>
-
-<p>To solve this you have to register the <code>ContentObserver</code> in few more places. I have added registration to <code>onCreate</code> callback in <code>RemoteViewsFactory</code> and the <code>onReceive</code> part which handles our custom actions in <code>AppWidgetProvider</code>.</p>
-
-<p>WeatherWidget sample does one more thing wrong: the <code>ContentObserver</code> is never unregistered and the worker thread is never stopped. The correct place to do this is <code>onDisabled</code> callback in <code>AppWidgetProvider</code>.</p>
-
-<h2>Issue #3: <code>CursorOutOfBoundsException</code> crash</h2>
-
-<p>Ever since we introduced the tasks widget, we&rsquo;ve occasionally received the crash reports indicating that the RemoteViewsFactory requested elements outside of <code>[0, getCount)</code> range:</p>
-
-<p>```
-05-10 15:22:50.559  13781-13795/org.chalup.widgetfail.widget E/AndroidRuntime﹕ FATAL EXCEPTION: Binder_2</p>
-
-<pre><code>Process: org.chalup.widgetfail.widget, PID: 13781
-android.database.CursorIndexOutOfBoundsException: Index 1 requested, with a size of 1
-</code></pre>
-
-<p>```</p>
-
-<p>The reproduction steps for this issue are quite complicated:</p>
-
-<ul>
-<li>Tap the task on the widget to mark it was completed. Internally we set the <code>PENDING_DONE</code> flag, so the task is marked as done, but is still displayed on the list, so the user can tap it again and reset the flag.</li>
-<li>Trigger the sync</li>
-<li><code>SyncAdapter</code> syncs the Task to our backend. The task is marked as <code>DONE</code> in our database, which triggers the <code>ContentObserver</code> registered by the widget.</li>
-<li><code>ContentObserver</code> triggers <code>onDataSetChanged</code> callback in <code>RemoteViewsFactory</code>, which then calls <code>getCount</code> and <code>getViewAt</code></li>
-<li>In some rare cases <code>getViewAt</code> with position == result of <code>getCount</code> is called</li>
-</ul>
-
-
-<p>It looks like some kind of a race condition or another threading issue in Android code which populates the app widgets. I tried synchronizing the <code>RemoteViewsFactory</code> methods, but it didn&rsquo;t help. The <code>getViewAt</code> have to return a valid <code>RemoteViews</code>, so I fixed it up by returning the loading view when element outside of valid range is requested:</p>
-
-<p>``` java
-@Override
-public synchronized RemoteViews getViewAt(int position) {
-  if (position >= mCursor.getCount()) {</p>
-
-<pre><code>return getLoadingView();
-</code></pre>
-
-<p>  } else {</p>
-
-<pre><code>mCursor.moveToPosition(position);
-
-// ...
-</code></pre>
-
-<p>  }
-}
-```</p>
-
-<h2>Issue #4: no refresh when &ldquo;Don&rsquo;t keep activities&rdquo; setting is enabled</h2>
-
-<p>User can click on the tasks displayed on the widget to go to the edit screen. The activity is closed when user saves or discards changes and the homescreen with the widget is shown again. Changing the task triggers the <code>ContentObserver</code>, the <code>onDataSetChanged</code> is called on all active <code>RemoteViewsFactories</code>, but sometimes other callbacks (<code>getCount</code>, <code>getViewAt</code>, etc.) are not called.</p>
-
-<p>It turns out this happens when the Homescreen activity is recreated because of low memory condition. To easily reproduce this issue you can check the &ldquo;Don&rsquo;t keep activities&rdquo; in developers settings.</p>
-
-<p>I do not have a solution or workaround for this issue unfortunately. I&rsquo;ll file a bug report and hope for the best.</p>
-
-<h2>Recap</h2>
-
-<p>There are mutliple issues with the WeatherWidget sample and some issues with the system services responsible for populating app widgets with content. I&rsquo;ve created a simple project which reproduces the issues #3 and #4 and shows the correct way of registering <code>ContentObserver</code> for your widget. The sources are <a href="https://github.com/chalup/android-widget-fail">available on Github</a>.</p>
 ]]></content>
   </entry>
   

@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="First of all by QML I do not mean this, I mean this: a UI module of Qt, the cross-platform framework. The gals and guys at Nokia figured out that &hellip;">
+  <meta name="description" content="Recently I&rsquo;ve started working on the new version of Windows Phone application originally written by interns in my company. One of the first &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,85 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/01/27/xname-binding-crash-on-windows-phone-71/">X:name Binding Crash on Windows Phone 7.1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-01-27T11:29:00+01:00" pubdate data-updated="true">Jan 27<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/01/27/xname-binding-crash-on-windows-phone-71/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/01/27/xname-binding-crash-on-windows-phone-71/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I&rsquo;ve started working on the new version of Windows Phone application originally written by interns in my company. One of the first tasks was to migrate from WP 7.0 to 7.1, a.k.a. &ldquo;Windows Phone 7.5&rdquo; (because 7.5 sounds sooooo much better than 7.1), a.k.a. &ldquo;Windows Phone Mango&rdquo;. The transition was generally smooth and it seems we&rsquo;ll be able to clean up some 7.0 specific workarounds, but there was one crash that was quite tricky to track down:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">Null</span> <span class="n">Reference</span> <span class="n">Exception</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">CheckHResult</span><span class="p">(</span><span class="n">UInt32</span> <span class="n">hr</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">UIElement_Measure_WithDesiredSize</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">element</span><span class="p">,</span> <span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">UIElement</span><span class="p">.</span><span class="n">Measure_WithDesiredSize</span><span class="p">(</span><span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">VirtualizingStackPanel</span><span class="p">.</span><span class="n">MeasureChild</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">child</span><span class="p">,</span> <span class="n">Size</span> <span class="n">layoutSlotSize</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">VirtualizingStackPanel</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">constraint</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Our code wasn&rsquo;t even in a call stack! It turns out that the following code worked on 7.0, but crashed on newer version:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;validationcontrol:validationcontrol</span>
+</span><span class='line'>    <span class="na">grid.row=</span><span class="s">&quot;1&quot;</span>
+</span><span class='line'>    <span class="na">inputscope=</span><span class="s">&quot;Number&quot;</span>
+</span><span class='line'>    <span class="na">lostfocus=</span><span class="s">&quot;OnCustomValueChanged&quot;</span>
+</span><span class='line'>    <span class="na">text=</span><span class="s">&quot;{Binding Custom}&quot;</span>
+</span><span class='line'>    <span class="na">width=</span><span class="s">&quot;420&quot;</span>
+</span><span class='line'>    <span class="na">x:name=</span><span class="s">&quot;{Binding Key}&quot;</span><span class="nt">/&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&rsquo;m not sure if using binding for a control name and relying on that information in code behind is a good idea, but I&rsquo;m damn sure it shouldn&rsquo;t crash. And even if it crashes, it should provide some useful information instead of throwing NRE from seemingly random place.</p>
+
+<p>What&rsquo;s the fix for it? Use x:Tag instead of x:Name.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -243,6 +322,10 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
@@ -256,10 +339,6 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
     
       <li class="post">
         <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
       </li>
     
   </ul>

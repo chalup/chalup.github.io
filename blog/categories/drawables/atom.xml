@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Drawables | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/drawables/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -20,7 +20,7 @@
     <id>http://chalup.github.io/blog/2013/11/05/android-drawables-stroke-inconsistency</id>
     <content type="html"><![CDATA[<p>I&rsquo;ve run into a funny little problem when creating custom drawables recently &ndash; some of the lines were crisp and some were blurred:</p>
 
-<p><img class="center" src="/images/zoomed.png"></p>
+<p>{% img center /images/zoomed.png %}</p>
 
 <p>After few debug iterations I was able to narrow down the difference to the shapes drawn using the <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawRoundRect%28android.graphics.RectF,%20float,%20float,%20android.graphics.Paint%29"><code>Canvas.drawRoundRect</code></a> and <a href="http://developer.android.com/reference/android/graphics/Canvas.html#drawPath%28android.graphics.Path,%20android.graphics.Paint%29"><code>Canvas.drawPath</code></a>. The former looked much crispier. I&rsquo;ve dug down to Skia classes and it turns out that they reach the same drawing function through slightly different code paths and I guess at some point some rounding is applied at one of them, but I haven&rsquo;t verified this.</p>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Loaders | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/loaders/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -647,7 +647,9 @@ data.registerContentObserver(mObserver);
 
 <p><a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> wrote few weeks ago that <a href="http://commonsware.com/blog/2014/03/31/cwac-loaderex-failed-abstractions.html">he considers Loader to be a failed abstraction</a>, mostly because the interface assumes there is a single object which notifies the Loader about new data. He concluded his post with the following sentence:</p>
 
-<p><blockquote><p>In my case, if I am going to have some singleton manager object, with distinct data objects per operation, I am going to use something more flexible than Loader, such as an event bus.</p></blockquote></p>
+<p>{% blockquote %}
+In my case, if I am going to have some singleton manager object, with distinct data objects per operation, I am going to use something more flexible than Loader, such as an event bus.
+{% endblockquote %}</p>
 
 <p>Extending <code>AbstractObservingLoader</code> to load some data from <code>SQLiteDatabase</code> and subscribe to some event bus for model change events should be trivial, and you&rsquo;d get a lot of things for free &ndash; performing loads in background, cancelling loads, caching results, invalidating cache, and so on.</p>
 

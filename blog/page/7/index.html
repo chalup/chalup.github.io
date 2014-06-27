@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="At my current day job I was the first adopter of git and one of the most frequently question I&rsquo;m asked as &ldquo;the git guy&rdquo; is the &hellip;">
+  <meta name="description" content="After the latest update of &ldquo;Nu, Pogodi!&rdquo;, I received few negative reviews saying that the game doesn&rsquo;t work. I&rsquo;ve tested the &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,115 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/05/30/qml-applications-on-nokia-belle/">QML Applications on Nokia Belle</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-05-30T20:06:00+02:00" pubdate data-updated="true">May 30<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/05/30/qml-applications-on-nokia-belle/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/05/30/qml-applications-on-nokia-belle/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>After the latest update of &ldquo;Nu, Pogodi!&rdquo;, I received few negative reviews saying that the game doesn&rsquo;t work. I&rsquo;ve tested the game thoroughly on all devices I was able to get my hands on, but I wasn&rsquo;t able to reproduce the error, so I decided to wait until I get more info. Few days ago with the help of one customer I was able to pin down the problem &ndash; the game failed to display any UI on new Belle firmware with Qt 4.8.0. I don&rsquo;t have such device myself, but fortunately the great <a href="http://www.developer.nokia.com/Devices/Remote_device_access/">Remote Device Access</a> service allows testing on Nokia 808 PureView with latest Belle firmware. I&rsquo;ve reproduced the error, wrote the Nokia Developers Support, and they sent me a very helpful link: <a href="http://www.developer.nokia.com/Community/Wiki/Changes_in_Symbian_Belle_and_Qt_4.7.4#Changes_in_Nokia_Belle_FP1">Changes in Nokia Belle FP1</a>. One issue listed there caught my eye:</p>
+
+<blockquote><p>If application does not specify a size for the root QML object and doesn’t use the Qt components Window as root element (Window component should not be used as a child item), it might cause the root window not to be shown.</p><p><b>Solution / Workaround:</b><br/>Always declare a size for your custom QML root element.</p></blockquote>
+
+
+<p>I&rsquo;ve checked my main QML file and indeed, I did not set the root element size, instead I&rsquo;ve set the resize mode to SizeRootObjectToView and maximized the QDeclarativeView. I think it&rsquo;s the better solution than setting the root element size explicitly, because the display resolution is not the same on all Nokia phones (I&rsquo;m looking at you, E6). Instead of doing that, I wrapped my entire UI into Window element from Qt Components and lo and behold, my game displayed something, although it wasn&rsquo;t exactly what I expected:</p>
+
+<p><img class="center" src="/images/Nokia+808+PureView.png"></p>
+
+<p>My code locked the screen orientation after loading main QML file, and it looked like the only thing that might cause this problem, so I changed the calls order. On Belle FP1 devices everything worked fine, but this change broke the display on devices with Anna and older Belle firmware:</p>
+
+<p><img class="center" src="/images/Nokia+N8-00.png"></p>
+
+<p>Wat? The only solution I came up with was creating the utility method for detecting version of Qt during runtime and locking screen orientation after and before loading main QML file, depending on the Qt version. Relevant piece of code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='c++'><span class='line'><span class="kt">bool</span> <span class="n">Utils</span><span class="o">::</span><span class="n">runtimeQtAtLeast</span><span class="p">(</span><span class="kt">int</span> <span class="n">major</span><span class="p">,</span> <span class="kt">int</span> <span class="n">minor</span><span class="p">,</span> <span class="kt">int</span> <span class="n">bugfix</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">const</span> <span class="n">QStringList</span> <span class="n">v</span> <span class="o">=</span> <span class="n">QString</span><span class="o">::</span><span class="n">fromAscii</span><span class="p">(</span><span class="n">qVersion</span><span class="p">()).</span><span class="n">split</span><span class="p">(</span><span class="n">QLatin1Char</span><span class="p">(</span><span class="sc">&#39;.&#39;</span><span class="p">));</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">runtimeVersion</span> <span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">toInt</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span> <span class="o">|</span> <span class="n">v</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">toInt</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">v</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="n">toInt</span><span class="p">();</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">version</span> <span class="o">=</span> <span class="n">major</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span> <span class="o">|</span> <span class="n">minor</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">bugfix</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">version</span> <span class="o">&lt;=</span> <span class="n">runtimeVersion</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// ...</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">const</span> <span class="kt">bool</span> <span class="n">qt48</span> <span class="o">=</span> <span class="n">Utils</span><span class="o">::</span><span class="n">runtimeQtAtLeast</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+</span><span class='line'><span class="n">QmlApplicationViewer</span> <span class="n">viewer</span><span class="p">;</span>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="n">qt48</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setOrientation</span><span class="p">(</span><span class="n">QmlApplicationViewer</span><span class="o">::</span><span class="n">ScreenOrientationLockLandscape</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setResizeMode</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">SizeRootObjectToView</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">viewer</span><span class="p">.</span><span class="n">setMainQmlFile</span><span class="p">(</span><span class="n">QLatin1String</span><span class="p">(</span><span class="s">&quot;qml/nupagadi/GameArea.qml&quot;</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">qt48</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setOrientation</span><span class="p">(</span><span class="n">QmlApplicationViewer</span><span class="o">::</span><span class="n">ScreenOrientationLockLandscape</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="p">.</span><span class="n">setResizeMode</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">SizeRootObjectToView</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This kind of incompatibility between <strong>minor</strong> versions of the Qt framework is mind boggling. It makes me think what else did Nokia screw up in Qt 4.8.0 for Symbian and what will they screw up in the next firmware updates. One thing is sure: I&rsquo;ll have a lot of blogging material.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -868,80 +977,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/02/dip-on-blackberry/">DIP on BlackBerry</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-02T21:35:00+01:00" pubdate data-updated="true">Mar 2<span>nd</span>, 2012</time>
-        
-           | <a href="/blog/2012/03/02/dip-on-blackberry/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/03/02/dip-on-blackberry/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Android has this nice notion of <a href="http://developer.android.com/guide/practices/screens_support.html#density-independence">density-independent pixel</a> &ndash; a measurement unit which ensures the widgets have the same physical size on the devices with different screen size and different resolution. Basically 1dp is 1px on a device with 160dpi and is scaled appropriately on devices with different dpi.</p>
-
-<p>Why is it important? Because if you design your UI in px on high resolution device and then run it on low resolution device, you&rsquo;ll end up with gigantic buttons which take 50% of the screen. If you do the opposite, you&rsquo;ll end up with button, which are too small to click on high res device.</p>
-
-<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png"><img class="center" src="http://developer.android.com/images/screens_support/density-test-bad.png"></a></p>
-
-<p>Unfortunately the BlackBerry doesn&rsquo;t support this concept out of the box. By default you specify the size and position of UI controls in regular pixels. The <a href="http://docs.blackberry.com/en/developers/deliverables/29251/Developing_apps_for_different_screen_sizes_1579421_11.jsp">BlackBerry documentation</a> suggests using this nugget of a code:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kt">boolean</span> <span class="n">lowRes</span> <span class="o">=</span> <span class="n">Display</span><span class="o">.</span><span class="na">getWidth</span><span class="o">()</span> <span class="o">&lt;=</span> <span class="mi">320</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">if</span> <span class="o">(</span><span class="n">lowRes</span><span class="o">)</span>
-</span><span class='line'><span class="o">{</span>
-</span><span class='line'>    <span class="c1">// The device has a low resolution screen size</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="k">else</span>
-</span><span class='line'><span class="o">{</span>
-</span><span class='line'>    <span class="c1">// The device has a high resolution screen size</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But I think there is a better way.</p>
-
-<p>The net.rim.device.api.ui.Ui contains the static method convertSize that can be used, as you might have guessed, for size conversion between different measurement units. We&rsquo;ll of course convert our measurements to pixels, because that&rsquo;s the unit expected by most drawing methods. But what unit will we convert from?</p>
-
-<p>Points are nice, because you probably use them for your font size already, but they are to coarse to be used for all components. Fortunately there is no need to write a wrapper for your own unit, because you can use built-in unit called centipoints. 100 centipoints = 1 point, so this unit should provide enough precision to layout elements just the way you want.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/8/">&larr; Older</a>
@@ -959,6 +994,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
@@ -972,10 +1011,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/10/enabling-proguard-for-debug-builds/">ProGuard in Ant Debug Builds</a>
       </li>
     
   </ul>

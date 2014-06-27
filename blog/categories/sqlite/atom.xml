@@ -4,7 +4,7 @@
   <title><![CDATA[Category: SQLite | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/sqlite/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -284,7 +284,7 @@ public void onUpgrade(final SQLiteDatabase db, int oldVersion, int newVersion) {
     <id>http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2</id>
     <content type="html"><![CDATA[<p>In <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first part of this series</a> I showed that to implement offline mode in your Android app you have to implement data migrations. If you&rsquo;re using SQLite database, it means you&rsquo;ll have to use (or rather work around) it&rsquo;s ALTER TABLE syntax:</p>
 
-<p><a href="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"><img class="center" src="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"></a></p>
+<p><a href="http://www.sqlite.org/images/syntax/alter-table-stmt.gif">{% img center http://www.sqlite.org/images/syntax/alter-table-stmt.gif %}</a></p>
 
 <p>So all you can do with it is adding the column or renaming the table, but in reality you probably need to alter a single column, remove column or change the table constraints. You can achieve this by doing the following operation:</p>
 
@@ -354,7 +354,7 @@ selectid    order       from        detail</p>
     <id>http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider</id>
     <content type="html"><![CDATA[<p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
 
-<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
+<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png">{% img center http://imgs.xkcd.com/comics/exploits_of_a_mom.png Obligatory XKCD %}</a></p>
 
 <p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
 

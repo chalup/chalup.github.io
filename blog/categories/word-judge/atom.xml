@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Word Judge | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/word-judge/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-20T20:12:45+02:00</updated>
+  <updated>2014-06-27T22:53:56+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -39,7 +39,7 @@
 
 <p>The most important observation is that we&rsquo;re not compressing some random white noise, but words from real language. We can leverage this information to get a much better compression than some generic algorithm. Lot of words share the same prefix and suffix, which means they can be efficiently represented as a directed acyclic graph with shared nodes for common prefixes and suffixes. Let&rsquo;s see how the graph would look like for couple of words:</p>
 
-<p><img class="center" src="/images/dag.png"></p>
+<p>{% img center /images/dag.png %}</p>
 
 <p>White letters on black background mark the nodes representing the ends of words. So the graph above represents the following words:</p>
 
@@ -63,13 +63,13 @@ ablations
 
 <p>For example on the graph above we can no longer share the <code>i</code> node in the <code>ions</code> suffix: if it was shared it would have to have a number one greater than the number of both <code>e</code> node in <code>ablate</code> and <code>n</code> node in <code>abjectness</code> (this is, of course, assuming the <code>i</code> node is the last on the child list of both <code>t</code> nodes; but it&rsquo;s impossible for any node ordering). Our graph would look like this:</p>
 
-<p><img class="center" src="/images/dawg.png"></p>
+<p>{% img center /images/dawg.png %}</p>
 
 <p>The rule for node equality has to be extended: the nodes are equal if they represent the same letter, the flags are the same, the children are equal and the siblings further on the children list are equal. The last condition is a bit confusing, so I&rsquo;ll provide an example.</p>
 
 <p>Let&rsquo;s add a <code>absolution</code> and <code>absolutions</code> to our dictionary. We can certainly share the <code>ab</code> prefix and <code>ons</code> suffix, but do we need a separate <code>i</code> node as well? The <code>i</code> node in <code>absolution</code> must have a End-Of-Child-List flag set. If we arrange the child nodes in either <code>ablat-</code> or <code>abject-</code> part of graph in such way that the <code>i</code> node is the last node, we can share the <code>i</code> node between that part of graph and the newly added branch. Our graph would look like this:</p>
 
-<p><img class="center" src="/images/dawg2.png"></p>
+<p>{% img center /images/dawg2.png %}</p>
 
 <p>This is the way we can squeeze the 36MB dictionary to 1.5MB. The structure also doesn&rsquo;t need any processing, it can be loaded to int array and used directly. If you&rsquo;re curious how to convert the dictionary into this kind of graph you can read the description of <a href="https://github.com/chalup/dawggenerator">my dawggenerator project on github</a> (C++) or the <a href="http://www.pathcom.com/~vadco/dawg.html">original description by John Paul Adamovsky</a> (pure C).</p>
 ]]></content>
@@ -88,7 +88,7 @@ ablations
 
 <p>That&rsquo;s why I created Word Judge &ndash; an ultimate way to settle all word-related disputes. The application contains full dictionary of valid words and short word list with definitions. Dictionary is shipped with the application, so you don&rsquo;t need internet connectivity to check if the word can be used in a word game. Currently the application is available only for Android devices, but I&rsquo;m going to release Symbian (and maybe Harmattan?) version soon.</p>
 
-<table class="separator" style="clear: both; text-align: center;"><tbody><tr><td><img class="center" src="/images/screenshot1.png"></td><td><img class="center" src="/images/screenshot2.png"></td><td><img class="center" src="/images/screenshot3.png"></td></tr></tbody></table>
+<table class="separator" style="clear: both; text-align: center;"><tbody><tr><td>{% img center /images/screenshot1.png %}</td><td>{% img center /images/screenshot2.png %}</td><td>{% img center /images/screenshot3.png %}</td></tr></tbody></table>
 
 
 <p>Unlike many other word game helpers, Word Judge doesn&rsquo;t contain anagrammer tool. It&rsquo;s not an oversight, it didn&rsquo;t add it for two reasons. First of all I don&rsquo;t think that such functionality should be bundled with the application, which is basically a dictionary. You use a dictionary to check the spelling, not to cheat. The second reason is more prosaic &ndash; I don&rsquo;t like the UI of any anagrammer tools I found. It&rsquo;s usually a jumble of checkboxes and radio buttons and two fields for board and rack tiles. Even if you figure out what all those controls do, these tools don&rsquo;t really solve the problem, which is finding the best move. It&rsquo;s not an easy problem, even if you find a convenient way to import current game state to the application (<a href="http://en.wikipedia.org/wiki/Augmented_reality">AR</a> maybe?). It&rsquo;s certainly a good idea for a separate application, but not for a part of a dictionary app.</p>
