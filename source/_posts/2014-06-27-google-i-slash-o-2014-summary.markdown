@@ -18,6 +18,8 @@ This might be a huge, not only because it means expanding the potential user bas
 ### ART
 The Dalvik was decomissioned, the new runtime is the only runtime. I do hope this means that the 64k method limit is no longer a problem and there are no technical roadblocks for Java 8 support. Maybe this questions were answersed during [The ART runtime](https://www.google.com/events/io/schedule/session/b750c8da-aebe-e311-b297-00155d5066d7) session, unfortunately there was no live stream of it.
 
+**Edit**: the video from the session is available. The GC improvements and performance boosts are amazing, but if I understand everything correctly the ART still uses dex bytecode underneath, so all Dalvik limitations are still in place.	Bad Google.
+
 ### [+Xavier Ducrohet](https://plus.google.com/+XavierDucrohet/posts)
 I got the feeling that he's the only Google employee who acknowledges that there are serious issues with developing on Android. Great answers about unit tests and robolectric support, good answer about Scala support.
 
