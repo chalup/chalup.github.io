@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Build System | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/build-system/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-27T22:53:56+02:00</updated>
+  <updated>2014-06-29T14:34:17+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -271,9 +271,7 @@ dependencies {
     <id>http://chalup.github.io/blog/2013/02/20/guava-on-android</id>
     <content type="html"><![CDATA[<p>In November 2012, the revision 21 of Android SDK Tools was released and one of the items in the <a href="http://developer.android.com/tools/sdk/tools-notes.html">release notes</a> made me a very happy panda:</p>
 
-<p>{% blockquote %}
-Improved the build time by pre-dexing libraries (both JAR files and library projects).
-{% endblockquote %}</p>
+<p><blockquote><p>Improved the build time by pre-dexing libraries (both JAR files and library projects).</p></blockquote></p>
 
 <p>This change solved the most problematic issue with <a href="http://code.google.com/p/guava-libraries/">Guava</a> and other large libraries &ndash; build time. Before this change Android tools executed dex for your code and every referenced library every time you wanted to launch the application, which in case of Guava took ages and required increasing heap space for Java VM, because the Eclipse closed with &ldquo;Unable to execute dex: Java heap space&rdquo; error.</p>
 

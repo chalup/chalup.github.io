@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ContentProvider | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/contentprovider/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-27T22:53:56+02:00</updated>
+  <updated>2014-06-29T14:34:17+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -20,7 +20,7 @@
     <id>http://chalup.github.io/blog/2013/09/30/mobilization-2013-and-android-tech</id>
     <content type="html"><![CDATA[<p>I&rsquo;ll give the presentation on this years Mobiliztion conference in Łódź on October 26th:</p>
 
-<p><a href="http://2013.mobilization.pl/">{% img center http://mobilization.pl/files/baner-speaking-at.png %}</a></p>
+<p><a href="http://2013.mobilization.pl/"><img class="center" src="http://mobilization.pl/files/baner-speaking-at.png"></a></p>
 
 <p>I&rsquo;ll talk about challenges related to <code>ContentProvider</code> and data model in general we faced during 2 years of development of Base CRM for Android. Even if this particular topic does not concern you, the <a href="http://2013.mobilization.pl/agenda/">agenda</a> is ripe with other interesting Android topics: dependency injection with Dagger, Gradle, unit testing, continuous integration. It&rsquo;s not Android specific event &ndash; there are also several presentations about other mobile platforms.</p>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: minSdkVersion | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/minsdkversion/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-27T22:53:56+02:00</updated>
+  <updated>2014-06-29T14:34:17+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -20,7 +20,7 @@
     <id>http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15</id>
     <content type="html"><![CDATA[<p>A year ago <a href="https://twitter.com/readyState">Jeff Gilfelt</a> was giving away <code>minSdkVersion=14</code> stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What seemed radical one year ago, today is a widely accepted. The <code>minSdkVersion</code> in new project wizard in latest Android Studio release is by default set to <code>15</code>. On the same screen you can click the &ldquo;help me choose&rdquo; hyperlink, which shows this screen:</p>
 
-<p>{% img center /images/android_studio_min_sdk.png %}</p>
+<p><img class="center" src="/images/android_studio_min_sdk.png"></p>
 
 <p>The percentages are consistent with data from <a href="http://developer.android.com/about/dashboards/index.html">developer.android.com</a> dashboards, but I&rsquo;d say they are skewed towards old Android versions. <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a> app I&rsquo;m working on has only 3.7% active users on devices with api level &lt; 15 (compared to 17.4% from official Google dashboards). Moreover, if you look only at the new users, the Froyo, GingerBread and Honeycomb is used only by 1%. In this light, supporting pre-API15 devices is a criminal waste, and starting new projects with minSdkVersion lower than 15 a criminal idiocy.</p>
 

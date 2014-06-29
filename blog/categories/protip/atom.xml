@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Protip | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/protip/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-27T22:53:56+02:00</updated>
+  <updated>2014-06-29T14:34:17+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -40,11 +40,11 @@ alarmManager.set(
 
 <p>This code won&rsquo;t always work though. While it is guaranteed that the alarm will go off and the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> will be sent, because we used a <code>_WAKEUP</code> alarm type, the device is allowed to go back to sleep before the service is started.</p>
 
-<p>{% img center /images/wakelock.001.png %}</p>
+<p><img class="center" src="/images/wakelock.001.png"></p>
 
 <p>It&rsquo;s not explicitly documented, but both <a href="https://plus.google.com/105051985738280261832">+Dianne Hackborn</a> and <a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> <a href="https://groups.google.com/d/msg/android-developers/K5ggbRigGS8/B5KajJYAae4J">confirmed</a> <a href="http://stackoverflow.com/a/7444510/184953">this</a>. The workaround is to use <a href="http://developer.android.com/reference/android/app/PendingIntent.html#getBroadcast%28android.content.Context,%20int,%20android.content.Intent,%20int%29"><code>PendingIntent.getBroadcast()</code></a>, because it is guaranteed that the <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html#onReceive%28android.content.Context,%20android.content.Intent%29"><code>BroadcastReceiver.onReceive()</code></a> will be always fully executed before the CPU goes to sleep. Inside that callback you have to acquire <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> start your <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> and release the lock at the end of <a href="http://developer.android.com/reference/android/app/IntentService.html#onHandleIntent%28android.content.Intent%29"><code>onHandleIntent()</code></a> method.</p>
 
-<p>{% img center /images/wakelock.002.png %}</p>
+<p><img class="center" src="/images/wakelock.002.png"></p>
 
 <p>This is where the <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> comes into play: its <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#startWakefulService%28android.content.Context,%20android.content.Intent%29"><code>startWakefulService</code></a> and <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#completeWakefulIntent%28android.content.Intent%29"><code>completeWakefulIntent</code></a> static methods encapsulate all the <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLocks</code></a> juggling, allowing you to focus on your business logic.</p>
 ]]></content>

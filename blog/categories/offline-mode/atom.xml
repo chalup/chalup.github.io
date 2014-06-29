@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Offline Mode | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/offline-mode/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-27T22:53:56+02:00</updated>
+  <updated>2014-06-29T14:34:17+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -199,7 +199,7 @@ public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     <id>http://chalup.github.io/blog/2014/01/03/offline-mode-in-android-apps-part-2</id>
     <content type="html"><![CDATA[<p>In <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1">first part of this series</a> I showed that to implement offline mode in your Android app you have to implement data migrations. If you&rsquo;re using SQLite database, it means you&rsquo;ll have to use (or rather work around) it&rsquo;s ALTER TABLE syntax:</p>
 
-<p><a href="http://www.sqlite.org/images/syntax/alter-table-stmt.gif">{% img center http://www.sqlite.org/images/syntax/alter-table-stmt.gif %}</a></p>
+<p><a href="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"><img class="center" src="http://www.sqlite.org/images/syntax/alter-table-stmt.gif"></a></p>
 
 <p>So all you can do with it is adding the column or renaming the table, but in reality you probably need to alter a single column, remove column or change the table constraints. You can achieve this by doing the following operation:</p>
 
@@ -227,23 +227,23 @@ public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     <content type="html"><![CDATA[<p>This year I gave a talk on <a href="http://www.krakdroid.pl/">Krakdroid</a> conference about offline mode in Android apps. By offline mode I mean implementing the app such way that the network availability is completely transparent to the end users. The high level implementation idea is to decouple the operations changing the data from sending these changes through unreliable network by saving the changes in local database and sending them at convinient moment. We have encountered two major problems when we implemented this behavior in <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a>: data migrations and identifying entities. This blog post describes the first issue.
 It might not be obvious why do you need the data migrations, so let&rsquo;s clear this out. Let&rsquo;s say on your mobile you have some data synced with backend (green squares on left and right) and some unsynced data created locally on mobile (red squares on the left).</p>
 
-<p>{% img center /images/unsynced.png %}</p>
+<p><img class="center" src="/images/unsynced.png"></p>
 
 <p>Now let&rsquo;s say that we introduce new functionality to our app, which changes the schema of our data models (the squares on the backend side are changed to circles).</p>
 
-<p>{% img center /images/schemachange.png %}</p>
+<p><img class="center" src="/images/schemachange.png"></p>
 
 <p>The schema of the local database have to be changed as well. The naive way of handling this situation is dropping old database with old schema, creating new one with new schema and resyncing all the data from backend, but there are two issues with this approach: if there is a lot of data the resyncing might take a while, which negates the most important advantage of offline mode &ndash; that the app is fully functional all the time.</p>
 
-<p>{% img center /images/lotofdata.png %}</p>
+<p><img class="center" src="/images/lotofdata.png"></p>
 
 <p>More serious issue is that dropping the old database means that the unsynced data will be dropped along with it.</p>
 
-<p>{% img center /images/unsynceddata.png %}</p>
+<p><img class="center" src="/images/unsynceddata.png"></p>
 
 <p>The only way to provide the optimal user experience is to perform schema migrations locally for both synced and unsynced data:</p>
 
-<p>{% img center /images/migration.png %}</p>
+<p><img class="center" src="/images/migration.png"></p>
 
 <p>Migrating the data doesn&rsquo;t sound like a challenging thing to code, but the combination of obscure SQLite and Android issues complicates the matter. Without proper tools it&rsquo;s quite easy to make your code unmaintainable in the long run. I&rsquo;ll describe this issues and our solutions in the further posts.</p>
 ]]></content>
