@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rant | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/rant/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -24,7 +24,7 @@
 
 <p>Today I have a simple task for you: create a button with some text and icon to the left of the text. The contents (both icon and text) should be centered inside the button.</p>
 
-<p>{% img center /images/challenge.png %}</p>
+<p><img class="center" src="/images/challenge.png"></p>
 
 <p>That&rsquo;s simple right? Here&rsquo;s the XML layout which comes to mind first:</p>
 
@@ -48,7 +48,7 @@ android:orientation="vertical" &gt;
 
 <p>Unfortunately, no cookie for you:</p>
 
-<p>{% img center /images/try1.png %}</p>
+<p><img class="center" src="/images/try1.png"></p>
 
 <p>Someone decided that compound drawables should be always draw next to the <code>View</code>&rsquo;s padding, so we have to try something else. For example <code>TextView</code> centered inside the <code>FrameLayout</code>.</p>
 
@@ -71,15 +71,15 @@ android:layout_height="wrap_content" &gt;
 <p></FrameLayout>
 ```</p>
 
-<p>{% img center /images/try2.png %}</p>
+<p><img class="center" src="/images/try2.png"></p>
 
 <p>Almost there, but the text has a wrong size and color. There is something called <code>textAppearanceButton</code>, but apparently it&rsquo;s not what the <code>Button</code>s use:</p>
 
-<p>{% img center /images/try3.png %}</p>
+<p><img class="center" src="/images/try3.png"></p>
 
 <p>OK, so let&rsquo;s use the buttonStyle again, this time on <code>TextView</code>:</p>
 
-<p>{% img center /images/try4.png %}</p>
+<p><img class="center" src="/images/try4.png"></p>
 
 <p>Now we need to get rid of the extra background, reset minimum height and width and make it not focusable and not clickable (otherwise tapping the caption won&rsquo;t have any effect):</p>
 
@@ -110,7 +110,7 @@ android:layout_height="wrap_content" &gt;
 
 <p>Lo and behold, it works!</p>
 
-<p>{% img center /images/challenge.png %}</p>
+<p><img class="center" src="/images/challenge.png"></p>
 
 <p>We&rsquo;d really like to use is something like <code>textAppearance="?android:attr/buttonStyle.textAppearance"</code>, but there is no such syntax. How about extracting all the attributes from <code>TextView</code> into some <code>buttonCaption</code> style with <code>?android:attr/buttonStyle</code> parent? No can do either: you can only inherit your style from the concrete <code>@style</code>, not from the styleable attribute.</p>
 
@@ -150,7 +150,7 @@ android:layout_height="wrap_content" &gt;
 
 <p>You can find the <a href="https://github.com/chalup/android-fontmetricstest">source code on my GitHub</a>, and here&rsquo;s the screenshot for other typographically challenged programmers:</p>
 
-<p>{% img center /images/fontsfordummies.png %}</p>
+<p><img class="center" src="/images/fontsfordummies.png"></p>
 
 <p>(BTW: the word &ldquo;Żyłę&rdquo; used there is not a complete gibberish, it&rsquo;s an accusative case of word &ldquo;vein&rdquo; in Polish; it&rsquo;s nice, because it&rsquo;s short, but it covers all cases of the metrics class).</p>
 
@@ -236,19 +236,13 @@ create table z (id INTEGER PRIMARY KEY AUTOINCREMENT,</p>
 
 <p>First there are the registration issues: you can register background task for the next two weeks and after that period your application have to reschedule the task. I&rsquo;m not sure why do I have to do this, and at the first glance it looks only like a minor nuisance, until you take into account two other constraints: tasks cannot reschedule themselves and there is a hard limit of scheduled periodic tasks, which can be ridiculously low. Relevant quote from MSDN:</p>
 
-<p>{% blockquote %}
-To help maximize the battery life of the device, there is a hard limit on the number of periodic agents that can be scheduled on the phone. It varies per device configuration and can be as low as 6.
-{% endblockquote %}</p>
+<p><blockquote><p>To help maximize the battery life of the device, there is a hard limit on the number of periodic agents that can be scheduled on the phone. It varies per device configuration and can be as low as 6.</p></blockquote></p>
 
 <p>Not a minor nuisance anymore, huh?</p>
 
 <p>This limit is only imposed on periodic agents, which are intended for short, periodic tasks like polling some service or uploading a data. There are also Resource Intensive Agents which can be used for longer tasks like data synchronization, but they have their own set of constraints: the device have to be charging, the battery have to be almost fully charged and there should be a Wi-Fi or PC connection (no cellular data). I think the MSDN note summarizes it quite well:</p>
 
-<p>{% blockquote %}
-Due to the constraints on the device that must be met for resource-intensive agents to run, it is possible that the agent will never be run on a particular device.</p>
-
-<p>(&hellip;)Also, resource-intensive agents are run one at a time, so as more applications that use resource-intensive agents are installed on a device, the likelihood of an agent running becomes even less. You should consider this when designing your application.
-{% endblockquote %}</p>
+<p><blockquote><p>Due to the constraints on the device that must be met for resource-intensive agents to run, it is possible that the agent will never be run on a particular device.</p></p><p><p>(&hellip;)Also, resource-intensive agents are run one at a time, so as more applications that use resource-intensive agents are installed on a device, the likelihood of an agent running becomes even less. You should consider this when designing your application.</p></blockquote></p>
 
 <p>I&rsquo;m going to add to the comment above my own observation: every application can register only one background agent, which can be both periodic agent and resource intensive agent. It means that if you need both types of agents, your resource intensive agent is also affected by the periodic agent hard limit.</p>
 
@@ -269,9 +263,7 @@ Due to the constraints on the device that must be met for resource-intensive age
 
 <p>Let&rsquo;s take a look at UriBuilder class and URIs in general. All the stuff between ? and # (VERIFY) is called query string, which contains key-value pairs separated by &amp;s. What kind of API for query string would make sense? An IDictionary&lt;String, String>! What API is presented by UriBuilder? A string! Take a look at the <a href="http://msdn.microsoft.com/en-us/library/system.uribuilder.query.aspx">documentation</a>. Here&rsquo;s the best part:</p>
 
-<p>{% blockquote %}
-<b>NOTE</b> Do not append a string directly to this property. If the length of Query is greater than 1, retrieve the property value as a string, remove the leading question mark, append the new query string, and set the property with the combined string.
-{% endblockquote %}</p>
+<p><blockquote><p><b>NOTE</b> Do not append a string directly to this property. If the length of Query is greater than 1, retrieve the property value as a string, remove the leading question mark, append the new query string, and set the property with the combined string.</p></blockquote></p>
 
 <p>Ridiculous. Seriously, MS, I don&rsquo;t care it&rsquo;s transformed to a string, it&rsquo;s a key-value dictionary, so let me treat it as such!</p>
 

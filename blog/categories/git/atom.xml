@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Git | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/git/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -35,7 +35,7 @@
 
 <p>So today I was pleasantly surprised when I found today actually a <a href="http://tonsky.me/blog/reinventing-git-interface/">good blog post about git UI</a>. Go ahead and read it. While I do not agree with everything OP wrote, he got two things right: git model and <code>git log --graph</code> improvements.</p>
 
-<p>{% img center <a href="http://tonsky.me/blog/reinventing-git-interface/overview@2x.png">http://tonsky.me/blog/reinventing-git-interface/overview@2x.png</a> %}</p>
+<p><img class="center <a" src="href="http://tonsky.me/blog/reinventing-git-interface/overview@2x.png">http://tonsky.me/blog/reinventing-git-interface/overview@2x.png</a>"></p>
 
 <h2>Git Mental Model</h2>
 
@@ -58,15 +58,15 @@
 
 <p>About a month ago I released the <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">Word Judge</a> application &ndash; an offline word validator for Scrabble and other word games. Initially I was working only on one version of Word Judge with polish dictionary, so I had one line of code in my git repository:</p>
 
-<p>{% img center /images/1.png %}</p>
+<p><img class="center" src="/images/1.png"></p>
 
 <p>When polish version was ready, I decided that I might as well release the english version, because it would require only minor changes: changing app icon and dictionary file. It turned out that I also have to change the application package, so both versions of Word Judge could be installed at the same time. The changes were in fact minor, but included a lot of renaming (package name is mirrored by the directory structure):</p>
 
-<p>{% img center /images/2.png %}</p>
+<p><img class="center" src="/images/2.png"></p>
 
 <p>Later on I decided to add ads to my application. First, I&rsquo;ve added the necessary code to master (i.e. polish) branch:</p>
 
-<p>{% img center /images/3.png %}</p>
+<p><img class="center" src="/images/3.png"></p>
 
 <p>I switched to english branch, typed <code>git merge master --no-commit</code>, and was very surprised to see just a few conflicts in binary files (icons). All the changes made in java code, <strong>in the renamed files</strong>, were automatically merged. If you still don&rsquo;t get how awesome this is, consider what would I had to do without it:</p>
 
@@ -85,7 +85,7 @@
 
 <p>Right now my repository looks like this (or it would look like this if the git gui tools didn&rsquo;t suck, but that&rsquo;s another story):</p>
 
-<p>{% img center /images/4.png %}</p>
+<p><img class="center" src="/images/4.png"></p>
 
 <p>I can&rsquo;t imagine supporting such structure without automatic merges provided by git, because it tracks <strong>content</strong> instead of <strong>files</strong>. And that&rsquo;s the real killer feature that distinguishes git from other DVCS.</p>
 ]]></content>

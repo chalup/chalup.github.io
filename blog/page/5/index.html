@@ -9,8 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Few days ago I saw the most peculiar crash on a tablet with Android 3.2: 1
-java.lang.NoSuchFieldError: com.google.i18n.phonenumbers.PhoneNumberUtil$ &hellip;">
+  <meta name="description" content="I just spend few hours analyzing and fixing a memory leak in Android application. With every orientation change the full Context, including the whole &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -78,6 +77,51 @@ java.lang.NoSuchFieldError: com.google.i18n.phonenumbers.PhoneNumberUtil$ &helli
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/24/android-gotcha-cursoradapter/">Android Gotcha: CursorAdapter Constructors</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-24T23:14:00+02:00" pubdate data-updated="true">Apr 24<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/04/24/android-gotcha-cursoradapter/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/04/24/android-gotcha-cursoradapter/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I just spend few hours analyzing and fixing a memory leak in Android application. With every orientation change the full <code>Context</code>, including the whole <code>Activity</code> was leaked. Long story short, the problem was caused by misuse of <code>CursorAdapter</code>: in subclass constructor we called <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> instead of <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20int%29"><code>CursorAdapter(context, null, 0)</code></a>.</p>
+
+<p>The difference is quite subtle. If you use the second constructor, you have to take care of handling content updates yourself. If you use the first constructor, the <code>CursorAdapter</code> will register an additional <code>ContentObserver</code> for you, but you need to manually reset the <code>Cursor</code>.</p>
+
+<p>The funny thing is, this behavior is described in javadocs, but the documentation is spread between the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29">constructor</a> and <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#FLAG_REGISTER_CONTENT_OBSERVER"><code>FLAG_REGISTER_CONTENT_OBSERVER</code></a> flag documentation. The second part contains most crucial information: you don&rsquo;t need to use this flag when you intend to use your adapter with <code>CursorLoader</code>.</p>
+
+<p>If for some reason you want to use the adapter without <code>CursorLoader</code>, you should use the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> constructor, and call <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#swapCursor%28android.database.Cursor%29"><code>swapCursor(null)</code></a> when leaving the <code>Activity</code> or <code>Fragment</code>.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -877,47 +921,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/11/13/android-gets-nested-fragments/">Android Gets Nested Fragments</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-13T21:31:00+01:00" pubdate data-updated="true">Nov 13<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/11/13/android-gets-nested-fragments/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Most of the items in the <a href="http://developer.android.com/about/versions/android-4.2.html">Android 4.2 APIs list</a> are kind of &ldquo;meh&rdquo; to me, but there is one item that&rsquo;s make me very happy: <a href="http://developer.android.com/about/versions/android-4.2.html#NestedFragments">nested fragments</a>. Fragments were supposed to be reusable UI components, but for some unfathomable reason the initial release of the fragments API didn&rsquo;t allow composing a fragment from other fragments. Even during the 2012 Google I/O one of the Google developers said that they have discussed this idea, but they&rsquo;re not sure if it&rsquo;s a good one, which is an absolute surprise to me, because I don&rsquo;t think anyone sane would consider making the <a href="http://developer.android.com/reference/android/view/ViewGroup.html"><code>ViewGroup</code></a> which isn&rsquo;t a subclass of a <a href="http://developer.android.com/reference/android/view/View.html"><code>View</code></a>.</p>
-
-<p>Fragment nesting was a topic I kept on my topic list for a day when I feel I need to bitch about something, but now I&rsquo;m happy to remove it and write this ecstatic post. So now launch your SDK managers and download the r11 of support package! (or wait for half a year and hope it will be added to <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.google.android%22%20AND%20a%3A%22support-v4%22">Maven Central</a>)</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -935,6 +938,10 @@ Things get even funnier here: when I used the <a href="http://developer.android.
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
@@ -948,10 +955,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
     
       <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
   </ul>

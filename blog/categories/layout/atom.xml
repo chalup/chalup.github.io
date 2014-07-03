@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Layout | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/layout/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -33,7 +33,7 @@
 
 <p>You can find the <a href="https://github.com/chalup/android-fontmetricstest">source code on my GitHub</a>, and here&rsquo;s the screenshot for other typographically challenged programmers:</p>
 
-<p>{% img center /images/fontsfordummies.png %}</p>
+<p><img class="center" src="/images/fontsfordummies.png"></p>
 
 <p>(BTW: the word &ldquo;Żyłę&rdquo; used there is not a complete gibberish, it&rsquo;s an accusative case of word &ldquo;vein&rdquo; in Polish; it&rsquo;s nice, because it&rsquo;s short, but it covers all cases of the metrics class).</p>
 
@@ -50,7 +50,7 @@
 
 <p>Why is it important? Because if you design your UI in px on high resolution device and then run it on low resolution device, you&rsquo;ll end up with gigantic buttons which take 50% of the screen. If you do the opposite, you&rsquo;ll end up with button, which are too small to click on high res device.</p>
 
-<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png">{% img center http://developer.android.com/images/screens_support/density-test-bad.png %}</a></p>
+<p><a href="http://developer.android.com/images/screens_support/density-test-bad.png"><img class="center" src="http://developer.android.com/images/screens_support/density-test-bad.png"></a></p>
 
 <p>Unfortunately the BlackBerry doesn&rsquo;t support this concept out of the box. By default you specify the size and position of UI controls in regular pixels. The <a href="http://docs.blackberry.com/en/developers/deliverables/29251/Developing_apps_for_different_screen_sizes_1579421_11.jsp">BlackBerry documentation</a> suggests using this nugget of a code:</p>
 
@@ -88,7 +88,7 @@ else
     <id>http://chalup.github.io/blog/2012/02/22/android-layoutinflater-gotcha</id>
     <content type="html"><![CDATA[<p>Many custom Adapter tutorials contain subtle error which can be hard to find and fix. Even <a href="http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/view/List14.html">efficient list adapter sample from Android SDK</a> contains this bug. If you compile and run the sample without any changes you should see something like this:</p>
 
-<p>{% img center /images/original.png %}</p>
+<p><img class="center" src="/images/original.png"></p>
 
 <p>There&rsquo;s nothing wrong with the list on this screenshot, as long as that&rsquo;s the look you want. But what if you want the list items to be wider? Let&rsquo;s change the list item layout:</p>
 
@@ -133,11 +133,11 @@ android:layout_height="150dip"&gt;
 
 <p>What&rsquo;s changed? Nothing, nada, zilch, zip. No changes whatsoever:</p>
 
-<p>{% img center /images/changed.png %}</p>
+<p><img class="center" src="/images/changed.png"></p>
 
 <p>You can use hierarchy viewer tool to verify that the list item height was not set correctly.</p>
 
-<p>{% img center /images/hierarchy.png %}</p>
+<p><img class="center" src="/images/hierarchy.png"></p>
 
 <p>There&rsquo;s obviously nothing wrong with the layout xml, so let&rsquo;s take a look at the code:</p>
 
@@ -334,7 +334,7 @@ at dalvik.system.NativeStart.main(Native Method)
 
 <p>Here&rsquo;s the application screenshot after the change:</p>
 
-<p>{% img center /images/fixed.png %}</p>
+<p><img class="center" src="/images/fixed.png"></p>
 
 <p>Ugly, but that&rsquo;s exactly what we should get after setting layout height to 150dip.</p>
 ]]></content>

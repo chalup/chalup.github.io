@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Android | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,27 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Android Recent Apps List and Intent Extras]]></title>
+    <link href="http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/"/>
+    <updated>2014-07-03T22:14:06+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras</id>
+    <content type="html"><![CDATA[<p>If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, because you&rsquo;ve always done it this way. It might be a good thing if you know all pros and cons of your solution, because your code will be consistent and you don&rsquo;t waste time rethinking the same things over and over again. On the other hand it is a good practice to question this established ways of doing things from time to time &ndash; maybe you&rsquo;ve missed something when you thought about this last time or some of your arguments are no longer valid.</p>
+
+<p>For me one of such things was the <code>Serializable</code> vs. <code>Parcelable</code> conundrum. A long time ago I read somewhere that <code>Serializable</code> is much slower than <code>Parcelable</code> and it shouldn&rsquo;t be used for large objects, but it&rsquo;s fast enough for passing simple POJOs between <code>Fragments</code> and <code>Activities</code> with <code>Intent</code> or arguments <code>Bundle</code>. While this is still a generally good advice, I realized I don&rsquo;t know how much faster the <code>Parcelable</code> is. Are we looking at 10µs vs. 15µs or 10µs vs. 10ms?</p>
+
+<p>I&rsquo;m too lazy to write a benchmark myself, but I found a <a href="http://www.developerphil.com/parcelable-vs-serializable/">decent article</a>. Tl;dr: on modern hardware (Nexus 4) serializing a simple data structure takes about 2ms and using <code>Parcelable</code> is about 10 times faster.</p>
+
+<p>Another hit on Google was a <a href="http://www.reddit.com/r/androiddev/comments/1daiib/parcelable_vs_serializable/">reddit thread</a> for this article. I found there an interesting comment by <a href="https://plus.google.com/u/1/+JakeWharton">+Jake Wharton</a>:</p>
+
+<p><blockquote><p>Serializable is like a tattoo. You are committing to a class name, package, and field structure forever. The only way to &ldquo;remove&rdquo; it is epic deserialization hacks.</p></p><p><p>Yes using it in an Intent isn&rsquo;t much harm, but if you use serialization there&rsquo;s a potential for crashing your app. They upgrade, hit your icon on the launcher, and Android tries to restore the previous Intent for where they were at in your app. You changed the object so deserialization fails and the app crashes. Not a good upgrade experience. Granted this is rare, but if you ever persist something to disk like this it can leave you in an extremely bad place.</p></blockquote></p>
+
+<p>There are two inaccuracies in the comment above. First, the problem will happen only if the app is started from the recet apps list, not from the launcher icon. Second, the problem is not limited to <code>Serializable</code> extras: <code>Parcelable</code> might read the byte stream originally written from a different structure (in this situation crash is a best case scenario), some extras might be missing, some might hold wrong type of data.</p>
+
+<p>Can you prevent this issue? I don&rsquo;t think so, at least not without some sophisticated validation of Intent extras. Considering that this issue is very rare and it goes away after starting the faulty app from somewhere else than recent apps list I don&rsquo;t think you should spend any time trying to fix it, but it&rsquo;s good to know about it, as it might explain some WTF crash reports coming your way.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Google I/O 2014 Summary]]></title>
@@ -69,7 +90,7 @@
     <id>http://chalup.github.io/blog/2014/06/15/minsdkversion-equals-15</id>
     <content type="html"><![CDATA[<p>A year ago <a href="https://twitter.com/readyState">Jeff Gilfelt</a> was giving away <code>minSdkVersion=14</code> stickers, promoting the idea of dumping the support for Gingerbread and Honeycomb. What seemed radical one year ago, today is a widely accepted. The <code>minSdkVersion</code> in new project wizard in latest Android Studio release is by default set to <code>15</code>. On the same screen you can click the &ldquo;help me choose&rdquo; hyperlink, which shows this screen:</p>
 
-<p>{% img center /images/android_studio_min_sdk.png %}</p>
+<p><img class="center" src="/images/android_studio_min_sdk.png"></p>
 
 <p>The percentages are consistent with data from <a href="http://developer.android.com/about/dashboards/index.html">developer.android.com</a> dashboards, but I&rsquo;d say they are skewed towards old Android versions. <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a> app I&rsquo;m working on has only 3.7% active users on devices with api level &lt; 15 (compared to 17.4% from official Google dashboards). Moreover, if you look only at the new users, the Froyo, GingerBread and Honeycomb is used only by 1%. In this light, supporting pre-API15 devices is a criminal waste, and starting new projects with minSdkVersion lower than 15 a criminal idiocy.</p>
 
@@ -717,9 +738,7 @@ data.registerContentObserver(mObserver);
 
 <p><a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> wrote few weeks ago that <a href="http://commonsware.com/blog/2014/03/31/cwac-loaderex-failed-abstractions.html">he considers Loader to be a failed abstraction</a>, mostly because the interface assumes there is a single object which notifies the Loader about new data. He concluded his post with the following sentence:</p>
 
-<p>{% blockquote %}
-In my case, if I am going to have some singleton manager object, with distinct data objects per operation, I am going to use something more flexible than Loader, such as an event bus.
-{% endblockquote %}</p>
+<p><blockquote><p>In my case, if I am going to have some singleton manager object, with distinct data objects per operation, I am going to use something more flexible than Loader, such as an event bus.</p></blockquote></p>
 
 <p>Extending <code>AbstractObservingLoader</code> to load some data from <code>SQLiteDatabase</code> and subscribe to some event bus for model change events should be trivial, and you&rsquo;d get a lot of things for free &ndash; performing loads in background, cancelling loads, caching results, invalidating cache, and so on.</p>
 
@@ -800,124 +819,6 @@ In my case, if I am going to have some singleton manager object, with distinct d
 <p>Note that I&rsquo;ve also introduced a <code>-set-proguard-config</code> task to be able to select different configuration for debug and release builds. We do not want to do obfuscation or advanced optimisations in debug, a simple dead code pruning is all we need. Since ant properties are immutable, this means that you <strong>HAVE TO</strong> remove proguard.config from your ant.properties.</p>
 
 <p>I&rsquo;m not exactly sure when this happened, but at some point our build times skyrocketed to over 3 minutes. It&rsquo;s fine for release or CI scripts, but absolutely unnacceptable for developers workflow. Fortunately it was enough to bump the heap size for Proguard. In Android Studio go to Settings, Compiler, Android Compilers and pass <code>-Xmx1024m</code> to ProGuard VM options.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Clicking Unclickable List Items]]></title>
-    <link href="http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items/"/>
-    <updated>2014-05-22T22:26:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items</id>
-    <content type="html"><![CDATA[<p>One of the UI patterns that improve lists usability is dividing items into sections. The section might be the first letter of the main text on the list item, date formatted and rounded in a specific way or whatever makes sense for your data.</p>
-
-<p>From the technical point of view you can either add the header view to every list item and show and hide them as needed or create the separate view for header and regular list item and register multiple view types in your Adapter. Both options were described in details by <a href="https://plus.google.com/118417777153109946393">+Cyril Mottier</a> in excellent <a href="http://cyrilmottier.com/2011/07/05/listview-tips-tricks-2-section-your-listview/">ListView Tips &amp; Tricks #2: Sectioning Your ListView</a> blog post.</p>
-
-<p>If you choose the second approach, you&rsquo;ll have to decide what to return from your <code>Adapter</code>&rsquo;s <code>getItem</code> and <code>getItemId</code> methods for items representing sections. If your sections are not supposed to be clickable, you might implement your <code>Adapter</code> like this:
-``` java
-@Override
-public Object getItem(int position) {
-  return getItemViewType(position) == TYPE_ITEM</p>
-
-<pre><code>  ? mItems[getCursorPosition(position)]
-  : null;
-</code></pre>
-
-<p>}</p>
-
-<p>@Override
-public long getItemId(int position) {
-  return getItemViewType(position) == TYPE_ITEM</p>
-
-<pre><code>  ? getCursorPosition(position)
-  : 0;
-</code></pre>
-
-<p>}</p>
-
-<p>@Override
-public boolean areAllItemsEnabled() {
-  return false;
-}</p>
-
-<p>@Override
-public boolean isEnabled(int position) {
-  return getItemViewType(position) == TYPE_ITEM;
-}
-```</p>
-
-<p>And your <code>onListItemClickListener</code> like this:
-``` java
-@Override
-public void onListItemClick(ListView l, View v, int position, long id) {
-  super.onListItemClick(l, v, position, id);</p>
-
-<p>  // dummy action which uses Object returned from getItem(position)
-  Log.d(&ldquo;DMFM&rdquo;, getListAdapter().getItem(position).toString());
-}
-```</p>
-
-<p>If you do so, the Android has a nasty surprise for you:</p>
-
-<p>```
-java.lang.NullPointerException</p>
-
-<pre><code>at org.chalup.dialmformonkey.app.MainFragment.onListItemClick(MainFragment.java:38)
-at android.app.ListFragment$2.onItemClick(ListFragment.java:160)
-at android.widget.AdapterView.performItemClick(AdapterView.java:298)
-at android.widget.AbsListView.performItemClick(AbsListView.java:1100)
-at android.widget.AbsListView$PerformClick.run(AbsListView.java:2749)
-at android.widget.AbsListView$1.run(AbsListView.java:3423)
-at android.os.Handler.handleCallback(Handler.java:725)
-...
-</code></pre>
-
-<p>```</p>
-
-<p>The only way this can happen is getting <code>null</code> from <code>Adapter.getItem()</code>, but this method will be called only for disabled items, right?</p>
-
-<p>``` java
-@Override
-public void onListItemClick(ListView l, View v, int position, long id) {
-  super.onListItemClick(l, v, position, id);</p>
-
-<p>  Log.d(&ldquo;DMFM&rdquo;, &ldquo;Clicked on item &rdquo; + position + &ldquo; which is &rdquo; +</p>
-
-<pre><code>    (getListAdapter().isEnabled(position) 
-        ? "enabled"
-        : "disabled")
-</code></pre>
-
-<p>  );</p>
-
-<p>  // dummy action which uses Object returned from getItem(position)
-  Log.d(&ldquo;DMFM&rdquo;, getListAdapter().getItem(position).toString());
-}
-```</p>
-
-<p>Wrong:</p>
-
-<p><code>
-D/DMFM﹕ Clicked on item 4 which is enabled
-D/DMFM﹕ Abondance
-D/DMFM﹕ Clicked on item 4 which is enabled
-D/DMFM﹕ Abondance
-D/DMFM﹕ Clicked on item 31 which is enabled
-D/DMFM﹕ Aragon
-D/DMFM﹕ Clicked on item 31 which is enabled
-D/DMFM﹕ Aragon
-D/dalvikvm﹕ GC_CONCURRENT freed 138K, 3% free 8825K/9016K, paused 0ms+0ms, total 3ms
-D/DMFM﹕ Clicked on item 28 which is disabled
-</code></p>
-
-<p>It&rsquo;s very difficult to reproduce this error manually, especially if tapping the list item does something more than writing to logcat, but I investigated this issue, because the stack traces above appeared in crash reports on Google Analytics, so several people managed to click exactly wrong area at the wrong time.</p>
-
-<p>I didn&rsquo;t investigate the issue thoroughly, but it seems there must be some disparity between checking the <code>isEnabled</code> method and getting the item. If I ever dive into <code>ListView</code> code, I&rsquo;ll definitely write about it. If you want to reproduce or investigate the issue yourself, compile <a href="https://github.com/chalup/blog-unclickable-items">this project</a> and run the monkey:</p>
-
-<p><code>
-$ adb shell monkey -p org.chalup.dialmformonkey.app -v 500
-</code></p>
-
-<p>So what can we do? First option is checking the <code>Adapter.isEnabled()</code> in your <code>onListItemClick</code> listener, which is yet another kind of boilerplate you have to add to your Android code, but it&rsquo;s super easy to add. The other option is going with the first sectioning approach, i.e. putting section as a part of the clickable list item, but it might not work for your use case (for example adapter with multiple item types).</p>
 ]]></content>
   </entry>
   

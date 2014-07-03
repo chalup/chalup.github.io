@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Android Studio kept nagging me about make implementation deprecation, so I decided to try the new build system based on Gradle. At first I obviously &hellip;">
+  <meta name="description" content="After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,71 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/19/introducing-merry-cook/">Introducing: Merry Cook</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-19T21:10:00+02:00" pubdate data-updated="true">Aug 19<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/08/19/introducing-merry-cook/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/08/19/introducing-merry-cook/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><img class="center" src="/images/ss3.png"></p>
+
+<p>After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I knew that the &ldquo;Nu, Pogodi!&rdquo; code wasn&rsquo;t my top achievement, and I had to force myself into diving into it, but I feel it was worth it. Few things I think I did right this time:</p>
+
+<ul>
+<li><strong>Do not keep <em>any</em> game logic in QML</strong>. Qt has an excellent state machine framework, which makes writing the game logic in C++ relatively easy.</li>
+<li><strong>Keep the QML/C++ interface as simple as possible</strong>. Send signals from QML to C++ when user takes some action and update the QML UI from the C++ side by changing QProperties on some context property object. I&rsquo;ve actually used two objects for that, because it made testing a bit easier.</li>
+<li><strong>Unit tests</strong>. I&rsquo;ve set up the testing harness using gmock/gtest and I&rsquo;ve used it to unit test some things. I probably would have been fine without them, since Merry Cook is a very simple but a) it forced me to divide stuff into more manageable classes and b) it gave me a sense of accomplishing something early. It&rsquo;s funny, because even though I&rsquo;m absolutely conscious of the latter fact, I think it gave me enough boost to get to the point where I had moved forward with implementation and polishing, because I really wanted to publish this game.</li>
+<li><strong>QProperty helper</strong>. I wrote an abominable macro for reducing the QProperty boilerplate:</li>
+</ul>
+
+
+<script src="https://gist.github.com/chalup/6267728.js"></script>
+
+
+<p></li></p>
+
+<p>Things still on my TODO list:</p>
+
+<ul>
+<li><strong>More tests</strong>. Besides unit tests I&rsquo;d also like to write some integration tests for the state machine setup and connections, but I didn&rsquo;t have time to think how this should be done without making too much state public just for testing. Maybe next time.</li>
+<li><strong>Refactor &ldquo;Nu, Pogodi!&rdquo;</strong>. I jumped straight into new project, but I should have started with refactoring the old crap. On the other hand, it might have sucked out all the motivation out of me, and had I done it, I wouldn&rsquo;t have been writing this post right now. So, maybe next time.</li>
+<li><strong>Passing enums to QML</strong>. I have no idea what I did wrong, but I couldn&rsquo;t get the QML to see my C++ enums. I&rsquo;ve resorted to passing them as simple ints and using magic numbers on QML side, but it&rsquo;s definitely something I should fix. Obviously not now, but next time.</li>
+</ul>
+
+
+<p>Anyways, I&rsquo;m really happy with the final results, especially with the gameplay experience, which I think mimics the original game very well. Try it yourself!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -822,51 +887,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/04/24/android-gotcha-cursoradapter/">Android Gotcha: CursorAdapter Constructors</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-24T23:14:00+02:00" pubdate data-updated="true">Apr 24<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/04/24/android-gotcha-cursoradapter/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/04/24/android-gotcha-cursoradapter/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I just spend few hours analyzing and fixing a memory leak in Android application. With every orientation change the full <code>Context</code>, including the whole <code>Activity</code> was leaked. Long story short, the problem was caused by misuse of <code>CursorAdapter</code>: in subclass constructor we called <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> instead of <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20int%29"><code>CursorAdapter(context, null, 0)</code></a>.</p>
-
-<p>The difference is quite subtle. If you use the second constructor, you have to take care of handling content updates yourself. If you use the first constructor, the <code>CursorAdapter</code> will register an additional <code>ContentObserver</code> for you, but you need to manually reset the <code>Cursor</code>.</p>
-
-<p>The funny thing is, this behavior is described in javadocs, but the documentation is spread between the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29">constructor</a> and <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#FLAG_REGISTER_CONTENT_OBSERVER"><code>FLAG_REGISTER_CONTENT_OBSERVER</code></a> flag documentation. The second part contains most crucial information: you don&rsquo;t need to use this flag when you intend to use your adapter with <code>CursorLoader</code>.</p>
-
-<p>If for some reason you want to use the adapter without <code>CursorLoader</code>, you should use the <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#CursorAdapter%28android.content.Context,%20android.database.Cursor,%20boolean%29"><code>CursorAdapter(context, null, false)</code></a> constructor, and call <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html#swapCursor%28android.database.Cursor%29"><code>swapCursor(null)</code></a> when leaving the <code>Activity</code> or <code>Fragment</code>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -884,6 +904,10 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
@@ -897,10 +921,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
     
       <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
   </ul>

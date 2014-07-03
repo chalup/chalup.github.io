@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="The first post in this series explained the first consequence on implementing the offline mode &ndash; performing the data migrations. In second part &hellip;">
+  <meta name="description" content="Yesterdays #AndroidDev #Protip explains how to use WakefulBroadcastReceiver utility class and what problem does it solve, but it doesn&rsquo;t &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,86 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-20T10:24:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/02/20/when-do-you-absolutely-need/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><a href="https://plus.google.com/108967384991768947849/posts/i6MzCp1NyzF">Yesterdays #AndroidDev #Protip</a> explains how to use <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> utility class and what problem does it solve, but it doesn&rsquo;t mention a case when using it or manually acquiring <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> is essential &ndash; using the <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a>.</p>
+
+<p>If you&rsquo;re not familiar with <code>AlarmManager</code>&rsquo;s API, here is <strong>tl;dr</strong> of the docs: it allows you to specify the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> that should be fired at some point, even if your application is in background. The common use cases for using <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a> is for example showing a <a href="http://developer.android.com/reference/android/app/Notification.html"><code>Notification</code></a> at the specified time or sending some kind of heartbeat to your backend. In both cases, your code performs potentially long running operation (in case of showing notification you might need some content from your local database), so you don&rsquo;t want to run it in the UI thread. The first thing that comes to mind is to specify an <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> as a <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> target:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">PendingIntent</span> <span class="n">intent</span> <span class="o">=</span> <span class="n">PendingIntent</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span>
+</span><span class='line'>  <span class="n">context</span><span class="o">,</span>
+</span><span class='line'>  <span class="mi">0</span><span class="o">,</span>
+</span><span class='line'>  <span class="k">new</span> <span class="nf">Intent</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">MyIntentService</span><span class="o">.</span><span class="na">class</span><span class="o">),</span>
+</span><span class='line'>  <span class="n">PendingIntent</span><span class="o">.</span><span class="na">FLAG_UPDATE_CURRENT</span>
+</span><span class='line'><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">AlarmManager</span> <span class="n">alarmManager</span> <span class="o">=</span> <span class="o">(</span><span class="n">AlarmManager</span><span class="o">)</span> <span class="n">context</span><span class="o">.</span><span class="na">getSystemService</span><span class="o">(</span><span class="n">Context</span><span class="o">.</span><span class="na">ALARM_SERVICE</span><span class="o">);</span>
+</span><span class='line'><span class="n">alarmManager</span><span class="o">.</span><span class="na">set</span><span class="o">(</span>
+</span><span class='line'>  <span class="n">AlarmManager</span><span class="o">.</span><span class="na">ELAPSED_REALTIME_WAKEUP</span><span class="o">,</span>
+</span><span class='line'>  <span class="n">SystemClock</span><span class="o">.</span><span class="na">elapsedRealtime</span><span class="o">()</span> <span class="o">+</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MINUTES</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="mi">15</span><span class="o">)</span>
+</span><span class='line'>  <span class="n">intent</span>
+</span><span class='line'><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This code won&rsquo;t always work though. While it is guaranteed that the alarm will go off and the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> will be sent, because we used a <code>_WAKEUP</code> alarm type, the device is allowed to go back to sleep before the service is started.</p>
+
+<p><img class="center" src="/images/wakelock.001.png"></p>
+
+<p>It&rsquo;s not explicitly documented, but both <a href="https://plus.google.com/105051985738280261832">+Dianne Hackborn</a> and <a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> <a href="https://groups.google.com/d/msg/android-developers/K5ggbRigGS8/B5KajJYAae4J">confirmed</a> <a href="http://stackoverflow.com/a/7444510/184953">this</a>. The workaround is to use <a href="http://developer.android.com/reference/android/app/PendingIntent.html#getBroadcast%28android.content.Context,%20int,%20android.content.Intent,%20int%29"><code>PendingIntent.getBroadcast()</code></a>, because it is guaranteed that the <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html#onReceive%28android.content.Context,%20android.content.Intent%29"><code>BroadcastReceiver.onReceive()</code></a> will be always fully executed before the CPU goes to sleep. Inside that callback you have to acquire <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> start your <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> and release the lock at the end of <a href="http://developer.android.com/reference/android/app/IntentService.html#onHandleIntent%28android.content.Intent%29"><code>onHandleIntent()</code></a> method.</p>
+
+<p><img class="center" src="/images/wakelock.002.png"></p>
+
+<p>This is where the <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> comes into play: its <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#startWakefulService%28android.content.Context,%20android.content.Intent%29"><code>startWakefulService</code></a> and <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#completeWakefulIntent%28android.content.Intent%29"><code>completeWakefulIntent</code></a> static methods encapsulate all the <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLocks</code></a> juggling, allowing you to focus on your business logic.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -952,66 +1032,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/11/06/sql-injection-through-contentprovider/">SQL Injection Through ContentProvider Projection</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-11-06T23:45:00+01:00" pubdate data-updated="true">Nov 6<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/11/06/sql-injection-through-contentprovider/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
-
-<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
-
-<p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="s1">&#39;Bobby Tables was here&#39;</span><span class="p">;</span> <span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">Students</span><span class="p">;</span> <span class="c1">--</span>
-</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">sqlite_master</span><span class="p">;</span> <span class="c1">--</span>
-</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">non_public_table_I_found_out_about_using_previous_query</span><span class="p">;</span> <span class="c1">--</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Basically it means that if you exposed a single uri without sanitizing the projection, you have exposed your entire db.</p>
-
-<p>So how do you sanitize your projections? I&rsquo;ve given it some thought and it seems that the only sensible thing to do is allowing only subsets of predefined set of columns.</p>
-
-<p>You cannot allow any expression, because you&rsquo;d allow any expressions, including SELECTs from other tables and allowing certain expressions is not a trivial task.</p>
-
-<p>You shouldn&rsquo;t ignore the provided projection and return all columns, because one of the benefits of using projections is limiting the amount of data retrieved from database. Besides, <a href="https://play.google.com/store/apps/details?id=com.google.android.gm">certain widely used Google application</a> ignores the existence of <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnIndex%28java.lang.String%29"><code>Cursor.getColumnIndex</code></a> method and assumes that the columns will be returned in the same order they were specified in projection. The other app won&rsquo;t work correctly, and the users will probably blame you.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -1029,6 +1049,10 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
@@ -1042,10 +1066,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
     
       <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
   </ul>

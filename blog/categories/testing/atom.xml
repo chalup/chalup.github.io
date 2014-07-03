@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Testing | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/testing/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -26,7 +26,7 @@
 
 <p>But hey, you can catch most of those errors simply by clicking through your application, right? Not exactly, doing so only tells you that in works on one particular device. You might have some plugins already installed, but not included in application&rsquo;s package and your app will work only on the devices which happen to have those plugins, which is not very likely.</p>
 
-<p>{% img center /images/works-on-my-machine-starburst_2.png %}
+<p><img class="center" src="/images/works-on-my-machine-starburst_2.png">
 That&rsquo;s exactly the error I made when I published the first version of &ldquo;Nu, Pogodi!&rdquo;. I submitted for Q&amp;A process an application with dependencies to Qt Components 1.1, build with the latest Qt SDK. I&rsquo;ve tested it thoroughly on some devices I had access to and via <a href="http://www.developer.nokia.com/Devices/Remote_device_access/">Remote Device Access</a> service (which BTW rocks; I wish there was a similar service for Android) and everything worked fine. The application was rejected by Q&amp;A, because at the end of 2011 there was some <a href="http://support.publish.nokia.com/?p=3766&amp;type=news">technical issues with Nokia Store and latest Qt</a> and I was told to rebuild my application with old SDK, which included only Qt Components 1.0. I&rsquo;ve tested my game again and everything worked so I published it to Nokia Store. Few days later I received first reviews &ndash; all negative, along the lines &ldquo;doesn&rsquo;t work, beware&rdquo;.</p>
 
 <p>Qt Smart Installer partially prevents those errors, but you still might shoot yourself in the foot in some cases. My game had dependencies to Qt Components 1.1, but the pkg file declared dependency to version 1.0, because it was created with old SDK. When my customers installed the game, the smart installer ensured only that version 1.0 is installed, but my game needed newer version and failed during runtime. I didn&rsquo;t caught this during testing, because all of my devices had latest Qt Components installed.</p>

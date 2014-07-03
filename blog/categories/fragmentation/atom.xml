@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Fragmentation | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/fragmentation/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -156,15 +156,15 @@ updateInfo();
 
 <p>Of course, there is a small gotcha (why else would I bother to write this blog post?). Let&rsquo;s say that you don&rsquo;t need to customize horizontal scrollbar, so you prepare only vertical 9-patches:</p>
 
-<p>{% img center /images/zoom_vertical.png %}</p>
+<p><img class="center" src="/images/zoom_vertical.png"></p>
 
 <p>On Ice Cream Sandwich everything looks fine, but on Gingerbread the graphics are not exactly what you want:</p>
 
-<p>{% img center /images/badstyle.png %}</p>
+<p><img class="center" src="/images/badstyle.png"></p>
 
 <p>Quick <a href="https://www.google.pl/search?q=android+incorrect+custom+scrollbar+width">Google search</a> returned a <a href="http://stackoverflow.com/questions/3736768/android-scrollview-scrollbarsize">StackOverflow thread</a> with a description and link to <a href="http://code.google.com/p/android/issues/detail?id=14317">Android bug tracker</a>, but no full workaround. If you&rsquo;re too lazy to click on those links, on Gingerbread and earlier releases the View asks ScrollbarDrawable for the height of horizontal scrollbar and uses it as a horizontal scrollbar height and vertical scrollbar width. Let&rsquo;s modify our scrollbar graphics a bit:</p>
 
-<p>{% img center /images/zoomed_symmetric.png %}</p>
+<p><img class="center" src="/images/zoomed_symmetric.png"></p>
 
 <p>And apply it as both horizontal and vertical scrollbar.</p>
 
@@ -176,7 +176,7 @@ updateInfo();
 
 <p>Lo and behold, it works!</p>
 
-<p>{% img center /images/goodstyle.png %}</p>
+<p><img class="center" src="/images/goodstyle.png"></p>
 
 <p>Note: in general case you probably want to create another graphics for horizontal scrollbar by rotating and flipping vertical scrollbar graphics. Our scrollbar graphics doesn&rsquo;t have any non-symmetric elements and I&rsquo;m lazy, so I used the same 9-patch for both scrollbars.</p>
 

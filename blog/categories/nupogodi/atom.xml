@@ -4,7 +4,7 @@
   <title><![CDATA[Category: NuPogodi | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/nupogodi/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -42,13 +42,13 @@
     <link href="http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi/"/>
     <updated>2012-01-20T12:05:00+01:00</updated>
     <id>http://chalup.github.io/blog/2012/01/20/introducing-nu-pogodi</id>
-    <content type="html"><![CDATA[<p>{% img center /images/nupogodi.png %}</p>
+    <content type="html"><![CDATA[<p><img class="center" src="/images/nupogodi.png"></p>
 
 <p>&ldquo;Nu, pogodi!&rdquo; is the first application I&rsquo;ve published in Nokia Store (or any other app store, in fact). It&rsquo;s a remake of a classic handheld console game I used to play in my childhood: you had to place a wolf with a basket under one of four roosts to catch the eggs rolling from them. Despite the extreme simplicity and the obvious flaw in the game plot (namely: what the hell does the wolf need the eggs for?) the game was quite addictive and I spent many hours listening to the hypnotizing ticking of the falling eggs (if you played this game you know what I&rsquo;m talking about).</p>
 
 <p>The handheld console I based my game on is actually a Russian clone of &ldquo;Egg&rdquo; game from Nintendo&rsquo;s &ldquo;Game &amp; Watch&rdquo; game series. The main difference is the graphics &ndash; instead of fox and hen the Russian clone featured the Wolf and the Hare from a &ldquo;Nu, pogodi!&rdquo; cartoon &ndash; hence the name of the game.</p>
 
-<p>{% img center /images/handhelds.jpg %}</p>
+<p><img class="center" src="/images/handhelds.jpg"></p>
 
 <p>At the beginning of 2011 I wanted to check out the Qt Quick, which was advertised by Nokia as the best thing since sliced bread. I never liked the go-through-a-boring-tutorials way of learning new things, so I started writing UI for a simple game instead. Few weeks later Nokia announced <a href="http://www.developer.nokia.com/Community/Wiki/The_Quick_Competition_2011Q1">Qt Quick Competition</a> &ndash; an event promoting Qt Quick introduced in Qt 4.7. I&rsquo;ve entered the competition with the early version of my game under the name <a href="http://projects.developer.nokia.com/PAGADI">&ldquo;Nu, Pagadi!&rdquo;</a> (which is, as I learned later, incorrect &ndash; apparently in Russian sometimes you write an &lsquo;o&rsquo;, but pronounce it as &lsquo;a&rsquo;), which didn&rsquo;t won me anything, but at least I had a motivation to work on the game. In accordance with the competition rules I&rsquo;ve published my code under OSS license and forgot about the whole deal.</p>
 
@@ -56,7 +56,7 @@
 
 <p>Despite the initial issues the game reached top 10 bestseller list in two weeks and stayed there ever since. Try it yourself!</p>
 
-<p><a href="http://store.ovi.com/content/219800">{% img center /images/nupogodi-banner.png %}</a></p>
+<p><a href="http://store.ovi.com/content/219800"><img class="center" src="/images/nupogodi-banner.png"></a></p>
 ]]></content>
   </entry>
   

@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I use the android.util.Log extensively &ndash; often it&rsquo;s faster than starting the debugger and (unlike debugging) it&rsquo;s always on, which &hellip;">
+  <meta name="description" content="Most of the items in the Android 4.2 APIs list are kind of &ldquo;meh&rdquo; to me, but there is one item that&rsquo;s make me very happy: nested &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,47 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/11/13/android-gets-nested-fragments/">Android Gets Nested Fragments</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-13T21:31:00+01:00" pubdate data-updated="true">Nov 13<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/11/13/android-gets-nested-fragments/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/11/13/android-gets-nested-fragments/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Most of the items in the <a href="http://developer.android.com/about/versions/android-4.2.html">Android 4.2 APIs list</a> are kind of &ldquo;meh&rdquo; to me, but there is one item that&rsquo;s make me very happy: <a href="http://developer.android.com/about/versions/android-4.2.html#NestedFragments">nested fragments</a>. Fragments were supposed to be reusable UI components, but for some unfathomable reason the initial release of the fragments API didn&rsquo;t allow composing a fragment from other fragments. Even during the 2012 Google I/O one of the Google developers said that they have discussed this idea, but they&rsquo;re not sure if it&rsquo;s a good one, which is an absolute surprise to me, because I don&rsquo;t think anyone sane would consider making the <a href="http://developer.android.com/reference/android/view/ViewGroup.html"><code>ViewGroup</code></a> which isn&rsquo;t a subclass of a <a href="http://developer.android.com/reference/android/view/View.html"><code>View</code></a>.</p>
+
+<p>Fragment nesting was a topic I kept on my topic list for a day when I feel I need to bitch about something, but now I&rsquo;m happy to remove it and write this ecstatic post. So now launch your SDK managers and download the r11 of support package! (or wait for half a year and hope it will be added to <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.google.android%22%20AND%20a%3A%22support-v4%22">Maven Central</a>)</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -996,205 +1037,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/06/22/sqlite-unions-gotcha/">SQLite Unions Gotcha</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-06-22T23:03:00+02:00" pubdate data-updated="true">Jun 22<span>nd</span>, 2012</time>
-        
-           | <a href="/blog/2012/06/22/sqlite-unions-gotcha/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/06/22/sqlite-unions-gotcha/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Recently I&rsquo;ve been tracking the problem with SQLite database used in the Android application I&rsquo;m working on. The starting point of the whole story is that I&rsquo;ve noticed that the cursor created with the <code>SQLiteDatabase.query()</code> method returned smaller data set than the same query executed through sqlite3 command line interface. The query in question looked like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">some_view</span> <span class="k">WHERE</span> <span class="p">(</span><span class="n">column_a</span><span class="o">=</span><span class="mi">1</span> <span class="k">OR</span> <span class="n">column_b</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Inside the Android app I was getting rows for the second part of OR clause (i.e. <code>column_b=1</code>), but no rows for the first part.</p>
-
-<p>Quick search through Android sources yielded the clue &ndash; I wasn&rsquo;t executing exactly the same query on the command line. Selection arguments are always bound as a strings, so the question marks in query string should be surrounded with quotes. So the Android app was executing the following query:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">some_view</span> <span class="k">WHERE</span> <span class="p">(</span><span class="n">column_a</span><span class="o">=</span><span class="ss">&quot;1&quot;</span> <span class="k">OR</span> <span class="n">column_b</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So now we have another puzzle: why <code>column_b=1</code> and <code>column_b="1"</code> give the same results, but the behavior is different for <code>column_a</code>? Let&rsquo;s try to reproduce the problem:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="p">.</span><span class="k">mode</span> <span class="k">column</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="p">.</span><span class="n">headers</span> <span class="k">on</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">t</span> <span class="p">(</span><span class="n">x</span> <span class="nb">INTEGER</span><span class="p">);</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t</span> <span class="k">VALUES</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">WHERE</span> <span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'><span class="mi">1</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">WHERE</span> <span class="n">x</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
-</span><span class='line'><span class="mi">1</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So far so good, no surprises. Let&rsquo;s create a view similar to the one which causes problems.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">VIEW</span> <span class="n">v</span> <span class="k">AS</span> <span class="k">SELECT</span> <span class="k">NULL</span> <span class="k">AS</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span> <span class="k">AS</span> <span class="n">b</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="n">x</span><span class="p">,</span> <span class="k">NULL</span> <span class="k">FROM</span> <span class="n">t</span><span class="p">;</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">v</span><span class="p">;</span>
-</span><span class='line'><span class="n">a</span>           <span class="n">b</span>
-</span><span class='line'><span class="c1">----------  ----------</span>
-</span><span class='line'>            <span class="mi">1</span>
-</span><span class='line'><span class="mi">1</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now let&rsquo;s take a look at counts:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">1</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">1</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">1</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">0</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Yay, we reproduced our bug. But why is this happening?</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="n">PRAGMA</span> <span class="n">TABLE_INFO</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
-</span><span class='line'><span class="n">cid</span>         <span class="n">name</span>        <span class="k">type</span>        <span class="k">notnull</span>     <span class="n">dflt_value</span>  <span class="n">pk</span>
-</span><span class='line'><span class="c1">----------  ----------  ----------  ----------  ----------  ----------</span>
-</span><span class='line'><span class="mi">0</span>           <span class="n">a</span>                       <span class="mi">0</span>                       <span class="mi">0</span>
-</span><span class='line'><span class="mi">1</span>           <span class="n">b</span>           <span class="nb">integer</span>     <span class="mi">0</span>                       <span class="mi">0</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It seems that the lack of explicitly defined type of the first column prevents type conversion (please note that this is only my assumption based on the observations above; unfortunately the sqlite documentation doesn&rsquo;t cover such cases in detail). How can we work around this issue?</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">VIEW</span> <span class="n">vfix</span> <span class="k">AS</span> <span class="k">SELECT</span> <span class="n">x</span> <span class="k">AS</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span> <span class="k">AS</span> <span class="n">b</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">WHERE</span> <span class="mi">1</span><span class="o">=</span><span class="mi">0</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">v</span><span class="p">;</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="n">PRAGMA</span> <span class="n">TABLE_INFO</span><span class="p">(</span><span class="n">vfix</span><span class="p">);</span>
-</span><span class='line'><span class="n">cid</span>         <span class="n">name</span>        <span class="k">type</span>        <span class="k">notnull</span>     <span class="n">dflt_value</span>  <span class="n">pk</span>
-</span><span class='line'><span class="c1">----------  ----------  ----------  ----------  ----------  ----------</span>
-</span><span class='line'><span class="mi">0</span>           <span class="n">a</span>           <span class="nb">integer</span>     <span class="mi">0</span>                       <span class="mi">0</span>
-</span><span class='line'><span class="mi">1</span>           <span class="n">b</span>           <span class="nb">integer</span>     <span class="mi">0</span>                       <span class="mi">0</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>As you can see the column types are correctly copied from the underlying table. Let&rsquo;s check the counts:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">1</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">1</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">1</span>
-</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
-</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
-</span><span class='line'><span class="c1">----------</span>
-</span><span class='line'><span class="mi">1</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Looks OK. Pretty? No, but it does the job and that&rsquo;s what matters at the end of the day.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/7/">&larr; Older</a>
@@ -1212,6 +1054,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
@@ -1225,10 +1071,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
   </ul>

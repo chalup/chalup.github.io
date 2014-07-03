@@ -4,7 +4,7 @@
   <title><![CDATA[Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:34:17+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,28 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Android Recent Apps List and Intent Extras]]></title>
+    <link href="http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/"/>
+    <updated>2014-07-03T22:14:06+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras</id>
+    <content type="html"><![CDATA[<p>If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, because you&rsquo;ve always done it this way. It might be a good thing if you know all pros and cons of your solution, because your code will be consistent and you don&rsquo;t waste time rethinking the same things over and over again. On the other hand it is a good practice to question this established ways of doing things from time to time &ndash; maybe you&rsquo;ve missed something when you thought about this last time or some of your arguments are no longer valid.</p>
+
+<p>For me one of such things was the <code>Serializable</code> vs. <code>Parcelable</code> conundrum. A long time ago I read somewhere that <code>Serializable</code> is much slower than <code>Parcelable</code> and it shouldn&rsquo;t be used for large objects, but it&rsquo;s fast enough for passing simple POJOs between <code>Fragments</code> and <code>Activities</code> with <code>Intent</code> or arguments <code>Bundle</code>. While this is still a generally good advice, I realized I don&rsquo;t know how much faster the <code>Parcelable</code> is. Are we looking at 10µs vs. 15µs or 10µs vs. 10ms?</p>
+
+<p>I&rsquo;m too lazy to write a benchmark myself, but I found a <a href="http://www.developerphil.com/parcelable-vs-serializable/">decent article</a>. Tl;dr: on modern hardware (Nexus 4) serializing a simple data structure takes about 2ms and using <code>Parcelable</code> is about 10 times faster.</p>
+
+<p>Another hit on Google was a <a href="http://www.reddit.com/r/androiddev/comments/1daiib/parcelable_vs_serializable/">reddit thread</a> for this article. I found there an interesting comment by <a href="https://plus.google.com/u/1/+JakeWharton">+Jake Wharton</a>:</p>
+
+<blockquote><p>Serializable is like a tattoo. You are committing to a class name, package, and field structure forever. The only way to &#8220;remove&#8221; it is epic deserialization hacks.</p><p>Yes using it in an Intent isn&#8217;t much harm, but if you use serialization there&#8217;s a potential for crashing your app. They upgrade, hit your icon on the launcher, and Android tries to restore the previous Intent for where they were at in your app. You changed the object so deserialization fails and the app crashes. Not a good upgrade experience. Granted this is rare, but if you ever persist something to disk like this it can leave you in an extremely bad place.</p></blockquote>
+
+
+<p>There are two inaccuracies in the comment above. First, the problem will happen only if the app is started from the recet apps list, not from the launcher icon. Second, the problem is not limited to <code>Serializable</code> extras: <code>Parcelable</code> might read the byte stream originally written from a different structure (in this situation crash is a best case scenario), some extras might be missing, some might hold wrong type of data.</p>
+
+<p>Can you prevent this issue? I don&rsquo;t think so, at least not without some sophisticated validation of Intent extras. Considering that this issue is very rare and it goes away after starting the faulty app from somewhere else than recent apps list I don&rsquo;t think you should spend any time trying to fix it, but it&rsquo;s good to know about it, as it might explain some WTF crash reports coming your way.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Google I/O 2014 Summary]]></title>
@@ -30,7 +52,7 @@
 
 <p>The Dalvik was decomissioned, the new runtime is the only runtime. I do hope this means that the 64k method limit is no longer a problem and there are no technical roadblocks for Java 8 support. Maybe this questions were answersed during <a href="https://www.google.com/events/io/schedule/session/b750c8da-aebe-e311-b297-00155d5066d7">The ART runtime</a> session, unfortunately there was no live stream of it.</p>
 
-<p><strong>Edit</strong>: the video from the session is available. The GC improvements and performance boosts are amazing, but if I understand everything correctly the ART still uses dex bytecode underneath, so all Dalvik limitations are still in place.</p>
+<p><strong>Edit</strong>: the video from the session is available. The GC improvements and performance boosts are amazing, but if I understand everything correctly the ART still uses dex bytecode underneath, so all Dalvik limitations are still in place.   Bad Google.</p>
 
 <h3><a href="https://plus.google.com/+XavierDucrohet/posts">+Xavier Ducrohet</a></h3>
 
@@ -2178,36 +2200,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 <p>Of course this behaviour is documented in the SQLite Query Planner overview (point 3 of the <a href="http://www.sqlite.org/optoverview.html#flattening">Subquery flattening</a> paragraph), and I even remember reading this docs few times, but I guess something like this has to bite me in the ass before I memorize it.</p>
 
 <p>Everything works fine if you copypaste the views selection in place of the joined view, which makes me a sad panda, because I wish SQLite could do this for me. On the other hand it&rsquo;s a very simple workaround for this issue, and, with a right library, the code might even be manageable.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[SQL Injection Through ContentProvider Projection]]></title>
-    <link href="http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider/"/>
-    <updated>2013-11-06T23:45:00+01:00</updated>
-    <id>http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider</id>
-    <content type="html"><![CDATA[<p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
-
-<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
-
-<p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="s1">&#39;Bobby Tables was here&#39;</span><span class="p">;</span> <span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">Students</span><span class="p">;</span> <span class="c1">--</span>
-</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">sqlite_master</span><span class="p">;</span> <span class="c1">--</span>
-</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">non_public_table_I_found_out_about_using_previous_query</span><span class="p">;</span> <span class="c1">--</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Basically it means that if you exposed a single uri without sanitizing the projection, you have exposed your entire db.</p>
-
-<p>So how do you sanitize your projections? I&rsquo;ve given it some thought and it seems that the only sensible thing to do is allowing only subsets of predefined set of columns.</p>
-
-<p>You cannot allow any expression, because you&rsquo;d allow any expressions, including SELECTs from other tables and allowing certain expressions is not a trivial task.</p>
-
-<p>You shouldn&rsquo;t ignore the provided projection and return all columns, because one of the benefits of using projections is limiting the amount of data retrieved from database. Besides, <a href="https://play.google.com/store/apps/details?id=com.google.android.gm">certain widely used Google application</a> ignores the existence of <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnIndex%28java.lang.String%29"><code>Cursor.getColumnIndex</code></a> method and assumes that the columns will be returned in the same order they were specified in projection. The other app won&rsquo;t work correctly, and the users will probably blame you.</p>
 ]]></content>
   </entry>
   

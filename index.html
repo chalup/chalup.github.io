@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Here are my thoughts after watching the keynote and few Android related sessions. Highlights Android One This might be a huge, not only because it &hellip;">
+  <meta name="description" content="If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -83,6 +83,58 @@
       
   <header>
     
+      <h1 class="entry-title"><a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-03T22:14:06+02:00" pubdate data-updated="true">Jul 3<span>rd</span>, 2014</time>
+        
+           | <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, because you&rsquo;ve always done it this way. It might be a good thing if you know all pros and cons of your solution, because your code will be consistent and you don&rsquo;t waste time rethinking the same things over and over again. On the other hand it is a good practice to question this established ways of doing things from time to time &ndash; maybe you&rsquo;ve missed something when you thought about this last time or some of your arguments are no longer valid.</p>
+
+<p>For me one of such things was the <code>Serializable</code> vs. <code>Parcelable</code> conundrum. A long time ago I read somewhere that <code>Serializable</code> is much slower than <code>Parcelable</code> and it shouldn&rsquo;t be used for large objects, but it&rsquo;s fast enough for passing simple POJOs between <code>Fragments</code> and <code>Activities</code> with <code>Intent</code> or arguments <code>Bundle</code>. While this is still a generally good advice, I realized I don&rsquo;t know how much faster the <code>Parcelable</code> is. Are we looking at 10µs vs. 15µs or 10µs vs. 10ms?</p>
+
+<p>I&rsquo;m too lazy to write a benchmark myself, but I found a <a href="http://www.developerphil.com/parcelable-vs-serializable/">decent article</a>. Tl;dr: on modern hardware (Nexus 4) serializing a simple data structure takes about 2ms and using <code>Parcelable</code> is about 10 times faster.</p>
+
+<p>Another hit on Google was a <a href="http://www.reddit.com/r/androiddev/comments/1daiib/parcelable_vs_serializable/">reddit thread</a> for this article. I found there an interesting comment by <a href="https://plus.google.com/u/1/+JakeWharton">+Jake Wharton</a>:</p>
+
+<blockquote><p>Serializable is like a tattoo. You are committing to a class name, package, and field structure forever. The only way to &#8220;remove&#8221; it is epic deserialization hacks.</p><p>Yes using it in an Intent isn&#8217;t much harm, but if you use serialization there&#8217;s a potential for crashing your app. They upgrade, hit your icon on the launcher, and Android tries to restore the previous Intent for where they were at in your app. You changed the object so deserialization fails and the app crashes. Not a good upgrade experience. Granted this is rare, but if you ever persist something to disk like this it can leave you in an extremely bad place.</p></blockquote>
+
+
+<p>There are two inaccuracies in the comment above. First, the problem will happen only if the app is started from the recet apps list, not from the launcher icon. Second, the problem is not limited to <code>Serializable</code> extras: <code>Parcelable</code> might read the byte stream originally written from a different structure (in this situation crash is a best case scenario), some extras might be missing, some might hold wrong type of data.</p>
+
+<p>Can you prevent this issue? I don&rsquo;t think so, at least not without some sophisticated validation of Intent extras. Considering that this issue is very rare and it goes away after starting the faulty app from somewhere else than recent apps list I don&rsquo;t think you should spend any time trying to fix it, but it&rsquo;s good to know about it, as it might explain some WTF crash reports coming your way.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
       <h1 class="entry-title"><a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a></h1>
     
     
@@ -121,7 +173,7 @@
 
 <p>The Dalvik was decomissioned, the new runtime is the only runtime. I do hope this means that the 64k method limit is no longer a problem and there are no technical roadblocks for Java 8 support. Maybe this questions were answersed during <a href="https://www.google.com/events/io/schedule/session/b750c8da-aebe-e311-b297-00155d5066d7">The ART runtime</a> session, unfortunately there was no live stream of it.</p>
 
-<p><strong>Edit</strong>: the video from the session is available. The GC improvements and performance boosts are amazing, but if I understand everything correctly the ART still uses dex bytecode underneath, so all Dalvik limitations are still in place.</p>
+<p><strong>Edit</strong>: the video from the session is available. The GC improvements and performance boosts are amazing, but if I understand everything correctly the ART still uses dex bytecode underneath, so all Dalvik limitations are still in place.   Bad Google.</p>
 
 <h3><a href="https://plus.google.com/+XavierDucrohet/posts">+Xavier Ducrohet</a></h3>
 
@@ -1862,86 +1914,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/20/when-do-you-absolutely-need/">When Do You Absolutely Need WakefulBroadcastReceiver</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-02-20T10:24:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2014</time>
-        
-           | <a href="/blog/2014/02/20/when-do-you-absolutely-need/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2014/02/20/when-do-you-absolutely-need/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p><a href="https://plus.google.com/108967384991768947849/posts/i6MzCp1NyzF">Yesterdays #AndroidDev #Protip</a> explains how to use <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> utility class and what problem does it solve, but it doesn&rsquo;t mention a case when using it or manually acquiring <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> is essential &ndash; using the <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a>.</p>
-
-<p>If you&rsquo;re not familiar with <code>AlarmManager</code>&rsquo;s API, here is <strong>tl;dr</strong> of the docs: it allows you to specify the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> that should be fired at some point, even if your application is in background. The common use cases for using <a href="http://developer.android.com/reference/android/app/AlarmManager.html"><code>AlarmManager</code></a> is for example showing a <a href="http://developer.android.com/reference/android/app/Notification.html"><code>Notification</code></a> at the specified time or sending some kind of heartbeat to your backend. In both cases, your code performs potentially long running operation (in case of showing notification you might need some content from your local database), so you don&rsquo;t want to run it in the UI thread. The first thing that comes to mind is to specify an <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> as a <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> target:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">PendingIntent</span> <span class="n">intent</span> <span class="o">=</span> <span class="n">PendingIntent</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span>
-</span><span class='line'>  <span class="n">context</span><span class="o">,</span>
-</span><span class='line'>  <span class="mi">0</span><span class="o">,</span>
-</span><span class='line'>  <span class="k">new</span> <span class="nf">Intent</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">MyIntentService</span><span class="o">.</span><span class="na">class</span><span class="o">),</span>
-</span><span class='line'>  <span class="n">PendingIntent</span><span class="o">.</span><span class="na">FLAG_UPDATE_CURRENT</span>
-</span><span class='line'><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">AlarmManager</span> <span class="n">alarmManager</span> <span class="o">=</span> <span class="o">(</span><span class="n">AlarmManager</span><span class="o">)</span> <span class="n">context</span><span class="o">.</span><span class="na">getSystemService</span><span class="o">(</span><span class="n">Context</span><span class="o">.</span><span class="na">ALARM_SERVICE</span><span class="o">);</span>
-</span><span class='line'><span class="n">alarmManager</span><span class="o">.</span><span class="na">set</span><span class="o">(</span>
-</span><span class='line'>  <span class="n">AlarmManager</span><span class="o">.</span><span class="na">ELAPSED_REALTIME_WAKEUP</span><span class="o">,</span>
-</span><span class='line'>  <span class="n">SystemClock</span><span class="o">.</span><span class="na">elapsedRealtime</span><span class="o">()</span> <span class="o">+</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MINUTES</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="mi">15</span><span class="o">)</span>
-</span><span class='line'>  <span class="n">intent</span>
-</span><span class='line'><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This code won&rsquo;t always work though. While it is guaranteed that the alarm will go off and the <a href="http://developer.android.com/reference/android/app/PendingIntent.html"><code>PendingIntent</code></a> will be sent, because we used a <code>_WAKEUP</code> alarm type, the device is allowed to go back to sleep before the service is started.</p>
-
-<p><img class="center" src="/images/wakelock.001.png"></p>
-
-<p>It&rsquo;s not explicitly documented, but both <a href="https://plus.google.com/105051985738280261832">+Dianne Hackborn</a> and <a href="https://plus.google.com/114205433913370454414">+CommonsWare</a> <a href="https://groups.google.com/d/msg/android-developers/K5ggbRigGS8/B5KajJYAae4J">confirmed</a> <a href="http://stackoverflow.com/a/7444510/184953">this</a>. The workaround is to use <a href="http://developer.android.com/reference/android/app/PendingIntent.html#getBroadcast%28android.content.Context,%20int,%20android.content.Intent,%20int%29"><code>PendingIntent.getBroadcast()</code></a>, because it is guaranteed that the <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html#onReceive%28android.content.Context,%20android.content.Intent%29"><code>BroadcastReceiver.onReceive()</code></a> will be always fully executed before the CPU goes to sleep. Inside that callback you have to acquire <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLock</code></a> start your <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a> and release the lock at the end of <a href="http://developer.android.com/reference/android/app/IntentService.html#onHandleIntent%28android.content.Intent%29"><code>onHandleIntent()</code></a> method.</p>
-
-<p><img class="center" src="/images/wakelock.002.png"></p>
-
-<p>This is where the <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html"><code>WakefulBroadcastReceiver</code></a> comes into play: its <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#startWakefulService%28android.content.Context,%20android.content.Intent%29"><code>startWakefulService</code></a> and <a href="http://developer.android.com/reference/android/support/v4/content/WakefulBroadcastReceiver.html#completeWakefulIntent%28android.content.Intent%29"><code>completeWakefulIntent</code></a> static methods encapsulate all the <a href="http://developer.android.com/reference/android/os/PowerManager.WakeLock.html"><code>WakeLocks</code></a> juggling, allowing you to focus on your business logic.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1957,6 +1929,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
@@ -1970,10 +1946,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
   </ul>

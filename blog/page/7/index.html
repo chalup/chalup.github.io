@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="After the latest update of &ldquo;Nu, Pogodi!&rdquo;, I received few negative reviews saying that the game doesn&rsquo;t work. I&rsquo;ve tested the &hellip;">
+  <meta name="description" content="Recently I&rsquo;ve been tracking the problem with SQLite database used in the Android application I&rsquo;m working on. The starting point of the &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,205 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/06/22/sqlite-unions-gotcha/">SQLite Unions Gotcha</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-22T23:03:00+02:00" pubdate data-updated="true">Jun 22<span>nd</span>, 2012</time>
+        
+           | <a href="/blog/2012/06/22/sqlite-unions-gotcha/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/06/22/sqlite-unions-gotcha/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I&rsquo;ve been tracking the problem with SQLite database used in the Android application I&rsquo;m working on. The starting point of the whole story is that I&rsquo;ve noticed that the cursor created with the <code>SQLiteDatabase.query()</code> method returned smaller data set than the same query executed through sqlite3 command line interface. The query in question looked like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">some_view</span> <span class="k">WHERE</span> <span class="p">(</span><span class="n">column_a</span><span class="o">=</span><span class="mi">1</span> <span class="k">OR</span> <span class="n">column_b</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Inside the Android app I was getting rows for the second part of OR clause (i.e. <code>column_b=1</code>), but no rows for the first part.</p>
+
+<p>Quick search through Android sources yielded the clue &ndash; I wasn&rsquo;t executing exactly the same query on the command line. Selection arguments are always bound as a strings, so the question marks in query string should be surrounded with quotes. So the Android app was executing the following query:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">some_view</span> <span class="k">WHERE</span> <span class="p">(</span><span class="n">column_a</span><span class="o">=</span><span class="ss">&quot;1&quot;</span> <span class="k">OR</span> <span class="n">column_b</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So now we have another puzzle: why <code>column_b=1</code> and <code>column_b="1"</code> give the same results, but the behavior is different for <code>column_a</code>? Let&rsquo;s try to reproduce the problem:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="p">.</span><span class="k">mode</span> <span class="k">column</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="p">.</span><span class="n">headers</span> <span class="k">on</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">t</span> <span class="p">(</span><span class="n">x</span> <span class="nb">INTEGER</span><span class="p">);</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t</span> <span class="k">VALUES</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">WHERE</span> <span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">WHERE</span> <span class="n">x</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So far so good, no surprises. Let&rsquo;s create a view similar to the one which causes problems.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">VIEW</span> <span class="n">v</span> <span class="k">AS</span> <span class="k">SELECT</span> <span class="k">NULL</span> <span class="k">AS</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span> <span class="k">AS</span> <span class="n">b</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="n">x</span><span class="p">,</span> <span class="k">NULL</span> <span class="k">FROM</span> <span class="n">t</span><span class="p">;</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">v</span><span class="p">;</span>
+</span><span class='line'><span class="n">a</span>           <span class="n">b</span>
+</span><span class='line'><span class="c1">----------  ----------</span>
+</span><span class='line'>            <span class="mi">1</span>
+</span><span class='line'><span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now let&rsquo;s take a look at counts:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">v</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Yay, we reproduced our bug. But why is this happening?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="n">PRAGMA</span> <span class="n">TABLE_INFO</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+</span><span class='line'><span class="n">cid</span>         <span class="n">name</span>        <span class="k">type</span>        <span class="k">notnull</span>     <span class="n">dflt_value</span>  <span class="n">pk</span>
+</span><span class='line'><span class="c1">----------  ----------  ----------  ----------  ----------  ----------</span>
+</span><span class='line'><span class="mi">0</span>           <span class="n">a</span>                       <span class="mi">0</span>                       <span class="mi">0</span>
+</span><span class='line'><span class="mi">1</span>           <span class="n">b</span>           <span class="nb">integer</span>     <span class="mi">0</span>                       <span class="mi">0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It seems that the lack of explicitly defined type of the first column prevents type conversion (please note that this is only my assumption based on the observations above; unfortunately the sqlite documentation doesn&rsquo;t cover such cases in detail). How can we work around this issue?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">VIEW</span> <span class="n">vfix</span> <span class="k">AS</span> <span class="k">SELECT</span> <span class="n">x</span> <span class="k">AS</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span> <span class="k">AS</span> <span class="n">b</span> <span class="k">FROM</span> <span class="n">t</span> <span class="k">WHERE</span> <span class="mi">1</span><span class="o">=</span><span class="mi">0</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">v</span><span class="p">;</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="n">PRAGMA</span> <span class="n">TABLE_INFO</span><span class="p">(</span><span class="n">vfix</span><span class="p">);</span>
+</span><span class='line'><span class="n">cid</span>         <span class="n">name</span>        <span class="k">type</span>        <span class="k">notnull</span>     <span class="n">dflt_value</span>  <span class="n">pk</span>
+</span><span class='line'><span class="c1">----------  ----------  ----------  ----------  ----------  ----------</span>
+</span><span class='line'><span class="mi">0</span>           <span class="n">a</span>           <span class="nb">integer</span>     <span class="mi">0</span>                       <span class="mi">0</span>
+</span><span class='line'><span class="mi">1</span>           <span class="n">b</span>           <span class="nb">integer</span>     <span class="mi">0</span>                       <span class="mi">0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see the column types are correctly copied from the underlying table. Let&rsquo;s check the counts:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">b</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">1</span>
+</span><span class='line'><span class="n">sqlite</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">vfix</span> <span class="k">WHERE</span> <span class="n">a</span><span class="o">=</span><span class="ss">&quot;1&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+</span><span class='line'><span class="c1">----------</span>
+</span><span class='line'><span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Looks OK. Pretty? No, but it does the job and that&rsquo;s what matters at the end of the day.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -911,72 +1110,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/08/customizing-ui-controls-on-android/">Customizing UI Controls on Android</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-08T15:09:00+01:00" pubdate data-updated="true">Mar 8<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/03/08/customizing-ui-controls-on-android/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/03/08/customizing-ui-controls-on-android/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>By customizing I mean &ldquo;Oh, and can we have buttons with pink background and neon green text&rdquo; requests you get from your customers. It turns out that such simple requests are in fact not simple. Take a look at the following screenshots taken on HTC Desire phone:</p>
-
-<p><img class="center" src="/images/customizingUIcontrols.png"></p>
-
-<p>The &ldquo;Nexus&rdquo; button uses custom background selector copied from Android sources, so it looks exactly like a buttons on Nexus phones. The &ldquo;HTC&rdquo; button is using default background selector for HTC phones. As you can see there are few differences: highlight, corner rounding and slightly different padding. Other vendors also customize default look of UI controls: Motorola uses red highlight, and Samsung tablets use light blue highlight and there are probably some minor differences in padding and rounding as well.</p>
-
-<p>Let&rsquo;s get back to the original problem, i.e. using pink background and neon green text. Obviously we cannot change just the text color, because it would be unreadable on HTC devices. Changing the background is also tricky, because you cannot reuse highlight graphics built into the platform resources: the different padding and corner rounding force you to use custom graphics for every state. Using layer list drawable to add some decoration is also out of the question, because of the differences in padding &ndash; most likely your decoration would be off by few pixels on some devices.</p>
-
-<p>But now you have one completely custom UI control, which stands apart of built in controls. So for me it&rsquo;s rather &ldquo;all or nothing&rdquo; approach &ndash; either you customize all your UI controls (which might be very time consuming) or you use default controls.</p>
-
-<p>I found one exception to this unfortunate situation: it&rsquo;s possible to create a ListView items with custom &ldquo;normal&rdquo; background and default highlight. Just use the following selector for list item background:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
-</span><span class='line'><span class="nt">&lt;selector</span> <span class="na">xmlns:android=</span><span class="s">&quot;http://schemas.android.com/apk/res/android&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:state_selected=</span><span class="s">&quot;true&quot;</span> <span class="na">android:drawable=</span><span class="s">&quot;@android:color/transparent&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:state_focused=</span><span class="s">&quot;true&quot;</span> <span class="na">android:drawable=</span><span class="s">&quot;@android:color/transparent&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:state_pressed=</span><span class="s">&quot;true&quot;</span> <span class="na">android:drawable=</span><span class="s">&quot;@android:color/transparent&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">android:drawable=</span><span class="s">&quot;@drawable/list_item&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'><span class="nt">&lt;/selector&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/8/">&larr; Older</a>
@@ -994,6 +1127,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
@@ -1007,10 +1144,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
   </ul>

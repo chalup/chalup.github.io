@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Algorithms | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/algorithms/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-06-29T14:37:02+02:00</updated>
+  <updated>2014-07-03T23:02:59+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -26,7 +26,7 @@
 
 <p>The most important observation is that we&rsquo;re not compressing some random white noise, but words from real language. We can leverage this information to get a much better compression than some generic algorithm. Lot of words share the same prefix and suffix, which means they can be efficiently represented as a directed acyclic graph with shared nodes for common prefixes and suffixes. Let&rsquo;s see how the graph would look like for couple of words:</p>
 
-<p>{% img center /images/dag.png %}</p>
+<p><img class="center" src="/images/dag.png"></p>
 
 <p>White letters on black background mark the nodes representing the ends of words. So the graph above represents the following words:</p>
 
@@ -50,13 +50,13 @@ ablations
 
 <p>For example on the graph above we can no longer share the <code>i</code> node in the <code>ions</code> suffix: if it was shared it would have to have a number one greater than the number of both <code>e</code> node in <code>ablate</code> and <code>n</code> node in <code>abjectness</code> (this is, of course, assuming the <code>i</code> node is the last on the child list of both <code>t</code> nodes; but it&rsquo;s impossible for any node ordering). Our graph would look like this:</p>
 
-<p>{% img center /images/dawg.png %}</p>
+<p><img class="center" src="/images/dawg.png"></p>
 
 <p>The rule for node equality has to be extended: the nodes are equal if they represent the same letter, the flags are the same, the children are equal and the siblings further on the children list are equal. The last condition is a bit confusing, so I&rsquo;ll provide an example.</p>
 
 <p>Let&rsquo;s add a <code>absolution</code> and <code>absolutions</code> to our dictionary. We can certainly share the <code>ab</code> prefix and <code>ons</code> suffix, but do we need a separate <code>i</code> node as well? The <code>i</code> node in <code>absolution</code> must have a End-Of-Child-List flag set. If we arrange the child nodes in either <code>ablat-</code> or <code>abject-</code> part of graph in such way that the <code>i</code> node is the last node, we can share the <code>i</code> node between that part of graph and the newly added branch. Our graph would look like this:</p>
 
-<p>{% img center /images/dawg2.png %}</p>
+<p><img class="center" src="/images/dawg2.png"></p>
 
 <p>This is the way we can squeeze the 36MB dictionary to 1.5MB. The structure also doesn&rsquo;t need any processing, it can be loaded to int array and used directly. If you&rsquo;re curious how to convert the dictionary into this kind of graph you can read the description of <a href="https://github.com/chalup/dawggenerator">my dawggenerator project on github</a> (C++) or the <a href="http://www.pathcom.com/~vadco/dawg.html">original description by John Paul Adamovsky</a> (pure C).</p>
 ]]></content>

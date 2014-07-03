@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: Fragmentation - Porcupine Programmer</title>
+  <title>Android Recent Apps List and Intent Extras - Porcupine Programmer</title>
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Category: fragmentation">
+  <meta name="description" content="If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://chalup.github.ioblog/categories/fragmentation">
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
@@ -76,67 +76,109 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Fragmentation</h1>
+    
+      <h1 class="entry-title">Android Recent Apps List and Intent Extras</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-03T22:14:06+02:00" pubdate data-updated="true">Jul 3<span>rd</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, because you&rsquo;ve always done it this way. It might be a good thing if you know all pros and cons of your solution, because your code will be consistent and you don&rsquo;t waste time rethinking the same things over and over again. On the other hand it is a good practice to question this established ways of doing things from time to time &ndash; maybe you&rsquo;ve missed something when you thought about this last time or some of your arguments are no longer valid.</p>
 
-  
-  <h2>2013</h2>
+<p>For me one of such things was the <code>Serializable</code> vs. <code>Parcelable</code> conundrum. A long time ago I read somewhere that <code>Serializable</code> is much slower than <code>Parcelable</code> and it shouldn&rsquo;t be used for large objects, but it&rsquo;s fast enough for passing simple POJOs between <code>Fragments</code> and <code>Activities</code> with <code>Intent</code> or arguments <code>Bundle</code>. While this is still a generally good advice, I realized I don&rsquo;t know how much faster the <code>Parcelable</code> is. Are we looking at 10µs vs. 15µs or 10µs vs. 10ms?</p>
 
-<article>
-  
-<h1><a href="/blog/2013/12/27/to-guava-or-not-to-guava/">To Guava or Not to Guava?</a></h1>
-<time datetime="2013-12-27T12:10:00+01:00" pubdate><span class='month'>Dec</span> <span class='day'>27</span> <span class='year'>2013</span></time>
+<p>I&rsquo;m too lazy to write a benchmark myself, but I found a <a href="http://www.developerphil.com/parcelable-vs-serializable/">decent article</a>. Tl;dr: on modern hardware (Nexus 4) serializing a simple data structure takes about 2ms and using <code>Parcelable</code> is about 10 times faster.</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/guava/'>Guava</a>, <a class='category' href='/blog/categories/fragmentation/'>fragmentation</a>, <a class='category' href='/blog/categories/minsdkversion/'>minSdkVersion</a></span>
-</footer>
+<p>Another hit on Google was a <a href="http://www.reddit.com/r/androiddev/comments/1daiib/parcelable_vs_serializable/">reddit thread</a> for this article. I found there an interesting comment by <a href="https://plus.google.com/u/1/+JakeWharton">+Jake Wharton</a>:</p>
+
+<blockquote><p>Serializable is like a tattoo. You are committing to a class name, package, and field structure forever. The only way to &#8220;remove&#8221; it is epic deserialization hacks.</p><p>Yes using it in an Intent isn&#8217;t much harm, but if you use serialization there&#8217;s a potential for crashing your app. They upgrade, hit your icon on the launcher, and Android tries to restore the previous Intent for where they were at in your app. You changed the object so deserialization fails and the app crashes. Not a good upgrade experience. Granted this is rare, but if you ever persist something to disk like this it can leave you in an extremely bad place.</p></blockquote>
 
 
-</article>
+<p>There are two inaccuracies in the comment above. First, the problem will happen only if the app is started from the recet apps list, not from the launcher icon. Second, the problem is not limited to <code>Serializable</code> extras: <code>Parcelable</code> might read the byte stream originally written from a different structure (in this situation crash is a best case scenario), some extras might be missing, some might hold wrong type of data.</p>
 
-
-
-  
-  <h2>2012</h2>
-
-<article>
-  
-<h1><a href="/blog/2012/09/05/android-sharedpreferences-gotcha/">Android SharedPreferences Gotcha</a></h1>
-<time datetime="2012-09-05T22:26:00+02:00" pubdate><span class='month'>Sep</span> <span class='day'>05</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/gotcha/'>Gotcha</a>, <a class='category' href='/blog/categories/fragmentation/'>fragmentation</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android/">Custom Scrollbar Graphics in Android</a></h1>
-<time datetime="2012-08-30T16:04:00+02:00" pubdate><span class='month'>Aug</span> <span class='day'>30</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/gotcha/'>Gotcha</a>, <a class='category' href='/blog/categories/fragmentation/'>fragmentation</a></span>
-</footer>
-
-
-</article>
-
+<p>Can you prevent this issue? I don&rsquo;t think so, at least not without some sophisticated validation of Intent extras. Considering that this issue is very rare and it goes away after starting the faulty app from somewhere else than recent apps list I don&rsquo;t think you should spend any time trying to fix it, but it&rsquo;s good to know about it, as it might explain some WTF crash reports coming your way.</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-03T22:14:06+02:00" pubdate data-updated="true">Jul 3<span>rd</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/gotcha/'>gotcha</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/06/27/google-i-slash-o-2014-summary/" title="Previous Post: Google I/O 2014 summary">&laquo; Google I/O 2014 summary</a>
+      
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -230,7 +272,10 @@
       var disqus_shortname = 'porcupineprogrammer';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

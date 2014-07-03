@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I&rsquo;ve run into a funny little problem when creating custom drawables recently &ndash; some of the lines were crisp and some were blurred: After &hellip;">
+  <meta name="description" content="The SQL injection through query parameters is the common security issue of any system using SQL database. Android is no different than any other &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,66 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/11/06/sql-injection-through-contentprovider/">SQL Injection Through ContentProvider Projection</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-06T23:45:00+01:00" pubdate data-updated="true">Nov 6<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/11/06/sql-injection-through-contentprovider/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
+
+<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
+
+<p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="s1">&#39;Bobby Tables was here&#39;</span><span class="p">;</span> <span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">Students</span><span class="p">;</span> <span class="c1">--</span>
+</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">sqlite_master</span><span class="p">;</span> <span class="c1">--</span>
+</span><span class='line'><span class="o">*</span> <span class="k">FROM</span> <span class="n">non_public_table_I_found_out_about_using_previous_query</span><span class="p">;</span> <span class="c1">--</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Basically it means that if you exposed a single uri without sanitizing the projection, you have exposed your entire db.</p>
+
+<p>So how do you sanitize your projections? I&rsquo;ve given it some thought and it seems that the only sensible thing to do is allowing only subsets of predefined set of columns.</p>
+
+<p>You cannot allow any expression, because you&rsquo;d allow any expressions, including SELECTs from other tables and allowing certain expressions is not a trivial task.</p>
+
+<p>You shouldn&rsquo;t ignore the provided projection and return all columns, because one of the benefits of using projections is limiting the amount of data retrieved from database. Besides, <a href="https://play.google.com/store/apps/details?id=com.google.android.gm">certain widely used Google application</a> ignores the existence of <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnIndex%28java.lang.String%29"><code>Cursor.getColumnIndex</code></a> method and assumes that the columns will be returned in the same order they were specified in projection. The other app won&rsquo;t work correctly, and the users will probably blame you.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1404,71 +1464,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/08/19/introducing-merry-cook/">Introducing: Merry Cook</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-19T21:10:00+02:00" pubdate data-updated="true">Aug 19<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/08/19/introducing-merry-cook/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/08/19/introducing-merry-cook/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p><img class="center" src="/images/ss3.png"></p>
-
-<p>After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I knew that the &ldquo;Nu, Pogodi!&rdquo; code wasn&rsquo;t my top achievement, and I had to force myself into diving into it, but I feel it was worth it. Few things I think I did right this time:</p>
-
-<ul>
-<li><strong>Do not keep <em>any</em> game logic in QML</strong>. Qt has an excellent state machine framework, which makes writing the game logic in C++ relatively easy.</li>
-<li><strong>Keep the QML/C++ interface as simple as possible</strong>. Send signals from QML to C++ when user takes some action and update the QML UI from the C++ side by changing QProperties on some context property object. I&rsquo;ve actually used two objects for that, because it made testing a bit easier.</li>
-<li><strong>Unit tests</strong>. I&rsquo;ve set up the testing harness using gmock/gtest and I&rsquo;ve used it to unit test some things. I probably would have been fine without them, since Merry Cook is a very simple but a) it forced me to divide stuff into more manageable classes and b) it gave me a sense of accomplishing something early. It&rsquo;s funny, because even though I&rsquo;m absolutely conscious of the latter fact, I think it gave me enough boost to get to the point where I had moved forward with implementation and polishing, because I really wanted to publish this game.</li>
-<li><strong>QProperty helper</strong>. I wrote an abominable macro for reducing the QProperty boilerplate:</li>
-</ul>
-
-
-<script src="https://gist.github.com/chalup/6267728.js"></script>
-
-
-<p></li></p>
-
-<p>Things still on my TODO list:</p>
-
-<ul>
-<li><strong>More tests</strong>. Besides unit tests I&rsquo;d also like to write some integration tests for the state machine setup and connections, but I didn&rsquo;t have time to think how this should be done without making too much state public just for testing. Maybe next time.</li>
-<li><strong>Refactor &ldquo;Nu, Pogodi!&rdquo;</strong>. I jumped straight into new project, but I should have started with refactoring the old crap. On the other hand, it might have sucked out all the motivation out of me, and had I done it, I wouldn&rsquo;t have been writing this post right now. So, maybe next time.</li>
-<li><strong>Passing enums to QML</strong>. I have no idea what I did wrong, but I couldn&rsquo;t get the QML to see my C++ enums. I&rsquo;ve resorted to passing them as simple ints and using magic numbers on QML side, but it&rsquo;s definitely something I should fix. Obviously not now, but next time.</li>
-</ul>
-
-
-<p>Anyways, I&rsquo;m really happy with the final results, especially with the gameplay experience, which I think mimics the original game very well. Try it yourself!</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1486,6 +1481,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
@@ -1499,10 +1498,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/12/android-loaders/">Android Loaders</a>
       </li>
     
   </ul>
