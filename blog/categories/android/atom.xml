@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Android | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-07-03T23:02:59+02:00</updated>
+  <updated>2014-09-05T22:38:26+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,80 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[My Shortest-lived Project Ever]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever/"/>
+    <updated>2014-09-04T21:11:06+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever</id>
+    <content type="html"><![CDATA[<p>Three weeks ago I wrote a <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin. I was super excited by this project because:</p>
+
+<ol>
+<li>It was a Gradle plugin, something I wanted to play with for quite some time</li>
+<li>It was written in Groovy, a language I wanted to play with for quite some time</li>
+<li>It solved a real issue with ProGuard configuration, which was pissing me off for quite some time</li>
+</ol>
+
+
+<h2>On configuring ProGuard</h2>
+
+<p>If you&rsquo;re not familiar with ProGuard, here&rsquo;s the basic info: it&rsquo;s a program which prunes the unused code from your compiled Java program. It can also do other stuff like optimization or code obfuscation and repackaging to make the reverse engineering harder. Sounds good? The catch is that ProGuard sometimes cuts out or obfuscates too much code, which usually breaks the app, especially if you rely on reflection. The trick is to configure it correctly for each library you use, but it&rsquo;s not a trivial task.</p>
+
+<p>The general idea for this plugin was to resolve the dependencies of your Android application and try to find the ProGuard configuration for every one of them. Of course the ProGuard config will not magically appear: the idea was to have a repository of configurations developed by the community.</p>
+
+<h2>On Gradle</h2>
+
+<p>First part of the project went really smooth, thanks to the <a href="http://www.gradle.org/docs/current/userguide/userguide.html">amazing documentation</a>. I didn&rsquo;t need to do any fancy stuff, so I was able to configure the basic scaffolding in no time at all. Docs for android gradle plugin are pretty much non-existent, but using the imported sources and <a href="https://bitbucket.org/hvisser/android-apt">android-apt</a> plugin by <a href="https://twitter.com/botteaap">Hugo Visser</a> as a base for Android related tasks I was able to get my plugin up and running.</p>
+
+<h2>On Groovy</h2>
+
+<p>I saw the Groovy for the first time at KrakDroid conference, when <a href="https://github.com/wojtekerbetowski">Wojciech Erbetowski</a> converted boring JUnit tests into <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> goodness. It looked nice, but when I started coding in Groovy, my love for this language faded.</p>
+
+<p>There are lot of things I take for granted as a Java developer: amazing IDE, instant feedback when I screw something up and documentation for the code under my cursor at my fingertips. Maybe switching to Groovy, Ruby or Python requires some mindset change I haven&rsquo;t fully embraced, but I simply cannot imagine why would I switch to the language that effectively forces me to write my code in Notepad™.</p>
+
+<p>I think the main problem I have with Groovy stems for the fact that there are some APIs that wouldn&rsquo;t typecheck in regular Java. Consider this code:</p>
+
+<p>```groovy
+if (!project.android[&ldquo;productFlavors&rdquo;].isEmpty()) {</p>
+
+<pre><code>throw new ProjectConfigurationException("The build flavors are not supported yet", null)
+</code></pre>
+
+<p>}</p>
+
+<p>def obfuscatedVariants = project.android[&ldquo;applicationVariants&rdquo;].findAll { v &ndash;> v.obfuscation != null }
+```</p>
+
+<p>It&rsquo;s a classic type of what I call &ldquo;string typing&rdquo;: depending on the key used in <code>project.android[]</code> access you get collection of objects of completely different type. As a consequence, the IDE cannot provide you with autocompletion or documentation for the collection contents.</p>
+
+<p>Another example is the public API of Grgit library. Theoretically you can call <code>Grgit.clone(...)</code>, but there is no such method as <code>clone</code> in <code>Grgit</code> class, instead you have this code:</p>
+
+<p>```groovy
+class Grgit {</p>
+
+<pre><code>private static final Map STATIC_OPERATIONS = [init: InitOp, clone: CloneOp]
+
+static {
+    Grgit.metaClass.static.methodMissing = { name, args -&gt;
+        OpSyntaxUtil.tryOp(Grgit, STATIC_OPERATIONS, [] as Object[], name, args)
+    }
+}
+</code></pre>
+
+<p>} <br/>
+```</p>
+
+<p>I don&rsquo;t see what&rsquo;s wrong with the good ol' static method and what do you achieve by using <code>methodMissing</code> (besides confusing the IDE and breaking autocomplete/javadocs). Maybe I&rsquo;m just grupy old fart with brain eroded by too long exposure to Java, but Groovy is definitely not a language for me. I&rsquo;ll put up with it if I ever want to write another gradle plugin, but it&rsquo;s not going to be my go to language.</p>
+
+<h2>What&rsquo;s up with the blog title?</h2>
+
+<p>Few hours after publishing my project, another solution for ProGuard configuration appeared. It turns out, if you use gradle to build your library, you can configure <code>consumerProguardFiles</code> property to include in your aar package a ProGuard configuration that should be used by the users of your library. The logical next step is creating the library project containing only the ProGuard configuration for the most popular libraries out there. And that&rsquo;s exactly what <a href="https://bitbucket.org/littlerobots/squadleader">squadleader</a> project is.</p>
+
+<p>It&rsquo;s not as flexible solution as my <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin, but it&rsquo;s much simpler, much easier to contribute to and the net effect is the same. In this light I chose to put my project on hold and redirect developers to squadleader page.</p>
+
+<p>Despite of that, I&rsquo;m glad I worked on this project. I&rsquo;m very excited by the fact that you can easily build an useful tool that&rsquo;s incredibly easy to use. Using gradle for a new build system was a great call.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Android Recent Apps List and Intent Extras]]></title>
@@ -743,82 +817,6 @@ data.registerContentObserver(mObserver);
 <p>Extending <code>AbstractObservingLoader</code> to load some data from <code>SQLiteDatabase</code> and subscribe to some event bus for model change events should be trivial, and you&rsquo;d get a lot of things for free &ndash; performing loads in background, cancelling loads, caching results, invalidating cache, and so on.</p>
 
 <p>Having said that, <code>Loaders</code> are not solution to every single problem. They are coupled with activity lifecycle, so they are not suitable for long running tasks that should not be interrupted when user navigates away. In these cases the <code>IntentService</code>, or some other <code>Service</code> implementation is a better choice.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[ProGuard in Ant Debug Builds]]></title>
-    <link href="http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds/"/>
-    <updated>2014-06-10T09:24:00+02:00</updated>
-    <id>http://chalup.github.io/blog/2014/06/10/enabling-proguard-for-debug-builds</id>
-    <content type="html"><![CDATA[<p>The post title raises two questions: &ldquo;why would you want to use ProGuard in debug builds?&rdquo; and &ldquo;why the hell are you still using ant?!&rdquo;.</p>
-
-<p>The answer for the first question is simple, so let&rsquo;s start with that one. A while ago we hit the <a href="https://code.google.com/p/android/issues/detail?id=20814">infamous 64k method limit</a>. The most reasonable option is to use ProGuard to remove unused code, especially from the dependencies. For some unreasonable option, see the Jesse Wilson&rsquo;s comments in the linked bug report.</p>
-
-<p>And why ant instead of Maven, gradle, buck or any other non-antique build tool? We&rsquo;ve started the project in dark ages (in 2011), when the android Maven plugin was still under heavy development and we encontered several issues with it. Ant builds just worked, so we set it up and nobody had to touch it for several months. At one point we considered switching to gradle, because setting up some annotation processors with ant was a pain in the ass, but again there were some issues with using gradle in our setup at the time (IIRC it was not possible to use local aar dependencies, and the builds were sooooooo slooooooow), so we did not switch.</p>
-
-<p>It all boils down to this: I can spend several hours working on some useful feature or library or I can use this time to switch to another build system. Until the latter option gives me some real benefits, I&rsquo;d rather work on some features.</p>
-
-<p>Anyways, using ProGuard for IDE builds is easy: go to Project Structure, Facets, and fill appropriate options on ProGuard tab for your project. That&rsquo;s fine for developers workflow, but not for CI.</p>
-
-<p>To make ProGuard work with ant you need to customize your build.xml. First, if this is your first cusomization, change the version tag in build.xml as recommended:</p>
-
-<p>``` xml</p>
-
-<!-- version-tag: custom -->
-
-
-<p>```</p>
-
-<p>Then override <code>-debug-obfuscation-check</code> and <code>-release-obfuscation-check</code> targets:</p>
-
-<p>``` xml
-<target name="-set-proguard-config"></p>
-
-<pre><code>&lt;condition property="proguard.config" value="proguard.cfg" else="proguard_debug.cfg"&gt;
-    &lt;isfalse value="${build.is.packaging.debug}"/&gt;
-&lt;/condition&gt;
-</code></pre>
-
-<p></target></p>
-
-<p><target name="-debug-obfuscation-check" depends="-set-proguard-config"></p>
-
-<pre><code>&lt;!-- enable proguard even in debug mode --&gt;
-&lt;property name="proguard.enabled" value="true"/&gt;
-&lt;echo&gt;proguard.config is ${proguard.config}&lt;/echo&gt;
-
-&lt;!-- Secondary dx input (jar files) is empty since all the jar files will be in the obfuscated jar --&gt;
-&lt;path id="out.dex.jar.input.ref" /&gt;
-</code></pre>
-
-<p></target></p>
-
-<p><target name="-release-obfuscation-check" depends="-set-proguard-config"></p>
-
-<pre><code>&lt;echo level="info"&gt;proguard.config is ${proguard.config}&lt;/echo&gt;
-&lt;condition property="proguard.enabled" value="true" else="false"&gt;
-    &lt;and&gt;
-        &lt;isset property="build.is.mode.release" /&gt;
-        &lt;isset property="proguard.config" /&gt;
-    &lt;/and&gt;
-&lt;/condition&gt;
-&lt;if condition="${proguard.enabled}"&gt;
-    &lt;then&gt;
-        &lt;echo level="info"&gt;Proguard.config is enabled&lt;/echo&gt;
-        &lt;!-- Secondary dx input (jar files) is empty since all the
-             jar files will be in the obfuscated jar --&gt;
-        &lt;path id="out.dex.jar.input.ref" /&gt;
-    &lt;/then&gt;
-&lt;/if&gt;
-</code></pre>
-
-<p></target>
-```</p>
-
-<p>Note that I&rsquo;ve also introduced a <code>-set-proguard-config</code> task to be able to select different configuration for debug and release builds. We do not want to do obfuscation or advanced optimisations in debug, a simple dead code pruning is all we need. Since ant properties are immutable, this means that you <strong>HAVE TO</strong> remove proguard.config from your ant.properties.</p>
-
-<p>I&rsquo;m not exactly sure when this happened, but at some point our build times skyrocketed to over 3 minutes. It&rsquo;s fine for release or CI scripts, but absolutely unnacceptable for developers workflow. Fortunately it was enough to bump the heap size for Proguard. In Android Studio go to Settings, Compiler, Android Compilers and pass <code>-Xmx1024m</code> to ProGuard VM options.</p>
 ]]></content>
   </entry>
   

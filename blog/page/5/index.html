@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I just spend few hours analyzing and fixing a memory leak in Android application. With every orientation change the full Context, including the whole &hellip;">
+  <meta name="description" content="The Google I/O 2013 has come and gone and one of the many things left in its wake is the new revision of Android SDK Tools and ADT plugin for Eclipse &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,51 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/">Upgrading to Android SDK Tools Revision 22</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-22T23:31:00+02:00" pubdate data-updated="true">May 22<span>nd</span>, 2013</time>
+        
+           | <a href="/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>The Google I/O 2013 has come and gone and one of the many things left in its wake is the new revision of Android SDK Tools and ADT plugin for Eclipse. If you haven&rsquo;t let Eclipse go in favor of new hot <a href="http://developer.android.com/sdk/installing/studio.html">Android Studio</a> (which is what Mark Murphy, a.k.a. commons guy, <a href="http://commonsware.com/blog/2013/05/16/android-studio-early-access-preview-and-you.html">recommends</a> BTW) and you upgraded to the latest Android SDK Tools, you&rsquo;ll probably have some issues with building your old projects.</p>
+
+<p>After installing all the updates from Android SDK Manager and updating the ADT Eclipse plugin your projects will simply fail to build, with the errors pointing to the R class in gen folder. If you try to build the project with ant you&rsquo;ll get more meaningful &ldquo;no build tools installed&rdquo; message. After re-running the Android SDK Manager, you should see an additional item in Tools section called Build-tools. Go ahead and install it.</p>
+
+<p>Now your project will build (you might have to restart the Eclipse), but if you use any external libraries from your projects libs directory, your app will crash on the first call using this libs. To fix this you have to go to the project Properties, Java Build Path, Order and Export tab and check the &ldquo;Android Private Libraries&rdquo; item. The previous name for this item was &ldquo;Android Dependencies&rdquo; and apparently the build rules for those two are not updated correctly.</p>
+
+<p>Of course new projects created with revision 22 of Android tools doesn&rsquo;t require jumping through all those hoops.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -853,74 +898,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/12/18/krakdroid-aftermath/">KrakDroid Aftermath</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-12-18T09:03:00+01:00" pubdate data-updated="true">Dec 18<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/12/18/krakdroid-aftermath/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/12/18/krakdroid-aftermath/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I finally got some sleep after a really busy weekend. For the first time I had an opportunity to give a talk at the programming related conference. I was also responsible for a programming contest organized by the company I work at, I tried to push the new release of our product and, on top of that, I had to do some Christmas related stuff, so I didn&rsquo;t get much sleep.</p>
-
-<p>Let&rsquo;s get back to the programming. I gave the talk about standard synchronization pattern on Android (<code>SyncAdapter</code> + <code>Authenticator</code> + <code>ContentProvider</code>) during this year&rsquo;s edition of KrakDroid conference. Here are the slides:</p>
-
-<iframe allowfullscreen="" frameborder="0" height="356" marginheight="0" marginwidth="0" mozallowfullscreen="" scrolling="no" src="http://www.slideshare.net/slideshow/embed_code/15668008" style="border-width: 1px 1px 0; border: 1px solid #CCC; margin-bottom: 5px;" webkitallowfullscreen="" width="427"> </iframe>
-
-
-<p>
-<strong> <a href="http://www.slideshare.net/chalup/sync-on-android">Sync on Android</a> </strong> from <strong><a href="http://www.slideshare.net/chalup">chalup</a></strong></p>
-
-<p>The link to recorded video can be found in the slideshare content description. I won&rsquo;t bother posting it here, because a) I gave the talk in Polish, and I try to keep the content of this blog in English b) I was really tired, at one point of the talk I had to stop and ask myself &ldquo;What the hell am I trying to say&rdquo;.</p>
-
-<p>Although my talk was average and there are many things I might have done better, I&rsquo;m very happy I had an opportunity to give this talk. Public speaking is definitely outside of my comfort zone and I learned a lot. Here&rsquo;s the &ldquo;conference speaker checklist&rdquo; for my future self:</p>
-
-<ol>
-<li>Get some sleep</li>
-<li><p>Do the test run of the talk in front of the mirror</p>
-
-<p> I finished the slides for my presentation half an hour before giving it, so I didn&rsquo;t have a chance to rehearse it. There were few points during my talk when adding a slide with a summary would make things much clearer. Which brings me to the next point:</p></li>
-<li><p>Recap</p>
-
-<p> I&rsquo;m not sure how much the listeners who didn&rsquo;t knew anything about sync will remember from my talk. The recaps could help them remember at least some keywords they would be able to google later.</p></li>
-<li><p>Do the test run of the talk in front of other people</p>
-
-<p> But not any other people &ndash; you want your audience to be critical and at least a bit familiar with the topic. You want someone who will tell you that this part of the talk is boring or that part is not clear.</p></li>
-<li><p>Get more sleep</p></li>
-</ol>
-
-
-<p>And finally, do not freak out &ndash; the hardest part is saying &ldquo;Hello, my name is&hellip;&rdquo;, the rest will pour out of you.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -938,6 +915,10 @@ Things get even funnier here: when I used the <a href="http://developer.android.
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
       </li>
     
@@ -951,10 +932,6 @@ Things get even funnier here: when I used the <a href="http://developer.android.
     
       <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
   </ul>

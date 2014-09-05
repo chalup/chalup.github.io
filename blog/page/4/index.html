@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="After a long hiatus since November 2011 I have released another clone of classic Russian handheld game from the &lsquo;80s &ndash; Merry Cook. I &hellip;">
+  <meta name="description" content="A while ago I wrote about removing the logs from release builds using Proguard. As usual, I&rsquo;ve found a gotcha that might cost you a couple &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,142 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/20/proguard-gotcha/">Proguard Gotcha</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-20T19:53:00+02:00" pubdate data-updated="true">Aug 20<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/08/20/proguard-gotcha/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/08/20/proguard-gotcha/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>A while ago I wrote about <a href="/blog/2012/10/17/android-protip-remove-debug-logs-from">removing the logs from release builds using Proguard</a>. As usual, I&rsquo;ve found a gotcha that might cost you a couple hours of head scratching.</p>
+
+<p>Let&rsquo;s say that we have a code like this somewhere:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">porcupineprogrammer</span><span class="o">.</span><span class="na">proguardgotcha</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.app.Activity</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.os.Bundle</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.util.Log</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainActivity</span> <span class="kd">extends</span> <span class="n">Activity</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TAG</span> <span class="o">=</span> <span class="s">&quot;ProguardGotcha&quot;</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="n">doNotRunOnProduction</span><span class="o">());</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">private</span> <span class="n">String</span> <span class="nf">doNotRunOnProduction</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&quot;FIRE ZE MISSILES!&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="s">&quot;Harmless log message&quot;</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>doNotRunOnProduction()</code> method might perform some expensive database query, send some data over the network or launch intercontinental missiles &ndash; anyways do something that you don&rsquo;t want to happen in production app. If you run the code on the debug build you&rsquo;ll of course get the following logs.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="mi">08</span><span class="o">-</span><span class="mi">20</span> <span class="mi">19</span><span class="o">:</span><span class="mi">31</span><span class="o">:</span><span class="mf">34.183</span>    <span class="mi">1819</span><span class="o">-</span><span class="mi">1819</span><span class="o">/</span><span class="n">com</span><span class="o">.</span><span class="na">porcupineprogrammer</span><span class="o">.</span><span class="na">proguardgotcha</span> <span class="n">E</span><span class="o">/</span><span class="nl">ProguardGotcha:</span> <span class="n">FIRE</span> <span class="n">ZE</span> <span class="n">MISSILES</span><span class="o">!</span>
+</span><span class='line'><span class="mi">08</span><span class="o">-</span><span class="mi">20</span> <span class="mi">19</span><span class="o">:</span><span class="mi">31</span><span class="o">:</span><span class="mf">34.183</span>    <span class="mi">1819</span><span class="o">-</span><span class="mi">1819</span><span class="o">/</span><span class="n">com</span><span class="o">.</span><span class="na">porcupineprogrammer</span><span class="o">.</span><span class="na">proguardgotcha</span> <span class="n">D</span><span class="o">/</span><span class="nl">ProguardGotcha:</span> <span class="n">Harmless</span> <span class="n">log</span> <span class="n">message</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, let&rsquo;s add Proguard config that removes all the <code>Log.d()</code> calls:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">-</span><span class="n">assumenosideeffects</span> <span class="kd">class</span> <span class="nc">android</span><span class="o">.</span><span class="na">util</span><span class="o">.</span><span class="na">Log</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="o">***</span> <span class="n">d</span><span class="o">(...);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We might expect the <code>Log.e()</code> call to be gone as well, but alas, here is what we get:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="mi">08</span><span class="o">-</span><span class="mi">20</span> <span class="mi">19</span><span class="o">:</span><span class="mi">34</span><span class="o">:</span><span class="mf">45.733</span>    <span class="mi">2078</span><span class="o">-</span><span class="mi">2078</span><span class="o">/</span><span class="n">com</span><span class="o">.</span><span class="na">porcupineprogrammer</span><span class="o">.</span><span class="na">proguardgotcha</span> <span class="n">E</span><span class="o">/</span><span class="nl">ProguardGotcha:</span> <span class="n">FIRE</span> <span class="n">ZE</span> <span class="n">MISSILES</span><span class="o">!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The key point to understanding what is happening here is the fact that the Proguard does not operate on the source code, but on the compiled bytecode. In this case, what the Proguard processes is more like this code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">String</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">doNotRunOnProduction</span><span class="o">();</span>
+</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="n">tmp</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One might argue that the temporary variable is not used and Proguard should remove it as well. Actually that might happen if you add some other Proguard configuration settings, but the point of this blog post is that when you specify that you want to remove calls to <code>Log.d()</code>, you shouldn&rsquo;t expect that any other calls will be affected. They might, but if your code really launches the missiles (or does something with similar effect for your users), you don&rsquo;t want to bet on this.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -842,51 +978,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/">Upgrading to Android SDK Tools Revision 22</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-22T23:31:00+02:00" pubdate data-updated="true">May 22<span>nd</span>, 2013</time>
-        
-           | <a href="/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/05/22/upgrading-to-android-sdk-tools-revision/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>The Google I/O 2013 has come and gone and one of the many things left in its wake is the new revision of Android SDK Tools and ADT plugin for Eclipse. If you haven&rsquo;t let Eclipse go in favor of new hot <a href="http://developer.android.com/sdk/installing/studio.html">Android Studio</a> (which is what Mark Murphy, a.k.a. commons guy, <a href="http://commonsware.com/blog/2013/05/16/android-studio-early-access-preview-and-you.html">recommends</a> BTW) and you upgraded to the latest Android SDK Tools, you&rsquo;ll probably have some issues with building your old projects.</p>
-
-<p>After installing all the updates from Android SDK Manager and updating the ADT Eclipse plugin your projects will simply fail to build, with the errors pointing to the R class in gen folder. If you try to build the project with ant you&rsquo;ll get more meaningful &ldquo;no build tools installed&rdquo; message. After re-running the Android SDK Manager, you should see an additional item in Tools section called Build-tools. Go ahead and install it.</p>
-
-<p>Now your project will build (you might have to restart the Eclipse), but if you use any external libraries from your projects libs directory, your app will crash on the first call using this libs. To fix this you have to go to the project Properties, Java Build Path, Order and Export tab and check the &ldquo;Android Private Libraries&rdquo; item. The previous name for this item was &ldquo;Android Dependencies&rdquo; and apparently the build rules for those two are not updated correctly.</p>
-
-<p>Of course new projects created with revision 22 of Android tools doesn&rsquo;t require jumping through all those hoops.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -904,6 +995,10 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
       </li>
     
@@ -917,10 +1012,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
     
       <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
   </ul>

@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Every Symbian Qt application in Nokia Store consists of two parts: metadata and content files. Metadata is the information about the application &hellip;">
+  <meta name="description" content="Qt SDK comes with great documentation and examples, but there is hardly any information about handling QML errors. All examples assume that nothing &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,107 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/01/handling-qml-errors-101/">Handling QML Errors 101</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-01T12:02:00+01:00" pubdate data-updated="true">Feb 1<span>st</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/01/handling-qml-errors-101/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/01/handling-qml-errors-101/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Qt SDK comes with great documentation and examples, but there is hardly any information about handling QML errors. All examples assume that nothing can go wrong during runtime, which is a bit naive approach. Even if your app is completely bug free, the users will find a way to shoot themselves in the foot. They will install your app and then uninstall key plugins ignoring all warnings from system. They will install your app on SD card and then delete some files for some unfathomable reason. And then they will blame you.</p>
+
+<p>Let&rsquo;s consider what happens if you have an error in your main QML file? User sees the black screen, gets pissed off, uninstalls your app and gives it a negative review in Nokia store. Not good. Let&rsquo;s try something different:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">QApplication</span> <span class="n">app</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">QDeclarativeView</span> <span class="n">canvas</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">canvas</span><span class="p">.</span><span class="n">setSource</span><span class="p">(</span><span class="n">QLatin1String</span><span class="p">(</span><span class="s">&quot;main.qml&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">canvas</span><span class="p">.</span><span class="n">errors</span><span class="p">().</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// handle errors</span>
+</span><span class='line'>        <span class="n">QMessageBox</span> <span class="n">msgBox</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">msgBox</span><span class="p">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&quot;Uh oh, something went terribly wrong!&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">msgBox</span><span class="p">.</span><span class="n">setInformativeText</span><span class="p">(</span>
+</span><span class='line'>            <span class="s">&quot;We&#39;re sorry, but it seems there &quot;</span>
+</span><span class='line'>            <span class="s">&quot;are some problems with running &quot;</span>
+</span><span class='line'>            <span class="s">&quot;our application on your phone.&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">msgBox</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// optionally set the screen orientation</span>
+</span><span class='line'>    <span class="c1">// call show/showFullscreen/showMaximized</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="n">app</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Few notes about the snippet above:</p>
+
+<ul>
+<li>If you&rsquo;re using the QML Application template from the recent version of Qt Creator you probably have a generated QmlApplicationViewer class instead of raw QDeclarativeView, but the general idea stays the same.</li>
+<li>Error handling section above is only a stub. You may ask user to reinstall the application. You may display more information about the error along with some contact information. If your application uses network connection, you should probably ask user if he wants to send an error report.</li>
+<li>If you use the QMessageBox or other modal dialog and lock the screen orientation, you mustn&rsquo;t lock the orientation before showing the dialog. In current version of Qt (4.7.4) there is a bug and in case of forced orientation change only dialog buttons are displayed.</li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -365,6 +466,10 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
       </li>
     
@@ -378,10 +483,6 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
     
       <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
   </ul>

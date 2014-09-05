@@ -1,0 +1,376 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>My Shortest-lived Project Ever - Porcupine Programmer</title>
+  <meta name="author" content="Jerzy Chalupski">
+
+  
+  <meta name="description" content="Three weeks ago I wrote a proguard-please plugin. I was super excited by this project because: It was a Gradle plugin, something I wanted to play &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-51611487-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Porcupine Programmer</a></h1>
+  
+    <h2>Programming rants, random stuff and some more programming.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:chalup.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">My Shortest-lived Project Ever</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-04T21:11:06+02:00" pubdate data-updated="true">Sep 4<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Three weeks ago I wrote a <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin. I was super excited by this project because:</p>
+
+<ol>
+<li>It was a Gradle plugin, something I wanted to play with for quite some time</li>
+<li>It was written in Groovy, a language I wanted to play with for quite some time</li>
+<li>It solved a real issue with ProGuard configuration, which was pissing me off for quite some time</li>
+</ol>
+
+
+<h2>On configuring ProGuard</h2>
+
+<p>If you&rsquo;re not familiar with ProGuard, here&rsquo;s the basic info: it&rsquo;s a program which prunes the unused code from your compiled Java program. It can also do other stuff like optimization or code obfuscation and repackaging to make the reverse engineering harder. Sounds good? The catch is that ProGuard sometimes cuts out or obfuscates too much code, which usually breaks the app, especially if you rely on reflection. The trick is to configure it correctly for each library you use, but it&rsquo;s not a trivial task.</p>
+
+<p>The general idea for this plugin was to resolve the dependencies of your Android application and try to find the ProGuard configuration for every one of them. Of course the ProGuard config will not magically appear: the idea was to have a repository of configurations developed by the community.</p>
+
+<h2>On Gradle</h2>
+
+<p>First part of the project went really smooth, thanks to the <a href="http://www.gradle.org/docs/current/userguide/userguide.html">amazing documentation</a>. I didn&rsquo;t need to do any fancy stuff, so I was able to configure the basic scaffolding in no time at all. Docs for android gradle plugin are pretty much non-existent, but using the imported sources and <a href="https://bitbucket.org/hvisser/android-apt">android-apt</a> plugin by <a href="https://twitter.com/botteaap">Hugo Visser</a> as a base for Android related tasks I was able to get my plugin up and running.</p>
+
+<h2>On Groovy</h2>
+
+<p>I saw the Groovy for the first time at KrakDroid conference, when <a href="https://github.com/wojtekerbetowski">Wojciech Erbetowski</a> converted boring JUnit tests into <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> goodness. It looked nice, but when I started coding in Groovy, my love for this language faded.</p>
+
+<p>There are lot of things I take for granted as a Java developer: amazing IDE, instant feedback when I screw something up and documentation for the code under my cursor at my fingertips. Maybe switching to Groovy, Ruby or Python requires some mindset change I haven&rsquo;t fully embraced, but I simply cannot imagine why would I switch to the language that effectively forces me to write my code in Notepad™.</p>
+
+<p>I think the main problem I have with Groovy stems for the fact that there are some APIs that wouldn&rsquo;t typecheck in regular Java. Consider this code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="k">if</span> <span class="o">(!</span><span class="n">project</span><span class="o">.</span><span class="na">android</span><span class="o">[</span><span class="s2">&quot;productFlavors&quot;</span><span class="o">].</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">throw</span> <span class="k">new</span> <span class="nf">ProjectConfigurationException</span><span class="o">(</span><span class="s2">&quot;The build flavors are not supported yet&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">def</span> <span class="n">obfuscatedVariants</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">android</span><span class="o">[</span><span class="s2">&quot;applicationVariants&quot;</span><span class="o">].</span><span class="na">findAll</span> <span class="o">{</span> <span class="n">v</span> <span class="o">-&gt;</span> <span class="n">v</span><span class="o">.</span><span class="na">obfuscation</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s a classic type of what I call &ldquo;string typing&rdquo;: depending on the key used in <code>project.android[]</code> access you get collection of objects of completely different type. As a consequence, the IDE cannot provide you with autocompletion or documentation for the collection contents.</p>
+
+<p>Another example is the public API of Grgit library. Theoretically you can call <code>Grgit.clone(...)</code>, but there is no such method as <code>clone</code> in <code>Grgit</code> class, instead you have this code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="kd">class</span> <span class="nc">Grgit</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Map</span> <span class="n">STATIC_OPERATIONS</span> <span class="o">=</span> <span class="o">[</span><span class="nl">init:</span> <span class="n">InitOp</span><span class="o">,</span> <span class="nl">clone:</span> <span class="n">CloneOp</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">static</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">Grgit</span><span class="o">.</span><span class="na">metaClass</span><span class="o">.</span><span class="na">static</span><span class="o">.</span><span class="na">methodMissing</span> <span class="o">=</span> <span class="o">{</span> <span class="n">name</span><span class="o">,</span> <span class="n">args</span> <span class="o">-&gt;</span>
+</span><span class='line'>          <span class="n">OpSyntaxUtil</span><span class="o">.</span><span class="na">tryOp</span><span class="o">(</span><span class="n">Grgit</span><span class="o">,</span> <span class="n">STATIC_OPERATIONS</span><span class="o">,</span> <span class="o">[]</span> <span class="k">as</span> <span class="n">Object</span><span class="o">[],</span> <span class="n">name</span><span class="o">,</span> <span class="n">args</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>  
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I don&rsquo;t see what&rsquo;s wrong with the good ol&#8217; static method and what do you achieve by using <code>methodMissing</code> (besides confusing the IDE and breaking autocomplete/javadocs). Maybe I&rsquo;m just grupy old fart with brain eroded by too long exposure to Java, but Groovy is definitely not a language for me. I&rsquo;ll put up with it if I ever want to write another gradle plugin, but it&rsquo;s not going to be my go to language.</p>
+
+<h2>What&rsquo;s up with the blog title?</h2>
+
+<p>Few hours after publishing my project, another solution for ProGuard configuration appeared. It turns out, if you use gradle to build your library, you can configure <code>consumerProguardFiles</code> property to include in your aar package a ProGuard configuration that should be used by the users of your library. The logical next step is creating the library project containing only the ProGuard configuration for the most popular libraries out there. And that&rsquo;s exactly what <a href="https://bitbucket.org/littlerobots/squadleader">squadleader</a> project is.</p>
+
+<p>It&rsquo;s not as flexible solution as my <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin, but it&rsquo;s much simpler, much easier to contribute to and the net effect is the same. In this light I chose to put my project on hold and redirect developers to squadleader page.</p>
+
+<p>Despite of that, I&rsquo;m glad I worked on this project. I&rsquo;m very excited by the fact that you can easily build an useful tool that&rsquo;s incredibly easy to use. Using gradle for a new build system was a great call.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-04T21:11:06+02:00" pubdate data-updated="true">Sep 4<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/groovy/'>Groovy</a>, <a class='category' href='/blog/categories/proguard/'>ProGuard</a>, <a class='category' href='/blog/categories/gradle/'>gradle</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/" title="Previous Post: Android recent apps list and Intent extras">&laquo; Android recent apps list and Intent extras</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What's Next?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/chalup">@chalup</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'chalup',
+            count: 0,
+            skip_forks: true,
+            filter_repos: [ "microorm", "thneed", "dawggenerator", "cerberus" ],
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/106340839330487061995?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Jerzy Chalupski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'porcupineprogrammer';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

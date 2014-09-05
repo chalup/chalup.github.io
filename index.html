@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, &hellip;">
+  <meta name="description" content="Three weeks ago I wrote a proguard-please plugin. I was super excited by this project because: It was a Gradle plugin, something I wanted to play &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,118 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-04T21:11:06+02:00" pubdate data-updated="true">Sep 4<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/09/04/my-shortest-lived-project-ever/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Three weeks ago I wrote a <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin. I was super excited by this project because:</p>
+
+<ol>
+<li>It was a Gradle plugin, something I wanted to play with for quite some time</li>
+<li>It was written in Groovy, a language I wanted to play with for quite some time</li>
+<li>It solved a real issue with ProGuard configuration, which was pissing me off for quite some time</li>
+</ol>
+
+
+<h2>On configuring ProGuard</h2>
+
+<p>If you&rsquo;re not familiar with ProGuard, here&rsquo;s the basic info: it&rsquo;s a program which prunes the unused code from your compiled Java program. It can also do other stuff like optimization or code obfuscation and repackaging to make the reverse engineering harder. Sounds good? The catch is that ProGuard sometimes cuts out or obfuscates too much code, which usually breaks the app, especially if you rely on reflection. The trick is to configure it correctly for each library you use, but it&rsquo;s not a trivial task.</p>
+
+<p>The general idea for this plugin was to resolve the dependencies of your Android application and try to find the ProGuard configuration for every one of them. Of course the ProGuard config will not magically appear: the idea was to have a repository of configurations developed by the community.</p>
+
+<h2>On Gradle</h2>
+
+<p>First part of the project went really smooth, thanks to the <a href="http://www.gradle.org/docs/current/userguide/userguide.html">amazing documentation</a>. I didn&rsquo;t need to do any fancy stuff, so I was able to configure the basic scaffolding in no time at all. Docs for android gradle plugin are pretty much non-existent, but using the imported sources and <a href="https://bitbucket.org/hvisser/android-apt">android-apt</a> plugin by <a href="https://twitter.com/botteaap">Hugo Visser</a> as a base for Android related tasks I was able to get my plugin up and running.</p>
+
+<h2>On Groovy</h2>
+
+<p>I saw the Groovy for the first time at KrakDroid conference, when <a href="https://github.com/wojtekerbetowski">Wojciech Erbetowski</a> converted boring JUnit tests into <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> goodness. It looked nice, but when I started coding in Groovy, my love for this language faded.</p>
+
+<p>There are lot of things I take for granted as a Java developer: amazing IDE, instant feedback when I screw something up and documentation for the code under my cursor at my fingertips. Maybe switching to Groovy, Ruby or Python requires some mindset change I haven&rsquo;t fully embraced, but I simply cannot imagine why would I switch to the language that effectively forces me to write my code in Notepad™.</p>
+
+<p>I think the main problem I have with Groovy stems for the fact that there are some APIs that wouldn&rsquo;t typecheck in regular Java. Consider this code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="k">if</span> <span class="o">(!</span><span class="n">project</span><span class="o">.</span><span class="na">android</span><span class="o">[</span><span class="s2">&quot;productFlavors&quot;</span><span class="o">].</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">throw</span> <span class="k">new</span> <span class="nf">ProjectConfigurationException</span><span class="o">(</span><span class="s2">&quot;The build flavors are not supported yet&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">def</span> <span class="n">obfuscatedVariants</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">android</span><span class="o">[</span><span class="s2">&quot;applicationVariants&quot;</span><span class="o">].</span><span class="na">findAll</span> <span class="o">{</span> <span class="n">v</span> <span class="o">-&gt;</span> <span class="n">v</span><span class="o">.</span><span class="na">obfuscation</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s a classic type of what I call &ldquo;string typing&rdquo;: depending on the key used in <code>project.android[]</code> access you get collection of objects of completely different type. As a consequence, the IDE cannot provide you with autocompletion or documentation for the collection contents.</p>
+
+<p>Another example is the public API of Grgit library. Theoretically you can call <code>Grgit.clone(...)</code>, but there is no such method as <code>clone</code> in <code>Grgit</code> class, instead you have this code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="kd">class</span> <span class="nc">Grgit</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Map</span> <span class="n">STATIC_OPERATIONS</span> <span class="o">=</span> <span class="o">[</span><span class="nl">init:</span> <span class="n">InitOp</span><span class="o">,</span> <span class="nl">clone:</span> <span class="n">CloneOp</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">static</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">Grgit</span><span class="o">.</span><span class="na">metaClass</span><span class="o">.</span><span class="na">static</span><span class="o">.</span><span class="na">methodMissing</span> <span class="o">=</span> <span class="o">{</span> <span class="n">name</span><span class="o">,</span> <span class="n">args</span> <span class="o">-&gt;</span>
+</span><span class='line'>          <span class="n">OpSyntaxUtil</span><span class="o">.</span><span class="na">tryOp</span><span class="o">(</span><span class="n">Grgit</span><span class="o">,</span> <span class="n">STATIC_OPERATIONS</span><span class="o">,</span> <span class="o">[]</span> <span class="k">as</span> <span class="n">Object</span><span class="o">[],</span> <span class="n">name</span><span class="o">,</span> <span class="n">args</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>  
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I don&rsquo;t see what&rsquo;s wrong with the good ol&#8217; static method and what do you achieve by using <code>methodMissing</code> (besides confusing the IDE and breaking autocomplete/javadocs). Maybe I&rsquo;m just grupy old fart with brain eroded by too long exposure to Java, but Groovy is definitely not a language for me. I&rsquo;ll put up with it if I ever want to write another gradle plugin, but it&rsquo;s not going to be my go to language.</p>
+
+<h2>What&rsquo;s up with the blog title?</h2>
+
+<p>Few hours after publishing my project, another solution for ProGuard configuration appeared. It turns out, if you use gradle to build your library, you can configure <code>consumerProguardFiles</code> property to include in your aar package a ProGuard configuration that should be used by the users of your library. The logical next step is creating the library project containing only the ProGuard configuration for the most popular libraries out there. And that&rsquo;s exactly what <a href="https://bitbucket.org/littlerobots/squadleader">squadleader</a> project is.</p>
+
+<p>It&rsquo;s not as flexible solution as my <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin, but it&rsquo;s much simpler, much easier to contribute to and the net effect is the same. In this light I chose to put my project on hold and redirect developers to squadleader page.</p>
+
+<p>Despite of that, I&rsquo;m glad I worked on this project. I&rsquo;m very excited by the fact that you can easily build an useful tool that&rsquo;s incredibly easy to use. Using gradle for a new build system was a great call.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1861,59 +1973,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/">Use minSdkVersion=10 for Libraries</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-02-25T21:42:00+01:00" pubdate data-updated="true">Feb 25<span>th</span>, 2014</time>
-        
-           | <a href="/blog/2014/02/25/use-minsdkversion10-for-libraries/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2014/02/25/use-minsdkversion10-for-libraries/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I&rsquo;ve pushed new versions of <a href="https://github.com/chalup/microorm">microorm</a> and <a href="https://github.com/chalup/thneed">thneed</a> to Maven Central today. The most notable change for both libraries is dropping the support for Android 2.2 and earlier versions. The same change was applied to all Android libraries open sourced by <a href="https://github.com/orgs/futuresimple/">Base</a>. Why? <a href="https://plus.google.com/104992412719307414985">+Jeff Gilfelt</a> summed it up nicely:</p>
-
-<blockquote class="twitter-tweet" lang="en"><p>Because it is 2014 <a href="https://t.co/UCMaZOB6Sl">https://t.co/UCMaZOB6Sl</a></p>&mdash; Jeff Gilfelt (@readyState) <a href="https://twitter.com/readyState/statuses/435419373852184576">February 17, 2014</a></blockquote>
-
-
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-
-<p>This tweet is a good laugh (and an excellent example of what happens if you limit the discussion to 140 characters), but there are poor souls who might need an answer they can use as an objective argument. For them, here is my take on this one: you should drop support for Froyo because sizeable chunk of Java 1.6 APIs were missing from API level 8. I&rsquo;m not talking about some dark corners of java packages, I&rsquo;m talking about stuff like <a href="http://developer.android.com/reference/java/lang/String.html#isEmpty%28%29"><code>String.isEmpty()</code></a>, <a href="http://developer.android.com/reference/java/util/Deque.html"><code>Deque</code></a>, <a href="http://developer.android.com/reference/java/util/NavigableSet.html"><code>NavigableSet</code></a>, <a href="http://developer.android.com/reference/java/io/IOException.html"><code>IOException</code></a>&rsquo;s constructors with cause parameter, <a href="http://developer.android.com/sdk/api_diff/9/changes/changes-summary.html">and so on</a>.</p>
-
-<p>Your own code can (and should) be checked with Lint, but these methods and classes can also be used by the 3rd party libraries and I&rsquo;m not aware of any static analysis tool that can help you in this case. So if your app supports Froyo and uses a lot of external dependencies, you&rsquo;re probably sitting on the <a href="/blog/2013/06/26/guava-and-minsdkversion">NoClassDefFoundError bomb</a>. It might force you to use obsolete versions of libraries, the most notable example of which is Guava &ndash; on Froyo you have to use 13.0.1, a 18 months old version.</p>
-
-<p>That&rsquo;s also the reason why the libraries authors should be the first ones to move on to Android 2.3 and later. If you use obsolete library in your application, you&rsquo;re hurting only yourself. If you use it as a library dependency, you&rsquo;re hurting every user of the library.</p>
-
-<p>So move on and bump the minSdkVersion. After all, it&rsquo;s 2014.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1929,6 +1988,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
       </li>
     
@@ -1942,10 +2005,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/13/beatiful-code-comparisonchain-from-guava/">Beatiful Code: ComparisonChain</a>
       </li>
     
   </ul>

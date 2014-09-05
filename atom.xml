@@ -4,7 +4,7 @@
   <title><![CDATA[Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-07-03T23:02:59+02:00</updated>
+  <updated>2014-09-05T22:38:26+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,88 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[My Shortest-lived Project Ever]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever/"/>
+    <updated>2014-09-04T21:11:06+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/04/my-shortest-lived-project-ever</id>
+    <content type="html"><![CDATA[<p>Three weeks ago I wrote a <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin. I was super excited by this project because:</p>
+
+<ol>
+<li>It was a Gradle plugin, something I wanted to play with for quite some time</li>
+<li>It was written in Groovy, a language I wanted to play with for quite some time</li>
+<li>It solved a real issue with ProGuard configuration, which was pissing me off for quite some time</li>
+</ol>
+
+
+<h2>On configuring ProGuard</h2>
+
+<p>If you&rsquo;re not familiar with ProGuard, here&rsquo;s the basic info: it&rsquo;s a program which prunes the unused code from your compiled Java program. It can also do other stuff like optimization or code obfuscation and repackaging to make the reverse engineering harder. Sounds good? The catch is that ProGuard sometimes cuts out or obfuscates too much code, which usually breaks the app, especially if you rely on reflection. The trick is to configure it correctly for each library you use, but it&rsquo;s not a trivial task.</p>
+
+<p>The general idea for this plugin was to resolve the dependencies of your Android application and try to find the ProGuard configuration for every one of them. Of course the ProGuard config will not magically appear: the idea was to have a repository of configurations developed by the community.</p>
+
+<h2>On Gradle</h2>
+
+<p>First part of the project went really smooth, thanks to the <a href="http://www.gradle.org/docs/current/userguide/userguide.html">amazing documentation</a>. I didn&rsquo;t need to do any fancy stuff, so I was able to configure the basic scaffolding in no time at all. Docs for android gradle plugin are pretty much non-existent, but using the imported sources and <a href="https://bitbucket.org/hvisser/android-apt">android-apt</a> plugin by <a href="https://twitter.com/botteaap">Hugo Visser</a> as a base for Android related tasks I was able to get my plugin up and running.</p>
+
+<h2>On Groovy</h2>
+
+<p>I saw the Groovy for the first time at KrakDroid conference, when <a href="https://github.com/wojtekerbetowski">Wojciech Erbetowski</a> converted boring JUnit tests into <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> goodness. It looked nice, but when I started coding in Groovy, my love for this language faded.</p>
+
+<p>There are lot of things I take for granted as a Java developer: amazing IDE, instant feedback when I screw something up and documentation for the code under my cursor at my fingertips. Maybe switching to Groovy, Ruby or Python requires some mindset change I haven&rsquo;t fully embraced, but I simply cannot imagine why would I switch to the language that effectively forces me to write my code in Notepad™.</p>
+
+<p>I think the main problem I have with Groovy stems for the fact that there are some APIs that wouldn&rsquo;t typecheck in regular Java. Consider this code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="k">if</span> <span class="o">(!</span><span class="n">project</span><span class="o">.</span><span class="na">android</span><span class="o">[</span><span class="s2">&quot;productFlavors&quot;</span><span class="o">].</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">throw</span> <span class="k">new</span> <span class="nf">ProjectConfigurationException</span><span class="o">(</span><span class="s2">&quot;The build flavors are not supported yet&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">def</span> <span class="n">obfuscatedVariants</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">android</span><span class="o">[</span><span class="s2">&quot;applicationVariants&quot;</span><span class="o">].</span><span class="na">findAll</span> <span class="o">{</span> <span class="n">v</span> <span class="o">-&gt;</span> <span class="n">v</span><span class="o">.</span><span class="na">obfuscation</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s a classic type of what I call &ldquo;string typing&rdquo;: depending on the key used in <code>project.android[]</code> access you get collection of objects of completely different type. As a consequence, the IDE cannot provide you with autocompletion or documentation for the collection contents.</p>
+
+<p>Another example is the public API of Grgit library. Theoretically you can call <code>Grgit.clone(...)</code>, but there is no such method as <code>clone</code> in <code>Grgit</code> class, instead you have this code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='groovy'><span class='line'><span class="kd">class</span> <span class="nc">Grgit</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Map</span> <span class="n">STATIC_OPERATIONS</span> <span class="o">=</span> <span class="o">[</span><span class="nl">init:</span> <span class="n">InitOp</span><span class="o">,</span> <span class="nl">clone:</span> <span class="n">CloneOp</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">static</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">Grgit</span><span class="o">.</span><span class="na">metaClass</span><span class="o">.</span><span class="na">static</span><span class="o">.</span><span class="na">methodMissing</span> <span class="o">=</span> <span class="o">{</span> <span class="n">name</span><span class="o">,</span> <span class="n">args</span> <span class="o">-&gt;</span>
+</span><span class='line'>          <span class="n">OpSyntaxUtil</span><span class="o">.</span><span class="na">tryOp</span><span class="o">(</span><span class="n">Grgit</span><span class="o">,</span> <span class="n">STATIC_OPERATIONS</span><span class="o">,</span> <span class="o">[]</span> <span class="k">as</span> <span class="n">Object</span><span class="o">[],</span> <span class="n">name</span><span class="o">,</span> <span class="n">args</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>  
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I don&rsquo;t see what&rsquo;s wrong with the good ol&#8217; static method and what do you achieve by using <code>methodMissing</code> (besides confusing the IDE and breaking autocomplete/javadocs). Maybe I&rsquo;m just grupy old fart with brain eroded by too long exposure to Java, but Groovy is definitely not a language for me. I&rsquo;ll put up with it if I ever want to write another gradle plugin, but it&rsquo;s not going to be my go to language.</p>
+
+<h2>What&rsquo;s up with the blog title?</h2>
+
+<p>Few hours after publishing my project, another solution for ProGuard configuration appeared. It turns out, if you use gradle to build your library, you can configure <code>consumerProguardFiles</code> property to include in your aar package a ProGuard configuration that should be used by the users of your library. The logical next step is creating the library project containing only the ProGuard configuration for the most popular libraries out there. And that&rsquo;s exactly what <a href="https://bitbucket.org/littlerobots/squadleader">squadleader</a> project is.</p>
+
+<p>It&rsquo;s not as flexible solution as my <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin, but it&rsquo;s much simpler, much easier to contribute to and the net effect is the same. In this light I chose to put my project on hold and redirect developers to squadleader page.</p>
+
+<p>Despite of that, I&rsquo;m glad I worked on this project. I&rsquo;m very excited by the fact that you can easily build an useful tool that&rsquo;s incredibly easy to use. Using gradle for a new build system was a great call.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Android Recent Apps List and Intent Extras]]></title>
@@ -2145,61 +2227,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 <p>I got an atrocious headache in the afternoon and went home, so I didn&rsquo;t see all the talks, but I&rsquo;ve seen the rare thing &ndash; a succesful live coding &ndash; by <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> who presented the <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> testing framework and incrementally turned a meh-Java code into concise Groove goodness. <a href="http://plus.google.com/102636096187402339072">+Maciej Górski</a> did the maps framework overview, and although he&rsquo;s the author of excellent <a href="https://github.com/mg6maciej/android-maps-extensions">Android Maps Extensions</a> he managed to be surprisingly objective. The first talk by <a href="http://plus.google.com/106250762035158784863">+Wojtek Kaliciński</a> triggered an internal discussion and Base about reducing the support for old Android versions. It won&rsquo;t happen overnight, but at least we&rsquo;ve moved from the dangerous &ldquo;c'mon, it&rsquo;s not that hard to support Froyo&rdquo; mindtrack. I&rsquo;ll definitely write more about this.</p>
 
 <p>To summarise, it was a great event. I&rsquo;ve learned a lot, I&rsquo;ve met some interesting people and I gave another talk, which completes <a href="http://chalup.github.io/blog/2012/12/30/2012-summary">one of the goals I set myself up for 2013</a>. Good stuff.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[SQLite Views Gotcha]]></title>
-    <link href="http://chalup.github.io/blog/2013/12/03/sqlite-views-gotcha/"/>
-    <updated>2013-12-03T00:13:00+01:00</updated>
-    <id>http://chalup.github.io/blog/2013/12/03/sqlite-views-gotcha</id>
-    <content type="html"><![CDATA[<p><strong>tl;dr:</strong> don&rsquo;t left join on view, or you gonna have a bad time.</p>
-
-<p>I have investigated a performance issue of the db in Android app today. The symptoms looked like a classic case of the missing index: the performance degraded with adding more data to certain tables. However, the quick check of sqlite_master table and looking at some <code>EXPLAIN QUERY PLAN</code> queries indicated that everything is properly indexed (which is not very surprising, given that we use <a href="https://github.com/futuresimple/android-autoindexer">android-autoindexer</a>).</p>
-
-<p>I started dumping the explain query plans for every query and it turned out that some queries perform multiple table scans instead of single scan of main table + indexed searches for joined tables. It means that the indices were in place, but they weren&rsquo;t used.</p>
-
-<p>The common denominator of these queries was joining with a view. Here&rsquo;s the simplest schema which demonstrates the issue:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sqlite&gt; create table x (id integer);
-</span><span class='line'>sqlite&gt; create table y (id integer, x_id integer);
-</span><span class='line'>
-</span><span class='line'>sqlite&gt; explain query plan select * from x left join y on x.id = x_id;
-</span><span class='line'>selectid    order       from        detail
-</span><span class='line'>----------  ----------  ----------  ----------------------------------------------------------------
-</span><span class='line'>0           0           0           SCAN TABLE x (~1000000 rows)
-</span><span class='line'>0           1           1           SEARCH TABLE y USING AUTOMATIC COVERING INDEX (x_id=?) (~7 rows)
-</span><span class='line'>
-</span><span class='line'>sqlite&gt; create view yyy as select * from y;
-</span><span class='line'>
-</span><span class='line'>sqlite&gt; explain query plan select * from x left join yyy on x.id = x_id;
-</span><span class='line'>selectid    order       from        detail
-</span><span class='line'>----------  ----------  ----------  -------------------------------------------------------------------
-</span><span class='line'>1           0           0           SCAN TABLE y (~1000000 rows)
-</span><span class='line'>0           0           0           SCAN TABLE x (~1000000 rows)
-</span><span class='line'>0           1           1           SEARCH SUBQUERY 1 USING AUTOMATIC COVERING INDEX (x_id=?) (~7 rows)</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Of course this behaviour is documented in the SQLite Query Planner overview (point 3 of the <a href="http://www.sqlite.org/optoverview.html#flattening">Subquery flattening</a> paragraph), and I even remember reading this docs few times, but I guess something like this has to bite me in the ass before I memorize it.</p>
-
-<p>Everything works fine if you copypaste the views selection in place of the joined view, which makes me a sad panda, because I wish SQLite could do this for me. On the other hand it&rsquo;s a very simple workaround for this issue, and, with a right library, the code might even be manageable.</p>
 ]]></content>
   </entry>
   
