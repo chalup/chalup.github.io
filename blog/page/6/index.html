@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I finally got some sleep after a really busy weekend. For the first time I had an opportunity to give a talk at the programming related conference. I &hellip;">
+  <meta name="description" content="Several days ago I was preparing a simple app for the programming contest organized by Future Simple during KrakDroid conference. It consisted of a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,49 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/12/28/unknownhostexception-gotcha/">UnknownHostException Gotcha</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-28T11:28:00+01:00" pubdate data-updated="true">Dec 28<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/12/28/unknownhostexception-gotcha/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/12/28/unknownhostexception-gotcha/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Several days ago I was preparing a simple app for the programming contest organized by <a href="https://getbase.com/">Future Simple</a> during <a href="http://www.krakdroid.pl/">KrakDroid</a> conference. It consisted of a public <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html"><code>SyncAdapter</code></a> and an <a href="http://developer.android.com/reference/android/app/Activity.html"><code>Activity</code></a>. The contest participants had to write an app which retrieves the input data from <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, solve a very simple algorithmic problem and save the output back in the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>. This would trigger the sync and the <a href="http://developer.android.com/reference/android/content/AbstractThreadedSyncAdapter.html"><code>SyncAdapter</code></a> would upload the data to our backend. The <a href="http://developer.android.com/reference/android/app/Activity.html"><code>Activity</code></a> showed the contest rules and the list of submissions.</p>
+
+<p>As you can see it&rsquo;s nothing fancy and I hacked everything together rather quickly, but when I tried to send the first submission I got the <a href="http://developer.android.com/reference/java/net/UnknownHostException.html"><code>UnknownHostException</code></a> from <a href="http://developer.android.com/reference/org/apache/http/impl/client/AbstractHttpClient.html#execute%28org.apache.http.client.methods.HttpUriRequest%29"><code>AbstractHttpClient.execute()</code></a>. Had I <a href="https://www.google.pl/search?q=android+UnknownHostException">googled</a> the issue first, I&rsquo;d solve this issue in one minute. The problem is, my internet connection was flaky and the backend I tried to connect to was set up couple hours earlier, so the <a href="http://developer.android.com/reference/java/net/UnknownHostException.html"><code>UnknownHostException</code></a> seemed like a quite probable error.</p>
+
+<p>If you haven&rsquo;t click the Google link above, here&rsquo;s the solution: this exception is a way in which Android tells you that your app is missing the <a href="http://developer.android.com/reference/android/Manifest.permission.html#INTERNET">INTERNET</a> permission.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -975,95 +1018,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android/">Custom Scrollbar Graphics in Android</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-08-30T16:04:00+02:00" pubdate data-updated="true">Aug 30<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/08/30/custom-scrollbar-graphics-in-android/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>One of the UI elements you might want to customize in your app are scrollbars for ListViews, ScrollViews and other scrollable objects. It&rsquo;s a minor visual change, but it might give your app more consistent and polished look and feel, especially in case of the heavily branded UI.</p>
-
-<p>Anyways, changing the default scrollbar style is dead simple &ndash; you just need to specify new drawables for the track and thumb in your style:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;style</span> <span class="na">name=</span><span class="s">&quot;badList&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarThumbVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_handle<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarTrackVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_track<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'><span class="nt">&lt;/style&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Of course, there is a small gotcha (why else would I bother to write this blog post?). Let&rsquo;s say that you don&rsquo;t need to customize horizontal scrollbar, so you prepare only vertical 9-patches:</p>
-
-<p><img class="center" src="/images/zoom_vertical.png"></p>
-
-<p>On Ice Cream Sandwich everything looks fine, but on Gingerbread the graphics are not exactly what you want:</p>
-
-<p><img class="center" src="/images/badstyle.png"></p>
-
-<p>Quick <a href="https://www.google.pl/search?q=android+incorrect+custom+scrollbar+width">Google search</a> returned a <a href="http://stackoverflow.com/questions/3736768/android-scrollview-scrollbarsize">StackOverflow thread</a> with a description and link to <a href="http://code.google.com/p/android/issues/detail?id=14317">Android bug tracker</a>, but no full workaround. If you&rsquo;re too lazy to click on those links, on Gingerbread and earlier releases the View asks ScrollbarDrawable for the height of horizontal scrollbar and uses it as a horizontal scrollbar height and vertical scrollbar width. Let&rsquo;s modify our scrollbar graphics a bit:</p>
-
-<p><img class="center" src="/images/zoomed_symmetric.png"></p>
-
-<p>And apply it as both horizontal and vertical scrollbar.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;style</span> <span class="na">name=</span><span class="s">&quot;goodList&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarThumbVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_handle<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarTrackVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_track<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarThumbHorizontal&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_handle<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarTrackHorizontal&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_track<span class="nt">&lt;/item&gt;</span>
-</span><span class='line'><span class="nt">&lt;/style&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Lo and behold, it works!</p>
-
-<p><img class="center" src="/images/goodstyle.png"></p>
-
-<p>Note: in general case you probably want to create another graphics for horizontal scrollbar by rotating and flipping vertical scrollbar graphics. Our scrollbar graphics doesn&rsquo;t have any non-symmetric elements and I&rsquo;m lazy, so I used the same 9-patch for both scrollbars.</p>
-
-<p>The code of the sample application can be found <a href="https://github.com/chalup/blog-scrollbargotcha">here</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/7/">&larr; Older</a>
@@ -1081,6 +1035,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
       </li>
     
@@ -1094,10 +1052,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
   </ul>

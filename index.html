@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Three weeks ago I wrote a proguard-please plugin. I was super excited by this project because: It was a Gradle plugin, something I wanted to play &hellip;">
+  <meta name="description" content="One of the first section of Android API Guides is the description of different app compontents. New developers can read about Activities, which map &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,74 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-10T21:25:19+02:00" pubdate data-updated="true">Sep 10<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/09/10/contentprovider-series-introduction/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>One of the first section of Android <a href="http://developer.android.com/guide/index.html">API Guides</a> is the description of different app compontents. New developers can read about Activities, which map directly to app UI, about Services, which perform background tasks, about BroadcastReceivers, which let&rsquo;s your app react to different system events, etc. At some point they read about ContentProvider and they think:</p>
+
+<blockquote><p>Why would I want to use it?</p></blockquote>
+
+
+<p>Android documentation give two reasons: when you want to share data with other applications; or when you want to integrate with search framework. I&rsquo;d say these use cases do not apply to most of the Android applications out there, but there are other resasons for using ContentProviders.</p>
+
+<h2>Database handle management</h2>
+
+<p>Let&rsquo;s say you don&rsquo;t use ContentProvider, but you want to use the SQLite database to store your data. Most likely you&rsquo;ll end up with the <code>SQLiteOpenHelper</code> singleton in your <code>Application</code> object with some helper methods. Easy to code, but it&rsquo;s really reimplementation of <code>Context.getContentResolver()</code>.</p>
+
+<h2>Encapsulation</h2>
+
+<p>If you go with the solution described above, you&rsquo;ll operate directly on the <code>SQLiteOpenHelper</code> or <code>SQLiteDatabase</code> objects and if you&rsquo;re not careful, this implementation detail will leak across your application. Ideally you should create an abstraction around it, but then you&rsquo;ll end up with something like ContentProvider anyways.</p>
+
+<h2>When in Rome, do as the Romans do</h2>
+
+<p>The ContentProvider API is leaked throughout the Android SDK. Whether it&rsquo;s good or bad thing is a topic for another blog post, but the facts stay the same. If you decide not to use the ContentProvider, you forego publish-subscribe mechanism provided by <code>CursorLoaders</code> (<strong>tl;dr:</strong> you can set up automatic reload of data on the UI when the data is updated), <code>SyncAdapter</code> framework with built-in throttling, etc. You can implement all of this on your own, but you probably should focus on your business logic and UX instead of rewriting Android SDK.</p>
+
+<h2>IPC</h2>
+
+<p>As in &ldquo;Inter-process communication&rdquo;. I haven&rsquo;t seen this point raised in any ContentProvider discussions, but the ContentProvider can be moved to separate process (if you don&rsquo;t do some smelly things like accessing singletons) or accessed from any other processes in your application. And why would you want to do this?</p>
+
+<p>If you don&rsquo;t do some brain-dead stupid things, the biggest source of animation jank in your application is garbage collection pauses. This problem is partially solved by GC improvements in ART in Android L, but let&rsquo;s face it &ndash; I don&rsquo;t expect will be <code>minSdkVersion=20</code> before the end of 2016. Until then we need another solution.</p>
+
+<p>Since GC is performed per-process, one thing you can do is moving your memory intensive operations &ndash; like web API access and JSON parsing &ndash; to another process. But if you want to access your database from another process you can&rsquo;t use <code>SQLiteOpenHelper</code> singleton. You&rsquo;ll have to access it through some IPC mechanism. ContentProvider gives you this for free.</p>
+
+<h2>Summary</h2>
+
+<p>There are more to ContentProviders than you can see in the official documentation or top 5 hits on Google search. Actually, this is the first post in the upcoming series of posts in which I&rsquo;ll describe some other aspects of ContentProvider implementation like content Uris design, thread safety, ContentProvider API deficiencies, documentation samples suckage and some solutions that can make implementing ContentProviders less painful. Stay tuned!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1794,185 +1862,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/05/10/android-app-widgets-issues/">Android App Widgets Issues</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-05-10T15:42:00+02:00" pubdate data-updated="true">May 10<span>th</span>, 2014</time>
-        
-           | <a href="/blog/2014/05/10/android-app-widgets-issues/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2014/05/10/android-app-widgets-issues/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This week I spend few days analyzing and fixing various issues of app widget in Base CRM application.</p>
-
-<p>This part of our codebase was created over a year ago during one of our internal hackathons and was released soon after that. Most of the times it worked. Every once in a while we received a weird crash report from Google Analytics, but it never caused much trouble. Recently though we received few complaints from customers. I happened to have few hours available for bug hunting, so I took a dive.</p>
-
-<p>The widget is really a simple todo list backed by <code>ContentProvider</code>. The code looks like it was based on the WeatherWidget from SDK samples. What can possibly go wrong?</p>
-
-<h2>Issue #1: gazillions of threads started</h2>
-
-<p>Take a look at the code of WeatherWidgetProvider:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">WeatherWidgetProvider</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="c1">// Start the worker thread</span>
-</span><span class='line'>  <span class="n">sWorkerThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HandlerThread</span><span class="o">(</span><span class="s">&quot;WeatherWidgetProvider-worker&quot;</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">sWorkerThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
-</span><span class='line'>  <span class="n">sWorkerQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Handler</span><span class="o">(</span><span class="n">sWorkerThread</span><span class="o">.</span><span class="na">getLooper</span><span class="o">());</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The WeatherWidgetProvider is an <code>AppWidgetProvider</code> implementation, which extends a regular <code>BroadcastReceiver</code>. It means that for every action a new instance of WeatherWidgetProvider is created, and the current implementation spawns new thread which is never closed.</p>
-
-<p>The sample author obviously intended to create only one worker thread &ndash; the sWorkerThread is the static &ndash; but forgot to do the null check before creating a new thread. So let&rsquo;s fix it:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="nf">WeatherWidgetProvider</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">sWorkerThread</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="c1">// Start the worker thread</span>
-</span><span class='line'>    <span class="n">sWorkerThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HandlerThread</span><span class="o">(</span><span class="s">&quot;WeatherWidgetProvider-worker&quot;</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">sWorkerThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
-</span><span class='line'>    <span class="n">sWorkerQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Handler</span><span class="o">(</span><span class="n">sWorkerThread</span><span class="o">.</span><span class="na">getLooper</span><span class="o">());</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Issue #2: no refresh after application update</h2>
-
-<p>The widget shows data from the same <code>ContentProvider</code> as the main app, so when the user creates a task inside in the main app and then goes back to homescreen, the task should be displayed on the widget. To achieve this we did the same thing the WeatherWidget sample does &ndash; we register the <code>ContentObserver</code> in <code>onEnabled</code> callback of <code>AppWidgetProvider</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onEnabled</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kd">final</span> <span class="n">ContentResolver</span> <span class="n">r</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getContentResolver</span><span class="o">();</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">sDataObserver</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="kd">final</span> <span class="n">AppWidgetManager</span> <span class="n">mgr</span> <span class="o">=</span> <span class="n">AppWidgetManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
-</span><span class='line'>    <span class="kd">final</span> <span class="n">ComponentName</span> <span class="n">cn</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ComponentName</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">WeatherWidgetProvider</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">sDataObserver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WeatherDataProviderObserver</span><span class="o">(</span><span class="n">mgr</span><span class="o">,</span> <span class="n">cn</span><span class="o">,</span> <span class="n">sWorkerQueue</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">r</span><span class="o">.</span><span class="na">registerContentObserver</span><span class="o">(</span><span class="n">WeatherDataProvider</span><span class="o">.</span><span class="na">CONTENT_URI</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">sDataObserver</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The <code>onEnabled</code> callback is called when the first instance of the widget is added to homescreen, so the code looks fine. Unfortunately the callback is not called at your process startup. So if your app is updated and the process is restarted, the <code>ContentObserver</code> won&rsquo;t be registered. The same thing happens if your app crashes or is stopped by the OS to free resources.</p>
-
-<p>To solve this you have to register the <code>ContentObserver</code> in few more places. I have added registration to <code>onCreate</code> callback in <code>RemoteViewsFactory</code> and the <code>onReceive</code> part which handles our custom actions in <code>AppWidgetProvider</code>.</p>
-
-<p>WeatherWidget sample does one more thing wrong: the <code>ContentObserver</code> is never unregistered and the worker thread is never stopped. The correct place to do this is <code>onDisabled</code> callback in <code>AppWidgetProvider</code>.</p>
-
-<h2>Issue #3: <code>CursorOutOfBoundsException</code> crash</h2>
-
-<p>Ever since we introduced the tasks widget, we&rsquo;ve occasionally received the crash reports indicating that the RemoteViewsFactory requested elements outside of <code>[0, getCount)</code> range:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="mi">05</span><span class="o">-</span><span class="mi">10</span> <span class="mi">15</span><span class="o">:</span><span class="mi">22</span><span class="o">:</span><span class="mf">50.559</span>  <span class="mi">13781</span><span class="o">-</span><span class="mi">13795</span><span class="o">/</span><span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">widgetfail</span><span class="o">.</span><span class="na">widget</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="err">﹕</span> <span class="n">FATAL</span> <span class="nl">EXCEPTION:</span> <span class="n">Binder_2</span>
-</span><span class='line'>    <span class="nl">Process:</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">widgetfail</span><span class="o">.</span><span class="na">widget</span><span class="o">,</span> <span class="nl">PID:</span> <span class="mi">13781</span>
-</span><span class='line'>    <span class="n">android</span><span class="o">.</span><span class="na">database</span><span class="o">.</span><span class="na">CursorIndexOutOfBoundsException</span><span class="o">:</span> <span class="n">Index</span> <span class="mi">1</span> <span class="n">requested</span><span class="o">,</span> <span class="n">with</span> <span class="n">a</span> <span class="n">size</span> <span class="n">of</span> <span class="mi">1</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The reproduction steps for this issue are quite complicated:</p>
-
-<ul>
-<li>Tap the task on the widget to mark it was completed. Internally we set the <code>PENDING_DONE</code> flag, so the task is marked as done, but is still displayed on the list, so the user can tap it again and reset the flag.</li>
-<li>Trigger the sync</li>
-<li><code>SyncAdapter</code> syncs the Task to our backend. The task is marked as <code>DONE</code> in our database, which triggers the <code>ContentObserver</code> registered by the widget.</li>
-<li><code>ContentObserver</code> triggers <code>onDataSetChanged</code> callback in <code>RemoteViewsFactory</code>, which then calls <code>getCount</code> and <code>getViewAt</code></li>
-<li>In some rare cases <code>getViewAt</code> with position == result of <code>getCount</code> is called</li>
-</ul>
-
-
-<p>It looks like some kind of a race condition or another threading issue in Android code which populates the app widgets. I tried synchronizing the <code>RemoteViewsFactory</code> methods, but it didn&rsquo;t help. The <code>getViewAt</code> have to return a valid <code>RemoteViews</code>, so I fixed it up by returning the loading view when element outside of valid range is requested:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kd">synchronized</span> <span class="n">RemoteViews</span> <span class="nf">getViewAt</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">position</span> <span class="o">&gt;=</span> <span class="n">mCursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">())</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nf">getLoadingView</span><span class="o">();</span>
-</span><span class='line'>  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">mCursor</span><span class="o">.</span><span class="na">moveToPosition</span><span class="o">(</span><span class="n">position</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// ...</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Issue #4: no refresh when &ldquo;Don&rsquo;t keep activities&rdquo; setting is enabled</h2>
-
-<p>User can click on the tasks displayed on the widget to go to the edit screen. The activity is closed when user saves or discards changes and the homescreen with the widget is shown again. Changing the task triggers the <code>ContentObserver</code>, the <code>onDataSetChanged</code> is called on all active <code>RemoteViewsFactories</code>, but sometimes other callbacks (<code>getCount</code>, <code>getViewAt</code>, etc.) are not called.</p>
-
-<p>It turns out this happens when the Homescreen activity is recreated because of low memory condition. To easily reproduce this issue you can check the &ldquo;Don&rsquo;t keep activities&rdquo; in developers settings.</p>
-
-<p>I do not have a solution or workaround for this issue unfortunately. I&rsquo;ll file a bug report and hope for the best.</p>
-
-<h2>Recap</h2>
-
-<p>There are mutliple issues with the WeatherWidget sample and some issues with the system services responsible for populating app widgets with content. I&rsquo;ve created a simple project which reproduces the issues #3 and #4 and shows the correct way of registering <code>ContentObserver</code> for your widget. The sources are <a href="https://github.com/chalup/android-widget-fail">available on Github</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1988,6 +1877,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
       </li>
     
@@ -2001,10 +1894,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
   </ul>

@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="It&rsquo;s been a while since my last blog post. The main reason of this unfortunate state is the fact that I&rsquo;ve changed my day job. I&rsquo;ve &hellip;">
+  <meta name="description" content="One of the UI elements you might want to customize in your app are scrollbars for ListViews, ScrollViews and other scrollable objects. It&rsquo;s a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,95 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android/">Custom Scrollbar Graphics in Android</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-30T16:04:00+02:00" pubdate data-updated="true">Aug 30<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/08/30/custom-scrollbar-graphics-in-android/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/08/30/custom-scrollbar-graphics-in-android/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>One of the UI elements you might want to customize in your app are scrollbars for ListViews, ScrollViews and other scrollable objects. It&rsquo;s a minor visual change, but it might give your app more consistent and polished look and feel, especially in case of the heavily branded UI.</p>
+
+<p>Anyways, changing the default scrollbar style is dead simple &ndash; you just need to specify new drawables for the track and thumb in your style:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;style</span> <span class="na">name=</span><span class="s">&quot;badList&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarThumbVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_handle<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarTrackVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_track<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'><span class="nt">&lt;/style&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Of course, there is a small gotcha (why else would I bother to write this blog post?). Let&rsquo;s say that you don&rsquo;t need to customize horizontal scrollbar, so you prepare only vertical 9-patches:</p>
+
+<p><img class="center" src="/images/zoom_vertical.png"></p>
+
+<p>On Ice Cream Sandwich everything looks fine, but on Gingerbread the graphics are not exactly what you want:</p>
+
+<p><img class="center" src="/images/badstyle.png"></p>
+
+<p>Quick <a href="https://www.google.pl/search?q=android+incorrect+custom+scrollbar+width">Google search</a> returned a <a href="http://stackoverflow.com/questions/3736768/android-scrollview-scrollbarsize">StackOverflow thread</a> with a description and link to <a href="http://code.google.com/p/android/issues/detail?id=14317">Android bug tracker</a>, but no full workaround. If you&rsquo;re too lazy to click on those links, on Gingerbread and earlier releases the View asks ScrollbarDrawable for the height of horizontal scrollbar and uses it as a horizontal scrollbar height and vertical scrollbar width. Let&rsquo;s modify our scrollbar graphics a bit:</p>
+
+<p><img class="center" src="/images/zoomed_symmetric.png"></p>
+
+<p>And apply it as both horizontal and vertical scrollbar.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;style</span> <span class="na">name=</span><span class="s">&quot;goodList&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarThumbVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_handle<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarTrackVertical&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_track<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarThumbHorizontal&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_handle<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;item</span> <span class="na">name=</span><span class="s">&quot;android:scrollbarTrackHorizontal&quot;</span><span class="nt">&gt;</span>@drawable/scrollbar_track<span class="nt">&lt;/item&gt;</span>
+</span><span class='line'><span class="nt">&lt;/style&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lo and behold, it works!</p>
+
+<p><img class="center" src="/images/goodstyle.png"></p>
+
+<p>Note: in general case you probably want to create another graphics for horizontal scrollbar by rotating and flipping vertical scrollbar graphics. Our scrollbar graphics doesn&rsquo;t have any non-symmetric elements and I&rsquo;m lazy, so I used the same 9-patch for both scrollbars.</p>
+
+<p>The code of the sample application can be found <a href="https://github.com/chalup/blog-scrollbargotcha">here</a>.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1025,76 +1114,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/14/large-raw-assets-in-android-22/">Large Raw Assets in Android 2.2</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-14T07:50:00+01:00" pubdate data-updated="true">Mar 14<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/03/14/large-raw-assets-in-android-22/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/03/14/large-raw-assets-in-android-22/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>My most recent application, <a href="https://play.google.com/store/apps/details?id=com.chalup.WordJudgeEN">Word Judge</a>, contains full dictionary of word valid in word games. I went to great lengths to minimize the size of this data, but for some languages it&rsquo;s still quite large. For example polish dictionary is compressed from 35MB to 1.4MB. In Android 2.2 and earlier, if you add such large file as an asset and then try to open it, you&rsquo;ll get <code>IOException</code>. The exception itself doesn&rsquo;t contain any useful information, but the following text appears in logcat:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>03-07 14:40:42.345: D/asset(301): Data exceeds UNCOMPRESS_DATA_MAX (1442144 vs 1048576)</span></code></pre></td></tr></table></div></figure>
-
-
-<p>With that information <a href="http://www.google.pl/search?sourceid=chrome&amp;ie=UTF-8&amp;q=UNCOMPRESS_DATA_MAX+site%3Astackoverflow.com">googling the workaround is easy</a>. Some folks recommend splitting the file into multiple parts, or repackaging the apk, but the simplest solution is to change the file extension of your asset to one of the extensions listed in aapt tool sources as files that are not compressed by default:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="cm">/* these formats are already compressed, or don&#39;t compress well */</span>
-</span><span class='line'><span class="kd">static</span> <span class="kd">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">kNoCompressExt</span><span class="o">[]</span> <span class="o">=</span> <span class="o">{</span>
-</span><span class='line'>    <span class="s">&quot;.jpg&quot;</span><span class="o">,</span> <span class="s">&quot;.jpeg&quot;</span><span class="o">,</span> <span class="s">&quot;.png&quot;</span><span class="o">,</span> <span class="s">&quot;.gif&quot;</span><span class="o">,</span>
-</span><span class='line'>    <span class="s">&quot;.wav&quot;</span><span class="o">,</span> <span class="s">&quot;.mp2&quot;</span><span class="o">,</span> <span class="s">&quot;.mp3&quot;</span><span class="o">,</span> <span class="s">&quot;.ogg&quot;</span><span class="o">,</span> <span class="s">&quot;.aac&quot;</span><span class="o">,</span>
-</span><span class='line'>    <span class="s">&quot;.mpg&quot;</span><span class="o">,</span> <span class="s">&quot;.mpeg&quot;</span><span class="o">,</span> <span class="s">&quot;.mid&quot;</span><span class="o">,</span> <span class="s">&quot;.midi&quot;</span><span class="o">,</span> <span class="s">&quot;.smf&quot;</span><span class="o">,</span> <span class="s">&quot;.jet&quot;</span><span class="o">,</span>
-</span><span class='line'>    <span class="s">&quot;.rtttl&quot;</span><span class="o">,</span> <span class="s">&quot;.imy&quot;</span><span class="o">,</span> <span class="s">&quot;.xmf&quot;</span><span class="o">,</span> <span class="s">&quot;.mp4&quot;</span><span class="o">,</span> <span class="s">&quot;.m4a&quot;</span><span class="o">,</span>
-</span><span class='line'>    <span class="s">&quot;.m4v&quot;</span><span class="o">,</span> <span class="s">&quot;.3gp&quot;</span><span class="o">,</span> <span class="s">&quot;.3gpp&quot;</span><span class="o">,</span> <span class="s">&quot;.3g2&quot;</span><span class="o">,</span> <span class="s">&quot;.3gpp2&quot;</span><span class="o">,</span>
-</span><span class='line'>    <span class="s">&quot;.amr&quot;</span><span class="o">,</span> <span class="s">&quot;.awb&quot;</span><span class="o">,</span> <span class="s">&quot;.wma&quot;</span><span class="o">,</span> <span class="s">&quot;.wmv&quot;</span>
-</span><span class='line'><span class="o">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Of course if you target API level 9 or newer, you don&rsquo;t have to worry about this gotcha.</p>
-
-<p>There is one more thing worth mentioning: the speed of IO operations in debug mode is atrocious. Loading the 1.4MB dictionary to memory takes over 10 seconds. Fortunately when the program is running without debugger attached, the loading time decreases to less than 1 second.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/8/">&larr; Older</a>
@@ -1112,6 +1131,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
       </li>
     
@@ -1125,10 +1148,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
   </ul>

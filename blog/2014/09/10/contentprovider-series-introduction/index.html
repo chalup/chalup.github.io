@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>2012 Summary - Porcupine Programmer</title>
+  <title>ContentProvider Series - Introduction - Porcupine Programmer</title>
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="The end of the year is the usual time for looking back and making a new years&#8217; resolutions, so I&rsquo;m going to gloat a little bit and do &hellip;">
+  <meta name="description" content="One of the first section of Android API Guides is the description of different app compontents. New developers can read about Activities, which map &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://chalup.github.io/blog/2012/12/30/2012-summary">
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
@@ -80,7 +80,7 @@
   
   <header>
     
-      <h1 class="entry-title">2012 Summary</h1>
+      <h1 class="entry-title">ContentProvider Series - Introduction</h1>
     
     
       <p class="meta">
@@ -96,7 +96,7 @@
   
 
 
-<time datetime="2012-12-30T22:39:00+01:00" pubdate data-updated="true">Dec 30<span>th</span>, 2012</time>
+<time datetime="2014-09-10T21:25:19+02:00" pubdate data-updated="true">Sep 10<span>th</span>, 2014</time>
         
            | <a href="#disqus_thread"
              data-disqus-identifier="http://chalup.github.io">Comments</a>
@@ -106,19 +106,36 @@
   </header>
 
 
-<div class="entry-content"><p>The end of the year is the usual time for looking back and making a new years&#8217; resolutions, so I&rsquo;m going to gloat a little bit and do some wishful thinking about the next year. Without further ado, let me list what I&rsquo;ve managed to accomplish:</p>
+<div class="entry-content"><p>One of the first section of Android <a href="http://developer.android.com/guide/index.html">API Guides</a> is the description of different app compontents. New developers can read about Activities, which map directly to app UI, about Services, which perform background tasks, about BroadcastReceivers, which let&rsquo;s your app react to different system events, etc. At some point they read about ContentProvider and they think:</p>
 
-<ol>
-<li>I have <a href="http://store.ovi.com/content/219800">published</a> <a href="http://store.ovi.com/content/262535">three</a> <a href="http://store.ovi.com/content/318428">apps</a> on two <a href="https://play.google.com/store/apps/developer?id=chalup">mobile</a> <a href="http://store.ovi.com/publisher/Jerzy%20Chalupski/">platforms</a>.</li>
-<li>I changed my safe corporate job for a position in the <a href="https://getbase.com/">startup</a>.</li>
-<li>I <a href="http://www.krakdroid.pl/#speaker_8">gave a talk at the conference</a>.</li>
-<li>There were over 4k unique visits of my blog and got a couple of +1s.</li>
-</ol>
+<blockquote><p>Why would I want to use it?</p></blockquote>
 
 
-<p>And what are my plans for the next year? I like to keep things simple, so let&rsquo;s just double the values from the list above, except maybe for the second point &ndash; I hope I won&rsquo;t have to change the job, I&rsquo;m very happy with my current employer.</p>
+<p>Android documentation give two reasons: when you want to share data with other applications; or when you want to integrate with search framework. I&rsquo;d say these use cases do not apply to most of the Android applications out there, but there are other resasons for using ContentProviders.</p>
 
-<p>Anyways, thanks for reading my blog and stay tuned for more content next year!</p>
+<h2>Database handle management</h2>
+
+<p>Let&rsquo;s say you don&rsquo;t use ContentProvider, but you want to use the SQLite database to store your data. Most likely you&rsquo;ll end up with the <code>SQLiteOpenHelper</code> singleton in your <code>Application</code> object with some helper methods. Easy to code, but it&rsquo;s really reimplementation of <code>Context.getContentResolver()</code>.</p>
+
+<h2>Encapsulation</h2>
+
+<p>If you go with the solution described above, you&rsquo;ll operate directly on the <code>SQLiteOpenHelper</code> or <code>SQLiteDatabase</code> objects and if you&rsquo;re not careful, this implementation detail will leak across your application. Ideally you should create an abstraction around it, but then you&rsquo;ll end up with something like ContentProvider anyways.</p>
+
+<h2>When in Rome, do as the Romans do</h2>
+
+<p>The ContentProvider API is leaked throughout the Android SDK. Whether it&rsquo;s good or bad thing is a topic for another blog post, but the facts stay the same. If you decide not to use the ContentProvider, you forego publish-subscribe mechanism provided by <code>CursorLoaders</code> (<strong>tl;dr:</strong> you can set up automatic reload of data on the UI when the data is updated), <code>SyncAdapter</code> framework with built-in throttling, etc. You can implement all of this on your own, but you probably should focus on your business logic and UX instead of rewriting Android SDK.</p>
+
+<h2>IPC</h2>
+
+<p>As in &ldquo;Inter-process communication&rdquo;. I haven&rsquo;t seen this point raised in any ContentProvider discussions, but the ContentProvider can be moved to separate process (if you don&rsquo;t do some smelly things like accessing singletons) or accessed from any other processes in your application. And why would you want to do this?</p>
+
+<p>If you don&rsquo;t do some brain-dead stupid things, the biggest source of animation jank in your application is garbage collection pauses. This problem is partially solved by GC improvements in ART in Android L, but let&rsquo;s face it &ndash; I don&rsquo;t expect will be <code>minSdkVersion=20</code> before the end of 2016. Until then we need another solution.</p>
+
+<p>Since GC is performed per-process, one thing you can do is moving your memory intensive operations &ndash; like web API access and JSON parsing &ndash; to another process. But if you want to access your database from another process you can&rsquo;t use <code>SQLiteOpenHelper</code> singleton. You&rsquo;ll have to access it through some IPC mechanism. ContentProvider gives you this for free.</p>
+
+<h2>Summary</h2>
+
+<p>There are more to ContentProviders than you can see in the official documentation or top 5 hits on Google search. Actually, this is the first post in the upcoming series of posts in which I&rsquo;ll describe some other aspects of ContentProvider implementation like content Uris design, thread safety, ContentProvider API deficiencies, documentation samples suckage and some solutions that can make implementing ContentProviders less painful. Stay tuned!</p>
 </div>
 
 
@@ -141,15 +158,21 @@
   
 
 
-<time datetime="2012-12-30T22:39:00+01:00" pubdate data-updated="true">Dec 30<span>th</span>, 2012</time>
+<time datetime="2014-09-10T21:25:19+02:00" pubdate data-updated="true">Sep 10<span>th</span>, 2014</time>
       
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/contentprovider/'>ContentProvider</a>
+  
+</span>
 
 
     </p>
     
       <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2012/12/30/2012-summary/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2012/12/30/2012-summary/" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -160,10 +183,8 @@
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2012/12/28/unknownhostexception-gotcha/" title="Previous Post: UnknownHostException gotcha">&laquo; UnknownHostException gotcha</a>
+        <a class="basic-alignment left" href="/blog/2014/09/04/my-shortest-lived-project-ever/" title="Previous Post: My shortest-lived project ever">&laquo; My shortest-lived project ever</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2013/01/30/android-sync-adapter-lifecycle/" title="Next Post: Android: sync adapter lifecycle">Android: sync adapter lifecycle &raquo;</a>
       
     </p>
   </footer>
@@ -268,8 +289,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://chalup.github.io/blog/2012/12/30/2012-summary/';
-        var disqus_url = 'http://chalup.github.io/blog/2012/12/30/2012-summary/';
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction/';
         var disqus_script = 'embed.js';
       
     (function () {

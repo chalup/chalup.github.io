@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="tl;dr: don&rsquo;t left join on view, or you gonna have a bad time. I have investigated a performance issue of the db in Android app today. The &hellip;">
+  <meta name="description" content="At the beginning of the December I had an opportunity to gave a talk on a Krakdroid conference. The organizers outdid themselves this year, the venue &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,55 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/12/24/krakdroid-2013/">Krakdroid 2013</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-24T15:28:00+01:00" pubdate data-updated="true">Dec 24<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/12/24/krakdroid-2013/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/12/24/krakdroid-2013/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>At the beginning of the December I had an opportunity to gave a talk on a <a href="http://www.krakdroid.pl/">Krakdroid conference</a>. The organizers outdid themselves this year, the venue, other speakers and the overall event atmosphere was amazing. Definitely a place to be at if you&rsquo;re in Krakow at the end of the year.</p>
+
+<p>This year I talked about the offline mode in Android apps. The talk was 30% sales pitch, 10% shameless plug and 60% describing the pitfalls one can fall into when implementing offline mode. I&rsquo;m going to describe two major problems with offline mode in details on my blog and here are the slides:</p>
+
+<p><script async="" class="speakerdeck-embed" data-id="6b523f1041750131528c42d974972a8f" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"/></p>
+
+<p>Protip on giving a public speech &ndash; take a sip of water every 2-3 slides, especially if you&rsquo;re not feeling well and you have a sore throat.</p>
+
+<p>I got an atrocious headache in the afternoon and went home, so I didn&rsquo;t see all the talks, but I&rsquo;ve seen the rare thing &ndash; a succesful live coding &ndash; by <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> who presented the <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> testing framework and incrementally turned a meh-Java code into concise Groove goodness. <a href="http://plus.google.com/102636096187402339072">+Maciej Górski</a> did the maps framework overview, and although he&rsquo;s the author of excellent <a href="https://github.com/mg6maciej/android-maps-extensions">Android Maps Extensions</a> he managed to be surprisingly objective. The first talk by <a href="http://plus.google.com/106250762035158784863">+Wojtek Kaliciński</a> triggered an internal discussion and Base about reducing the support for old Android versions. It won&rsquo;t happen overnight, but at least we&rsquo;ve moved from the dangerous &ldquo;c'mon, it&rsquo;s not that hard to support Froyo&rdquo; mindtrack. I&rsquo;ll definitely write more about this.</p>
+
+<p>To summarise, it was a great event. I&rsquo;ve learned a lot, I&rsquo;ve met some interesting people and I gave another talk, which completes <a href="/blog/2012/12/30/2012-summary">one of the goals I set myself up for 2013</a>. Good stuff.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1103,316 +1152,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/08/25/random-musings-on-visitor-design/">Random Musings on Visitor Design Pattern in Java</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-25T13:21:00+02:00" pubdate data-updated="true">Aug 25<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/08/25/random-musings-on-visitor-design/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/08/25/random-musings-on-visitor-design/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>First let&rsquo;s have a quick refresher on what is the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. This pattern consists of two elements: the Visitor, which in the Gang of Four book is defined as an &ldquo;operation to be performed on the elements of an object structure&rdquo;; the second element is the structure itself.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitable</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span> <span class="n">visitor</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitor</span> <span class="o">{</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The Visitor interface is for now empty, because we haven&rsquo;t declared any Visitable types. In every class implementing Visitable interface we&rsquo;ll call a different method in Visitor:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitable</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span> <span class="n">visitor</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableFoo</span> <span class="kd">implements</span> <span class="n">Visitable</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableBar</span> <span class="kd">implements</span> <span class="n">Visitable</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitor</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableBar</span> <span class="n">visitableBar</span><span class="o">);</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableFoo</span> <span class="n">visitableFoo</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Sounds like a lot of work, but there is a reason for it. You could achieve something similar by simply adding another method to the Visitable pattern, but this means you&rsquo;d have to be able to modify the Visitable classes. The visit/accept double dispatch allows you to write a library like <a href="https://github.com/chalup/thneed">Thneed</a>, which defines the data structure, but leaves the operations implementation to the library users.</p>
-
-<p>The classic visitor pattern requires you to keep some kind of state and to write a method for getting and clearing this state. This might be what you want, but if you want to simply process your Visitable objects one by one and return independent computations, you might want just to return a value from visit() method. So the first twist you can add to classic Visitor pattern is to return a value from visit/accept method:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitable</span> <span class="o">{</span>
-</span><span class='line'>  <span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="n">TReturn</span> <span class="n">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableFoo</span> <span class="kd">implements</span> <span class="n">Visitable</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="n">TReturn</span> <span class="n">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableBar</span> <span class="kd">implements</span> <span class="n">Visitable</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="n">TReturn</span> <span class="n">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitor</span><span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">TReturn</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableBar</span> <span class="n">visitableBar</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">TReturn</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableFoo</span> <span class="n">visitableFoo</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Note that only Visitor interface is parametrized with a return type. The only thing that <code>Visitable.accept()</code> do is dispatching the call to Visitor, so there is no point in generifying the whole interface, it&rsquo;s sufficient to make an accept method generic. In fact, making the TReturn type a Visitable interface type would be a design mistake, because you wouldn&rsquo;t be able to create a Visitable that could be accepted by Visitors with different return types:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitable</span><span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="o">{&lt;</span><span class="n">br</span><span class="o">/&gt;</span>  <span class="n">TReturn</span> <span class="n">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">TReturn</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">);&lt;</span><span class="n">br</span><span class="o">/&gt;}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Because of type erasure you wouldn&rsquo;t be able to create a Visitable that can accept two Visitors returning a different types:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyVisitable</span> <span class="kd">implements</span> <span class="n">Visitable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;,</span> <span class="n">Visitable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="c1">// Invalid! &quot;Duplicate class Visitable&quot; compilation error.</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Another thing you can do is generifying the whole pattern. The use case for this is when your Visitables are some kind of containers or wrappers over objects (again, see the <a href="https://github.com/chalup/thneed">Thneed</a> library, where the Visitables subclasses are the different kinds of relationships between data models and are parametrized with the type representing the data models). The naive way to do this is just adding the type parameters:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableFoo</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">Visitable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableBar</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">Visitable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableBar</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">visitableBar</span><span class="o">);</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableFoo</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">visitableFoo</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>There is a problem with the signatures of those interfaces. Let&rsquo;s say that we want our Visitor to operate on Visitables containing Numbers:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">Number</span><span class="o">&gt;</span> <span class="n">visitor</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Visitor</span><span class="o">&lt;</span><span class="n">Number</span><span class="o">&gt;()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableBar</span><span class="o">&lt;</span><span class="n">Number</span><span class="o">&gt;</span> <span class="n">visitableBar</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableFoo</span><span class="o">&lt;</span><span class="n">Number</span><span class="o">&gt;</span> <span class="n">visitableFoo</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You should think about Visitor as the method accepting the Visitable. If our Visitor can handle something that contains Number, it should also handle something that contain any Number subclass &ndash; it&rsquo;s a classic example of <a href="https://sites.google.com/site/io/effective-java-reloaded">&ldquo;consumer extends, producer super&rdquo;</a> behaviour or <a href="http://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science">covariance and contravariance</a>) in general. In the implementation above however, the strict generics types are causing compilation errors. <a href="http://docs.oracle.com/javase/tutorial/extra/generics/wildcards.html">Generics wildcards</a> to the rescue:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableFoo</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">Visitable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">VisitableBar</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">Visitable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Visitor</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">visitor</span><span class="o">.</span><span class="na">visit</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Visitor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableBar</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">visitableBar</span><span class="o">);</span>
-</span><span class='line'>  <span class="kt">void</span> <span class="nf">visit</span><span class="o">(</span><span class="n">VisitableFoo</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">visitableFoo</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Note that the change has to be symmetric, i.e. both the <code>accept()</code> and <code>visit()</code> signatures have to include the bounds. Now we can safely call:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">VisitableBar</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">visitableBar</span> <span class="o">=</span> <span class="k">new</span> <span class="n">VisitableBar</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;();</span>
-</span><span class='line'><span class="n">Visitor</span><span class="o">&lt;</span><span class="n">Number</span><span class="o">&gt;</span> <span class="n">visitor</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Visitor</span><span class="o">&lt;</span><span class="n">Number</span><span class="o">&gt;()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="c1">// visit() implementations</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">visitableBar</span><span class="o">.</span><span class="na">accept</span><span class="o">(</span><span class="n">visitor</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1430,6 +1169,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
       </li>
     
@@ -1443,10 +1186,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
   </ul>

@@ -4,7 +4,7 @@
   <title><![CDATA[Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-09-05T22:38:26+02:00</updated>
+  <updated>2014-09-14T10:53:36+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,44 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[ContentProvider Series - Introduction]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction/"/>
+    <updated>2014-09-10T21:25:19+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/10/contentprovider-series-introduction</id>
+    <content type="html"><![CDATA[<p>One of the first section of Android <a href="http://developer.android.com/guide/index.html">API Guides</a> is the description of different app compontents. New developers can read about Activities, which map directly to app UI, about Services, which perform background tasks, about BroadcastReceivers, which let&rsquo;s your app react to different system events, etc. At some point they read about ContentProvider and they think:</p>
+
+<blockquote><p>Why would I want to use it?</p></blockquote>
+
+
+<p>Android documentation give two reasons: when you want to share data with other applications; or when you want to integrate with search framework. I&rsquo;d say these use cases do not apply to most of the Android applications out there, but there are other resasons for using ContentProviders.</p>
+
+<h2>Database handle management</h2>
+
+<p>Let&rsquo;s say you don&rsquo;t use ContentProvider, but you want to use the SQLite database to store your data. Most likely you&rsquo;ll end up with the <code>SQLiteOpenHelper</code> singleton in your <code>Application</code> object with some helper methods. Easy to code, but it&rsquo;s really reimplementation of <code>Context.getContentResolver()</code>.</p>
+
+<h2>Encapsulation</h2>
+
+<p>If you go with the solution described above, you&rsquo;ll operate directly on the <code>SQLiteOpenHelper</code> or <code>SQLiteDatabase</code> objects and if you&rsquo;re not careful, this implementation detail will leak across your application. Ideally you should create an abstraction around it, but then you&rsquo;ll end up with something like ContentProvider anyways.</p>
+
+<h2>When in Rome, do as the Romans do</h2>
+
+<p>The ContentProvider API is leaked throughout the Android SDK. Whether it&rsquo;s good or bad thing is a topic for another blog post, but the facts stay the same. If you decide not to use the ContentProvider, you forego publish-subscribe mechanism provided by <code>CursorLoaders</code> (<strong>tl;dr:</strong> you can set up automatic reload of data on the UI when the data is updated), <code>SyncAdapter</code> framework with built-in throttling, etc. You can implement all of this on your own, but you probably should focus on your business logic and UX instead of rewriting Android SDK.</p>
+
+<h2>IPC</h2>
+
+<p>As in &ldquo;Inter-process communication&rdquo;. I haven&rsquo;t seen this point raised in any ContentProvider discussions, but the ContentProvider can be moved to separate process (if you don&rsquo;t do some smelly things like accessing singletons) or accessed from any other processes in your application. And why would you want to do this?</p>
+
+<p>If you don&rsquo;t do some brain-dead stupid things, the biggest source of animation jank in your application is garbage collection pauses. This problem is partially solved by GC improvements in ART in Android L, but let&rsquo;s face it &ndash; I don&rsquo;t expect will be <code>minSdkVersion=20</code> before the end of 2016. Until then we need another solution.</p>
+
+<p>Since GC is performed per-process, one thing you can do is moving your memory intensive operations &ndash; like web API access and JSON parsing &ndash; to another process. But if you want to access your database from another process you can&rsquo;t use <code>SQLiteOpenHelper</code> singleton. You&rsquo;ll have to access it through some IPC mechanism. ContentProvider gives you this for free.</p>
+
+<h2>Summary</h2>
+
+<p>There are more to ContentProviders than you can see in the official documentation or top 5 hits on Google search. Actually, this is the first post in the upcoming series of posts in which I&rsquo;ll describe some other aspects of ContentProvider implementation like content Uris design, thread safety, ContentProvider API deficiencies, documentation samples suckage and some solutions that can make implementing ContentProviders less painful. Stay tuned!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[My Shortest-lived Project Ever]]></title>
@@ -2208,25 +2246,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 <p><img class="center" src="http://chalup.github.io/images/migration.png"></p>
 
 <p>Migrating the data doesn&rsquo;t sound like a challenging thing to code, but the combination of obscure SQLite and Android issues complicates the matter. Without proper tools it&rsquo;s quite easy to make your code unmaintainable in the long run. I&rsquo;ll describe this issues and our solutions in the further posts.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Krakdroid 2013]]></title>
-    <link href="http://chalup.github.io/blog/2013/12/24/krakdroid-2013/"/>
-    <updated>2013-12-24T15:28:00+01:00</updated>
-    <id>http://chalup.github.io/blog/2013/12/24/krakdroid-2013</id>
-    <content type="html"><![CDATA[<p>At the beginning of the December I had an opportunity to gave a talk on a <a href="http://www.krakdroid.pl/">Krakdroid conference</a>. The organizers outdid themselves this year, the venue, other speakers and the overall event atmosphere was amazing. Definitely a place to be at if you&rsquo;re in Krakow at the end of the year.</p>
-
-<p>This year I talked about the offline mode in Android apps. The talk was 30% sales pitch, 10% shameless plug and 60% describing the pitfalls one can fall into when implementing offline mode. I&rsquo;m going to describe two major problems with offline mode in details on my blog and here are the slides:</p>
-
-<p><script async="" class="speakerdeck-embed" data-id="6b523f1041750131528c42d974972a8f" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"/></p>
-
-<p>Protip on giving a public speech &ndash; take a sip of water every 2-3 slides, especially if you&rsquo;re not feeling well and you have a sore throat.</p>
-
-<p>I got an atrocious headache in the afternoon and went home, so I didn&rsquo;t see all the talks, but I&rsquo;ve seen the rare thing &ndash; a succesful live coding &ndash; by <a href="http://plus.google.com/101390418023034694144">+Wojtek Erbetowski</a> who presented the <a href="https://github.com/Polidea/RoboSpock">RoboSpock</a> testing framework and incrementally turned a meh-Java code into concise Groove goodness. <a href="http://plus.google.com/102636096187402339072">+Maciej Górski</a> did the maps framework overview, and although he&rsquo;s the author of excellent <a href="https://github.com/mg6maciej/android-maps-extensions">Android Maps Extensions</a> he managed to be surprisingly objective. The first talk by <a href="http://plus.google.com/106250762035158784863">+Wojtek Kaliciński</a> triggered an internal discussion and Base about reducing the support for old Android versions. It won&rsquo;t happen overnight, but at least we&rsquo;ve moved from the dangerous &ldquo;c'mon, it&rsquo;s not that hard to support Froyo&rdquo; mindtrack. I&rsquo;ll definitely write more about this.</p>
-
-<p>To summarise, it was a great event. I&rsquo;ve learned a lot, I&rsquo;ve met some interesting people and I gave another talk, which completes <a href="http://chalup.github.io/blog/2012/12/30/2012-summary">one of the goals I set myself up for 2013</a>. Good stuff.</p>
 ]]></content>
   </entry>
   

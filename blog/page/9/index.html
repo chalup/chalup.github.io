@@ -9,7 +9,12 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Qt SDK comes with great documentation and examples, but there is hardly any information about handling QML errors. All examples assume that nothing &hellip;">
+  <meta name="description" content="Guess what&rsquo;s wrong with this Application Bar button handler: 1
+2
+3
+4
+private void OnAboutButtonClick(object sender, EventArgs e)
+{ MessageBox. &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +82,138 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/02/02/messagebox-crash-on-windows-phone-7/">MessageBox Crash on Windows Phone 7</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-02-02T22:05:00+01:00" pubdate data-updated="true">Feb 2<span>nd</span>, 2012</time>
+        
+           | <a href="/blog/2012/02/02/messagebox-crash-on-windows-phone-7/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/02/02/messagebox-crash-on-windows-phone-7/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Guess what&rsquo;s wrong with this Application Bar button handler:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">OnAboutButtonClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Blah blah blah, our app v1.0&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you answered &ldquo;you&rsquo;re using hardcoded string instead of application resource&rdquo; you are of course right, but that&rsquo;s not the worst problem with it, so no cookie for you. If the user clicks the application bar button twice before the message box is shown it crashes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">System</span><span class="p">.</span><span class="n">Exception</span> <span class="n">was</span> <span class="n">unhandled</span>
+</span><span class='line'>  <span class="n">Message</span><span class="p">=</span><span class="m">0</span><span class="n">x8000ffff</span>
+</span><span class='line'>  <span class="n">StackTrace</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">CheckHResult</span><span class="p">(</span><span class="n">UInt32</span> <span class="n">hr</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MessageBox_ShowCore</span><span class="p">(</span><span class="n">String</span> <span class="n">messageBoxText</span><span class="p">,</span> <span class="n">String</span> <span class="n">caption</span><span class="p">,</span> <span class="n">UInt32</span> <span class="n">type</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">MessageBox</span><span class="p">.</span><span class="n">ShowCore</span><span class="p">(</span><span class="n">String</span> <span class="n">messageBoxText</span><span class="p">,</span> <span class="n">String</span> <span class="n">caption</span><span class="p">,</span> <span class="n">MessageBoxButton</span> <span class="n">button</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="n">String</span> <span class="n">messageBoxText</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">PhoneApp1</span><span class="p">.</span><span class="n">MainPage</span><span class="p">.</span><span class="n">OnAboutButtonClick</span><span class="p">(</span><span class="n">Object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBarItemContainer</span><span class="p">.</span><span class="n">FireEventHandler</span><span class="p">(</span><span class="n">EventHandler</span> <span class="n">handler</span><span class="p">,</span> <span class="n">Object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">args</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBarIconButton</span><span class="p">.</span><span class="n">ClickEvent</span><span class="p">()</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBarIconButtonContainer</span><span class="p">.</span><span class="n">ClickEvent</span><span class="p">()</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBar</span><span class="p">.</span><span class="n">OnCommand</span><span class="p">(</span><span class="n">UInt32</span> <span class="n">idCommand</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">Interop</span><span class="p">.</span><span class="n">NativeCallbackInteropWrapper</span><span class="p">.</span><span class="n">OnCommand</span><span class="p">(</span><span class="n">UInt32</span> <span class="n">idCommand</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MessageBox_ShowCoreNative</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">context</span><span class="p">,</span> <span class="n">String</span> <span class="n">messageBoxText</span><span class="p">,</span> <span class="n">String</span> <span class="n">caption</span><span class="p">,</span> <span class="n">UInt32</span> <span class="n">type</span><span class="p">,</span> <span class="n">Int32</span><span class="p">&amp;</span> <span class="n">result</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MessageBox_ShowCore</span><span class="p">(</span><span class="n">String</span> <span class="n">messageBoxText</span><span class="p">,</span> <span class="n">String</span> <span class="n">caption</span><span class="p">,</span> <span class="n">UInt32</span> <span class="n">type</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">MessageBox</span><span class="p">.</span><span class="n">ShowCore</span><span class="p">(</span><span class="n">String</span> <span class="n">messageBoxText</span><span class="p">,</span> <span class="n">String</span> <span class="n">caption</span><span class="p">,</span> <span class="n">MessageBoxButton</span> <span class="n">button</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="n">String</span> <span class="n">messageBoxText</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">PhoneApp1</span><span class="p">.</span><span class="n">MainPage</span><span class="p">.</span><span class="n">OnAboutButtonClick</span><span class="p">(</span><span class="n">Object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBarItemContainer</span><span class="p">.</span><span class="n">FireEventHandler</span><span class="p">(</span><span class="n">EventHandler</span> <span class="n">handler</span><span class="p">,</span> <span class="n">Object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">args</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBarIconButton</span><span class="p">.</span><span class="n">ClickEvent</span><span class="p">()</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBarIconButtonContainer</span><span class="p">.</span><span class="n">ClickEvent</span><span class="p">()</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">ApplicationBar</span><span class="p">.</span><span class="n">OnCommand</span><span class="p">(</span><span class="n">UInt32</span> <span class="n">idCommand</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">Shell</span><span class="p">.</span><span class="n">Interop</span><span class="p">.</span><span class="n">NativeCallbackInteropWrapper</span><span class="p">.</span><span class="n">OnCommand</span><span class="p">(</span><span class="n">UInt32</span> <span class="n">idCommand</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The interesting thing about this stack trace is that it contains two calls to <code>MessageBox.Show()</code>. WTF? Since <code>MessageBox.Show()</code> returns the value, I assumed it&rsquo;s a synchronous call, i.e. no stuff would happen until the user clicks &ldquo;OK&rdquo;. Apparently MessageBox opens internal event loop (which kind of makes sense, since something has to handle the user clicking &ldquo;OK&rdquo;), which handles the second application bar click, tries to open the second message box and the whole application blows up.</p>
+
+<p>Now, you may say &ldquo;It&rsquo;s only a problem if the user intentionally bangs the poor phone like an ADD afflicted monkey on speed&rdquo;. I say &ldquo;Fix your god damn app&rdquo; (and in case anyone from Microsoft would ever read this, I also say &ldquo;Fix your god damn framework&rdquo;).</p>
+
+<p>So what can we do? Using lock is out of the question, since everything is executed in the same thread. So the only option I came up with is a Crappy Boolean Flag Pattern:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="kt">bool</span> <span class="n">_msgboxShown</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">OnAboutButtonClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(!</span><span class="n">_msgboxShown</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">_msgboxShown</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">MessageBox</span><span class="p">.</span><span class="n">Show</span><span class="p">(</span><span class="s">&quot;Blah blah blah, our app v1.0&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">_msgboxShown</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Not elegant, but it works. Of course if you use message boxes for other stuff, create some helper class for this crap.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -466,6 +603,10 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
       </li>
     
@@ -479,10 +620,6 @@ That&rsquo;s exactly the error I made when I published the first version of &ldq
     
       <li class="post">
         <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/15/minsdkversion-equals-15/">minSdkVersion=15, What&#8217;s Next?</a>
       </li>
     
   </ul>
