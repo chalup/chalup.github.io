@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="This week I spend few days analyzing and fixing various issues of app widget in Base CRM application. This part of our codebase was created over a &hellip;">
+  <meta name="description" content="One of the UI patterns that improve lists usability is dividing items into sections. The section might be the first letter of the main text on the &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,207 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-22T22:26:00+02:00" pubdate data-updated="true">May 22<span>nd</span>, 2014</time>
+        
+           | <a href="/blog/2014/05/22/clicking-unclickable-list-items/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>One of the UI patterns that improve lists usability is dividing items into sections. The section might be the first letter of the main text on the list item, date formatted and rounded in a specific way or whatever makes sense for your data.</p>
+
+<p>From the technical point of view you can either add the header view to every list item and show and hide them as needed or create the separate view for header and regular list item and register multiple view types in your Adapter. Both options were described in details by <a href="https://plus.google.com/118417777153109946393">+Cyril Mottier</a> in excellent <a href="http://cyrilmottier.com/2011/07/05/listview-tips-tricks-2-section-your-listview/">ListView Tips &amp; Tricks #2: Sectioning Your ListView</a> blog post.</p>
+
+<p>If you choose the second approach, you&rsquo;ll have to decide what to return from your <code>Adapter</code>&rsquo;s <code>getItem</code> and <code>getItemId</code> methods for items representing sections. If your sections are not supposed to be clickable, you might implement your <code>Adapter</code> like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">Object</span> <span class="nf">getItem</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span>
+</span><span class='line'>      <span class="o">?</span> <span class="n">mItems</span><span class="o">[</span><span class="n">getCursorPosition</span><span class="o">(</span><span class="n">position</span><span class="o">)]</span>
+</span><span class='line'>      <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">long</span> <span class="nf">getItemId</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span>
+</span><span class='line'>      <span class="o">?</span> <span class="n">getCursorPosition</span><span class="o">(</span><span class="n">position</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">:</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">areAllItemsEnabled</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isEnabled</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And your <code>onListItemClickListener</code> like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onListItemClick</span><span class="o">(</span><span class="n">ListView</span> <span class="n">l</span><span class="o">,</span> <span class="n">View</span> <span class="n">v</span><span class="o">,</span> <span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="kt">long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">l</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="n">position</span><span class="o">,</span> <span class="n">id</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// dummy action which uses Object returned from getItem(position)</span>
+</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="n">getListAdapter</span><span class="o">().</span><span class="na">getItem</span><span class="o">(</span><span class="n">position</span><span class="o">).</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you do so, the Android has a nasty surprise for you:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">NullPointerException</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">dialmformonkey</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">MainFragment</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">MainFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">38</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">ListFragment</span><span class="n">$2</span><span class="o">.</span><span class="na">onItemClick</span><span class="o">(</span><span class="n">ListFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">160</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AdapterView</span><span class="o">.</span><span class="na">performItemClick</span><span class="o">(</span><span class="n">AdapterView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">298</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="o">.</span><span class="na">performItemClick</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1100</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="n">$PerformClick</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2749</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="n">$1</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">3423</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Handler</span><span class="o">.</span><span class="na">handleCallback</span><span class="o">(</span><span class="n">Handler</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">725</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The only way this can happen is getting <code>null</code> from <code>Adapter.getItem()</code>, but this method will be called only for disabled items, right?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onListItemClick</span><span class="o">(</span><span class="n">ListView</span> <span class="n">l</span><span class="o">,</span> <span class="n">View</span> <span class="n">v</span><span class="o">,</span> <span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="kt">long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">l</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="n">position</span><span class="o">,</span> <span class="n">id</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="s">&quot;Clicked on item &quot;</span> <span class="o">+</span> <span class="n">position</span> <span class="o">+</span> <span class="s">&quot; which is &quot;</span> <span class="o">+</span>
+</span><span class='line'>        <span class="o">(</span><span class="n">getListAdapter</span><span class="o">().</span><span class="na">isEnabled</span><span class="o">(</span><span class="n">position</span><span class="o">)</span>
+</span><span class='line'>            <span class="o">?</span> <span class="s">&quot;enabled&quot;</span>
+</span><span class='line'>            <span class="o">:</span> <span class="s">&quot;disabled&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// dummy action which uses Object returned from getItem(position)</span>
+</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="n">getListAdapter</span><span class="o">().</span><span class="na">getItem</span><span class="o">(</span><span class="n">position</span><span class="o">).</span><span class="na">toString</span><span class="o">());</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wrong:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">4</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Abondance</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">4</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Abondance</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">31</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Aragon</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">31</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Aragon</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">dalvikvm</span><span class="err">﹕</span> <span class="n">GC_CONCURRENT</span> <span class="n">freed</span> <span class="mi">138</span><span class="n">K</span><span class="o">,</span> <span class="mi">3</span><span class="o">%</span> <span class="n">free</span> <span class="mi">8825</span><span class="n">K</span><span class="o">/</span><span class="mi">9016</span><span class="n">K</span><span class="o">,</span> <span class="n">paused</span> <span class="mi">0</span><span class="n">ms</span><span class="o">+</span><span class="mi">0</span><span class="n">ms</span><span class="o">,</span> <span class="n">total</span> <span class="mi">3</span><span class="n">ms</span>
+</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">28</span> <span class="n">which</span> <span class="n">is</span> <span class="n">disabled</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s very difficult to reproduce this error manually, especially if tapping the list item does something more than writing to logcat, but I investigated this issue, because the stack traces above appeared in crash reports on Google Analytics, so several people managed to click exactly wrong area at the wrong time.</p>
+
+<p>I didn&rsquo;t investigate the issue thoroughly, but it seems there must be some disparity between checking the <code>isEnabled</code> method and getting the item. If I ever dive into <code>ListView</code> code, I&rsquo;ll definitely write about it. If you want to reproduce or investigate the issue yourself, compile <a href="https://github.com/chalup/blog-unclickable-items">this project</a> and run the monkey:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">$</span> <span class="n">adb</span> <span class="n">shell</span> <span class="n">monkey</span> <span class="o">-</span><span class="n">p</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">dialmformonkey</span><span class="o">.</span><span class="na">app</span> <span class="o">-</span><span class="n">v</span> <span class="mi">500</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So what can we do? First option is checking the <code>Adapter.isEnabled()</code> in your <code>onListItemClick</code> listener, which is yet another kind of boilerplate you have to add to your Android code, but it&rsquo;s super easy to add. The other option is going with the first sectioning approach, i.e. putting section as a part of the clickable list item, but it might not work for your use case (for example adapter with multiple item types).</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1070,66 +1271,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1/">Offline Mode in Android Apps, Part 1 - Data Migrations</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-12-26T14:05:00+01:00" pubdate data-updated="true">Dec 26<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/12/26/offline-mode-in-android-apps-part-1/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/12/26/offline-mode-in-android-apps-part-1/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This year I gave a talk on <a href="http://www.krakdroid.pl/">Krakdroid</a> conference about offline mode in Android apps. By offline mode I mean implementing the app such way that the network availability is completely transparent to the end users. The high level implementation idea is to decouple the operations changing the data from sending these changes through unreliable network by saving the changes in local database and sending them at convinient moment. We have encountered two major problems when we implemented this behavior in <a href="https://play.google.com/store/apps/details?id=com.futuresimple.base">Base CRM</a>: data migrations and identifying entities. This blog post describes the first issue.
-It might not be obvious why do you need the data migrations, so let&rsquo;s clear this out. Let&rsquo;s say on your mobile you have some data synced with backend (green squares on left and right) and some unsynced data created locally on mobile (red squares on the left).</p>
-
-<p><img class="center" src="/images/unsynced.png"></p>
-
-<p>Now let&rsquo;s say that we introduce new functionality to our app, which changes the schema of our data models (the squares on the backend side are changed to circles).</p>
-
-<p><img class="center" src="/images/schemachange.png"></p>
-
-<p>The schema of the local database have to be changed as well. The naive way of handling this situation is dropping old database with old schema, creating new one with new schema and resyncing all the data from backend, but there are two issues with this approach: if there is a lot of data the resyncing might take a while, which negates the most important advantage of offline mode &ndash; that the app is fully functional all the time.</p>
-
-<p><img class="center" src="/images/lotofdata.png"></p>
-
-<p>More serious issue is that dropping the old database means that the unsynced data will be dropped along with it.</p>
-
-<p><img class="center" src="/images/unsynceddata.png"></p>
-
-<p>The only way to provide the optimal user experience is to perform schema migrations locally for both synced and unsynced data:</p>
-
-<p><img class="center" src="/images/migration.png"></p>
-
-<p>Migrating the data doesn&rsquo;t sound like a challenging thing to code, but the combination of obscure SQLite and Android issues complicates the matter. Without proper tools it&rsquo;s quite easy to make your code unmaintainable in the long run. I&rsquo;ll describe this issues and our solutions in the further posts.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -1147,6 +1288,10 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
       </li>
     
@@ -1160,10 +1305,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
     
       <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
   </ul>

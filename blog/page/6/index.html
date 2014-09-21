@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Several days ago I was preparing a simple app for the programming contest organized by Future Simple during KrakDroid conference. It consisted of a &hellip;">
+  <meta name="description" content="The end of the year is the usual time for looking back and making a new years&#8217; resolutions, so I&rsquo;m going to gloat a little bit and do &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,57 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/12/30/2012-summary/">2012 Summary</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-30T22:39:00+01:00" pubdate data-updated="true">Dec 30<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/12/30/2012-summary/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/12/30/2012-summary/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>The end of the year is the usual time for looking back and making a new years&#8217; resolutions, so I&rsquo;m going to gloat a little bit and do some wishful thinking about the next year. Without further ado, let me list what I&rsquo;ve managed to accomplish:</p>
+
+<ol>
+<li>I have <a href="http://store.ovi.com/content/219800">published</a> <a href="http://store.ovi.com/content/262535">three</a> <a href="http://store.ovi.com/content/318428">apps</a> on two <a href="https://play.google.com/store/apps/developer?id=chalup">mobile</a> <a href="http://store.ovi.com/publisher/Jerzy%20Chalupski/">platforms</a>.</li>
+<li>I changed my safe corporate job for a position in the <a href="https://getbase.com/">startup</a>.</li>
+<li>I <a href="http://www.krakdroid.pl/#speaker_8">gave a talk at the conference</a>.</li>
+<li>There were over 4k unique visits of my blog and got a couple of +1s.</li>
+</ol>
+
+
+<p>And what are my plans for the next year? I like to keep things simple, so let&rsquo;s just double the values from the list above, except maybe for the second point &ndash; I hope I won&rsquo;t have to change the job, I&rsquo;m very happy with my current employer.</p>
+
+<p>Anyways, thanks for reading my blog and stay tuned for more content next year!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -833,191 +884,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/09/05/android-sharedpreferences-gotcha/">Android SharedPreferences Gotcha</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-05T22:26:00+02:00" pubdate data-updated="true">Sep 5<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/09/05/android-sharedpreferences-gotcha/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/09/05/android-sharedpreferences-gotcha/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I have another gotcha for you. Can you tell what&rsquo;s wrong with the following code?</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyFragment</span> <span class="kd">extends</span> <span class="n">Fragment</span> <span class="kd">implements</span> <span class="n">OnSharedPreferenceChangeListener</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kd">private</span> <span class="n">TextView</span> <span class="n">mInfo</span><span class="o">;</span>
-</span><span class='line'>  <span class="kd">private</span> <span class="n">SharedPreferences</span> <span class="n">mPreferences</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">INFO_SP_KEY</span> <span class="o">=</span> <span class="s">&quot;info&quot;</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="n">View</span> <span class="nf">onCreateView</span><span class="o">(</span><span class="n">LayoutInflater</span> <span class="n">inflater</span><span class="o">,</span> <span class="n">ViewGroup</span> <span class="n">container</span><span class="o">,</span>
-</span><span class='line'>      <span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">inflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">my_fragment</span><span class="o">,</span> <span class="n">container</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onViewCreated</span><span class="o">(</span><span class="n">View</span> <span class="n">view</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onViewCreated</span><span class="o">(</span><span class="n">view</span><span class="o">,</span> <span class="n">savedInstanceState</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">mInfo</span> <span class="o">=</span> <span class="o">(</span><span class="n">TextView</span><span class="o">)</span> <span class="n">view</span><span class="o">.</span><span class="na">findViewById</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">id</span><span class="o">.</span><span class="na">info</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onSharedPreferenceChanged</span><span class="o">(</span><span class="n">SharedPreferences</span> <span class="n">sharedPreferences</span><span class="o">,</span> <span class="n">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">key</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">INFO_SP_KEY</span><span class="o">))</span> <span class="o">{</span>
-</span><span class='line'>      <span class="n">updateInfo</span><span class="o">();</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onActivityCreated</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onActivityCreated</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">mPreferences</span> <span class="o">=</span> <span class="n">PreferenceManager</span><span class="o">.</span><span class="na">getDefaultSharedPreferences</span><span class="o">(</span><span class="n">getActivity</span><span class="o">());</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onPause</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onPause</span><span class="o">();</span>
-</span><span class='line'>    <span class="n">mPreferences</span><span class="o">.</span><span class="na">unregisterOnSharedPreferenceChangeListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nd">@Override</span>
-</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onResume</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">onResume</span><span class="o">();</span>
-</span><span class='line'>    <span class="n">mPreferences</span><span class="o">.</span><span class="na">registerOnSharedPreferenceChangeListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">updateInfo</span><span class="o">();</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">updateInfo</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">mInfo</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">getString</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">string</span><span class="o">.</span><span class="na">info_text</span><span class="o">,</span> <span class="n">mPreferences</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="n">INFO_SP_KEY</span><span class="o">,</span> <span class="mi">0</span><span class="o">)));</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>At first glance everything looks fine and in most cases it will work fine as well. However, if you a) set android:minSdkVersion to 8 or lower and b) change the shared preference from another thread (IntentService, SyncAdapter, etc.), you&rsquo;ll get the following crash:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">ViewRoot</span><span class="n">$CalledFromWrongThreadException</span><span class="o">:</span> <span class="n">Only</span> <span class="n">the</span> <span class="n">original</span> <span class="n">thread</span> <span class="n">that</span> <span class="n">created</span> <span class="n">a</span> <span class="n">view</span> <span class="n">hierarchy</span> <span class="n">can</span> <span class="n">touch</span> <span class="n">its</span> <span class="n">views</span><span class="o">.</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">ViewRoot</span><span class="o">.</span><span class="na">checkThread</span><span class="o">(</span><span class="n">ViewRoot</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2802</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">ViewRoot</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">ViewRoot</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">594</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">8125</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">8125</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">8125</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">8125</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">8125</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">8125</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">requestLayout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">8125</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">TextView</span><span class="o">.</span><span class="na">checkForRelayout</span><span class="o">(</span><span class="n">TextView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">5378</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">TextView</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">TextView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2688</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">TextView</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">TextView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2556</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">TextView</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">TextView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2531</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">porcupineprogrammer</span><span class="o">.</span><span class="na">sharedpreferencesgotcha</span><span class="o">.</span><span class="na">BaseFragment</span><span class="o">.</span><span class="na">updateButtonText</span><span class="o">(</span><span class="n">BaseFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">65</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">porcupineprogrammer</span><span class="o">.</span><span class="na">sharedpreferencesgotcha</span><span class="o">.</span><span class="na">WrongFragment</span><span class="o">.</span><span class="na">onSharedPreferenceChanged</span><span class="o">(</span><span class="n">WrongFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">12</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">ContextImpl</span><span class="n">$SharedPreferencesImpl$EditorImpl</span><span class="o">.</span><span class="na">commit</span><span class="o">(</span><span class="n">ContextImpl</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2830</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">porcupineprogrammer</span><span class="o">.</span><span class="na">sharedpreferencesgotcha</span><span class="o">.</span><span class="na">BaseFragment</span><span class="n">$1$1</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">BaseFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">36</span><span class="o">)</span>
-</span><span class='line'><span class="mi">09</span><span class="o">-</span><span class="mi">05</span> <span class="mi">07</span><span class="o">:</span><span class="mi">16</span><span class="o">:</span><span class="mf">58.993</span><span class="o">:</span> <span class="n">E</span><span class="o">/</span><span class="n">AndroidRuntime</span><span class="o">(</span><span class="mi">403</span><span class="o">):</span> <span class="n">at</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">Thread</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">Thread</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1096</span><span class="o">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Fortunately the obvious crashlog is obvious and you can solve this issue in about 5 seconds, by wrapping the UI action in <code>Activity.runOnUiThread()</code> method. Morbidly curious may track the root cause of this issue in <a href="http://grepcode.com/file_/repository.grepcode.com/java/ext/com.google.android/android/2.2_r1.1/android/app/ContextImpl.java/?v=diff&amp;id2=2.3_r1#3035">GrepCode</a>. <strong>Tl;dr</strong>: before Gingerbread the listeners are notified in the same thread as the <code>SharedPreferences.commit()</code> caller, in later releases <code>commit()</code> ensures the notifications are performed in UI thread.</p>
-
-<p>Code of the sample application that demonstrates this issue is <a href="https://github.com/chalup/blog-sharedpreferences-gotcha">available on my github</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/7/">&larr; Older</a>
@@ -1035,6 +901,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
       </li>
     
@@ -1048,10 +918,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
   </ul>

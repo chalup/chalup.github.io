@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ContentProvider | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/contentprovider/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-09-14T10:53:36+02:00</updated>
+  <updated>2014-09-21T13:53:58+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,58 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[ContentProvider Series - Uris]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/14/contentprovider-series-uris/"/>
+    <updated>2014-09-14T21:19:18+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/14/contentprovider-series-uris</id>
+    <content type="html"><![CDATA[<p>The <code>ContentResolver</code> and <code>SQLiteDatabase</code> APIs are very similar:</p>
+
+<p><code>
+public Cursor query (Uri uri,      String[] projection, String selection, String[] selectionArgs,                                String sortOrder            )
+public Cursor query (String table, String[] columns,    String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit)
+</code></p>
+
+<p>Some arguments are renamed, SQL-specific <code>groupBy</code>+<code>having</code> are omitted, and <code>limit</code> also got an axe, but it is pretty much the same, except for the first argument.</p>
+
+<h2>Content Uris 101</h2>
+
+<p>Instead of specifying database table, you have to pass the <code>Uri</code> describing the resource you want to access. By convention the Uri should have <code>content</code> scheme (use <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SCHEME_CONTENT">SCHEME_CONTENT</a> constant), followed by the <code>ContentProvider</code> authority, and the path, which is mapped to resources.</p>
+
+<p>If you have ever accessed any REST-ish API, or built the routes table for the web app, you&rsquo;ll find it familiar. Querying <code>/foo</code> should return the list of <code>foo</code>s, <code>/foo/1</code> operates on <code>foo</code> with id <code>1</code> and <code>/foo/1/bar</code> refers to all <code>bar</code>s related to <code>foo</code> with id <code>1</code>. The last <code>Uri</code> pattern is not mentioned in <a href="http://developer.android.com/guide/topics/providers/content-provider-creating.html#ContentURI">API Guides</a>, but is widely used in <a href="https://github.com/google/iosched">Google I/O Schedule app</a> and system <code>ContentProvider</code>s.</p>
+
+<h2>Publish &ndash; subscribe</h2>
+
+<p>The <code>Uri</code> parameter leaks from <code>ContentProvider</code> API into <code>Cursor</code>. You can call <code>Cursor.setNotificationUri()</code> to specify that the <code>Cursor</code> will observe changes on the given <code>Uri</code> and propagate the notification to all <code>ContentObserver</code>s registered with <code>Cursor.registerContentObserver()</code>. So when someone calls <code>ContentResolver.notifyChange()</code> on the same Uri, these <code>ContentObserver</code>s will be notified of the change. This is the mechanism that powers the automatic reloading of <code>CursorLoader</code>s.</p>
+
+<p>But what about the related Uris? Shouldn&rsquo;t observers of <code>/foo</code> Uri be notified when the <code>/foo/1</code> is updated? In case of standard <code>Cursors</code> that&rsquo;s exactly what happens, because the observers registered in <code>AbstractCursor</code> base class use <code>true</code> as <code>notifyForDescendents</code> parameter. But if your specific use case requires observing only single specific Uri, you can call <code>contentResolver.registerContentObserver(uri, false, observer)</code>.</p>
+
+<h2>Semantics</h2>
+
+<p>Content Uri semantics for querying content, i.e. how the Uri path affects the query, were already described in &ldquo;Content Uris 101&rdquo; section above. Semantics for other actions are not explicitly specified anywhere in the Android documentation, but again I/O Schedule app and system <code>ContentPovider</code>s implement it in a common way that can be thought of as standard to be followed.</p>
+
+<p>For deletes and updates the Uri path are treated the same ways as for queries &ndash; as additional selection.</p>
+
+<p>For inserts, the Uri path is translated to additional <code>ContentValues</code> that should be inserted into database, e.g. insert on <code>/foo/42/bar</code> create new <code>bar</code> record with supplied <code>ContentValues</code> and with <code>foo_id</code> (or similar foreign key field) set to 42.</p>
+
+<h2>Issue #1 &ndash; many to many</h2>
+
+<p>The described mechanics work well for one-to-many relations, but there is a problem with entities in many-to-many relations. Let&rsquo;s use <code>sessions</code> and <code>tags</code> from Google I/O Schedule app as an example. Each session can be tagged with mutliple tags, and many sessions can be tagged with the same tag.</p>
+
+<p>The semantics of querying <code>/sessions/*/tags</code> or <code>/tags/*/sessions</code> are OK. The first one should return all tags of a given session and the second one should yield the list of sessions tagged with a given tag. But on which Uri should you insert a new link between existing tag and existing session?</p>
+
+<p>Usually many-to-many relationships are modeled with linking table, in this case &ldquo;sessions_tags&rdquo;. But you cannot really pass the related tag and session in Uri path: <code>/sessions/*/tags/*/sessions_tags</code> or similar Uris look weird. One option is to put it directly in ContentValues, but this means that this entities will be created in a different way than all the other entities in one-to-many relations. Another option is use query parameters, i.e. insert on <code>/sessions_tags?relatedTo=/tags/*&amp;relatedTo=/sessions/*</code> Uri, which is ugly, but explicit.</p>
+
+<h2>Issue #2 &ndash; subscription vs. joins</h2>
+
+<p>Let&rsquo;s go back to querying the <code>/sessions/*/tags</code> endpoint. Under the hood we&rsquo;d join <code>tags</code> table with <code>sessions_tags</code> table, but most likely we&rsquo;d set the <code>Cursor</code>&rsquo;s notification Uri to <code>/sessions/*/tags</code>. It means that our Cursor won&rsquo;t be notified of changes on <code>/tags</code>, <code>/sessions_tags</code> and descendant Uris, although it might affect the data we queried.</p>
+
+<p>The only solution offered by Android SDK is calling <code>notifyChange</code> on insert, delete and update with multiple Uris, but there are two issues with this approach: you might end up notifying half of your endpoints for every small change, forcing way to many content reloads; it&rsquo;s error prone, because changing one endpoint might require manual changes of many different endpoints.</p>
+
+<p>What you really need for such cases are multiple notification Uris on Cursor, alas, that&rsquo;s not possible with regular Cursors implementations.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[ContentProvider Series - Introduction]]></title>

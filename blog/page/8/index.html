@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="My most recent application, Word Judge, contains full dictionary of word valid in word games. I went to great lengths to minimize the size of this &hellip;">
+  <meta name="description" content="I&rsquo;m the first to admit that the Word Judge is booooring application. Checking if the word can be used in a word game? Meh. From a programmer &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,93 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/19/dawg-data-structure-in-word-judge/">DAWG Data Structure in Word Judge</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-19T14:01:00+01:00" pubdate data-updated="true">Mar 19<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/19/dawg-data-structure-in-word-judge/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/19/dawg-data-structure-in-word-judge/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;m the first to admit that the Word Judge is booooring application. Checking if the word can be used in a word game? Meh. From a programmer perspective however, there is one very interesting problem to solve &ndash; how to compress a large dictionary to reduce the size of the application package and at the same time be able to query this dictionary without using excessive amount of memory and CPU power?</p>
+
+<p>First, let&rsquo;s settle on what is a &ldquo;large dictionary&rdquo;. One of the languages supported by Word Judge is Polish, for which the valid word list has over 2 million entries and takes about 36MB after unpacking. Do we need to compress this data at all? Probably not. If you consider the average hardware spec and modern network speed, the 36MB is not much, but we can do so much better. Besides, it&rsquo;s fun!</p>
+
+<p>One the other end of the spectrum is the &ldquo;zip all the things&rdquo; approach. It&rsquo;s not a good idea though &ndash; it puts a very heavy load on the CPU and doesn&rsquo;t compress the data that well. The zipped Polish dictionary takes 4.5MB.</p>
+
+<p>The most important observation is that we&rsquo;re not compressing some random white noise, but words from real language. We can leverage this information to get a much better compression than some generic algorithm. Lot of words share the same prefix and suffix, which means they can be efficiently represented as a directed acyclic graph with shared nodes for common prefixes and suffixes. Let&rsquo;s see how the graph would look like for couple of words:</p>
+
+<p><img class="center" src="/images/dag.png"></p>
+
+<p>White letters on black background mark the nodes representing the ends of words. So the graph above represents the following words:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>abject
+</span><span class='line'>abjection
+</span><span class='line'>abjections
+</span><span class='line'>abjectly
+</span><span class='line'>abjectness
+</span><span class='line'>ablate
+</span><span class='line'>ablated
+</span><span class='line'>ablation
+</span><span class='line'>ablations</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The nodes for <code>ab</code> prefix are of course shared, the <code>ions</code>, <code>s</code> suffixes nodes as well. For obvious reasons we cannot share the <code>t</code> node: in one group it marks the end of the word, in other it does not; the child nodes for each &rsquo;t&#8217; nodes are also different. Nodes are equal, and thus can be shared, if and only if they represent the same letter, the End Of Word flag is the same for both of them, and the list of children is exactly the same.</p>
+
+<p>This type of graph contains minimal number of nodes, but each node takes quite a lot of space. We need 8 bits for the letter, 1 bit for EOW flag, 8 bits for the children list length and some kind of reference, for example node index, to each child, which is log2(n) rounded up bits, where n is a number of nodes in the graph. As you can see the major contributor to a single node size is the children list: for TWL06 dictionary the number of nodes is in the 10k-100k order of magnitude, which means we need several bits per node index.</p>
+
+<p>A guy called John Paul Adamovsky <a href="http://www.pathcom.com/~vadco/dawg.html">found a neat solution to that</a>. Instead of keeping the full list of children, we can keep children in something similar to singly-linked list: let&rsquo;s store only the index of the first child, number the nodes in such way that the children always have consecutive indices and add a End Of Children List flag to each node. This way we need exactly 1 + log2(n) bits for child list. This way we can keep the entire node in one byte. What&rsquo;s the catch? We need to introduce few more nodes.</p>
+
+<p>For example on the graph above we can no longer share the <code>i</code> node in the <code>ions</code> suffix: if it was shared it would have to have a number one greater than the number of both <code>e</code> node in <code>ablate</code> and <code>n</code> node in <code>abjectness</code> (this is, of course, assuming the <code>i</code> node is the last on the child list of both <code>t</code> nodes; but it&rsquo;s impossible for any node ordering). Our graph would look like this:</p>
+
+<p><img class="center" src="/images/dawg.png"></p>
+
+<p>The rule for node equality has to be extended: the nodes are equal if they represent the same letter, the flags are the same, the children are equal and the siblings further on the children list are equal. The last condition is a bit confusing, so I&rsquo;ll provide an example.</p>
+
+<p>Let&rsquo;s add a <code>absolution</code> and <code>absolutions</code> to our dictionary. We can certainly share the <code>ab</code> prefix and <code>ons</code> suffix, but do we need a separate <code>i</code> node as well? The <code>i</code> node in <code>absolution</code> must have a End-Of-Child-List flag set. If we arrange the child nodes in either <code>ablat-</code> or <code>abject-</code> part of graph in such way that the <code>i</code> node is the last node, we can share the <code>i</code> node between that part of graph and the newly added branch. Our graph would look like this:</p>
+
+<p><img class="center" src="/images/dawg2.png"></p>
+
+<p>This is the way we can squeeze the 36MB dictionary to 1.5MB. The structure also doesn&rsquo;t need any processing, it can be loaded to int array and used directly. If you&rsquo;re curious how to convert the dictionary into this kind of graph you can read the description of <a href="https://github.com/chalup/dawggenerator">my dawggenerator project on github</a> (C++) or the <a href="http://www.pathcom.com/~vadco/dawg.html">original description by John Paul Adamovsky</a> (pure C).</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1066,392 +1153,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/16/quest-for-paramerized-converter-for/">The Quest for Paramerized Converter for Windows Phone 7</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-16T13:16:00+01:00" pubdate data-updated="true">Feb 16<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/02/16/quest-for-paramerized-converter-for/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/02/16/quest-for-paramerized-converter-for/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p><strong>Warning:</strong> this is going to be a long post, because I want to provide full background for the issues I found. Also, none of the code posted here works in 100% of cases.</p>
-
-<p>Recently I was involved in refactoring a program written by interns, which included an over engineered and messed up solution for application settings. I had plenty of time and, despite of the messed up implementation, the original idea might be useful for any form filled by user, so instead of scraping the whole thing I decided to clean it up.</p>
-
-<p>Every type of setting is represented by different class derived from common base. The model of settings consist of a collection of base class objects. That collection is bound to ItemsSource property of ListBox and instead of single data template I use template selector, which creates different UI controls for different setting type.</p>
-
-<p>There is a BooleanSetting, which is represented by a single ToggleSwitch from <a href="http://silverlight.codeplex.com/">Silverlight from Windows Phone Toolkit</a>. There is a ClosedListSetting, represented by ListPicker, which is used for a setting where user can choose one of many options from a predefined list (hence the name). Finally there is a OpenListSetting, which is just like a ClosedListSetting, except there is the &ldquo;Other&rdquo; option which allows user to enter any value. On web forms such field is usually represented as a radio button group with an input box beside the &ldquo;Other&rdquo; option.</p>
-
-<p>For UI consistency I wanted to represent the OpenListSetting using ListPicker, and when the user would select the &ldquo;Other&rdquo; option, additional entry field will appear. It seemed really easy, I thought I&rsquo;ll just bind the visibility of the custom entry field to ListPicker&rsquo;s SelectedIndex property with a value converter.</p>
-
-<p>The first complication is that the position of custom option might be different for a different settings &ndash; usually it&rsquo;s the last one, so it depends on the number of predefined options; for maximum flexibility it should be possible to have many custom options in one OpenListSetting. The obvious solution is to bind some value to converter&rsquo;s parameter property.</p>
-
-<p>Quick search on Google reveals the major flaw in that plan, to wit, you cannot use the binding for converter parameter. There is a Multibinding, which sounds like a likely solution (after all I want to bind visibility to two properties and an operation between those properties), but apparently it&rsquo;s not available in Silverlight for Windows Phone 7. Yay, it&rsquo;s Java ME crap all over again!</p>
-
-<p>The suggested workaround is creating a converter as a non-visual FrameworkElement, with parameter as a dependency property, which can be used in binding. I created a base class:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">ConverterWithBindingParameter</span><span class="p">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">TConverter</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">FrameworkElement</span><span class="p">,</span> <span class="n">IValueConverter</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ParameterProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span>
-</span><span class='line'>        <span class="s">&quot;BindingParameter&quot;</span><span class="p">,</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="n">TConverter</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">null</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="n">T</span> <span class="n">BindingParameter</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="n">GetValue</span><span class="p">(</span><span class="n">ParameterProperty</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>        <span class="k">set</span> <span class="p">{</span> <span class="n">SetValue</span><span class="p">(</span><span class="n">ParameterProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">abstract</span> <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">abstract</span> <span class="k">public</span> <span class="kt">object</span> <span class="nf">ConvertBack</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And then derived the concrete converter for a problem at hand:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">EqualToVisibilityConverter</span> <span class="p">:</span> <span class="n">ConverterWithBindingParameter</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">EqualToVisibilityConverter</span><span class="p">&gt;</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">override</span> <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">return</span> <span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="n">Equals</span><span class="p">(</span><span class="n">BindingParameter</span><span class="p">))</span> <span class="p">?</span> <span class="n">Visibility</span><span class="p">.</span><span class="n">Visible</span> <span class="p">:</span> <span class="n">Visibility</span><span class="p">.</span><span class="n">Collapsed</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">override</span> <span class="k">public</span> <span class="kt">object</span> <span class="nf">ConvertBack</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">throw</span> <span class="k">new</span> <span class="nf">NotImplementedException</span><span class="p">();</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Edit XAML, rebuild, run, kaboom:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">System</span><span class="p">.</span><span class="n">ArgumentException</span> <span class="n">was</span> <span class="n">unhandled</span>
-</span><span class='line'>    <span class="n">StackTrace</span><span class="p">:</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Reflection</span><span class="p">.</span><span class="n">RuntimeMethodInfo</span><span class="p">.</span><span class="n">InternalInvoke</span><span class="p">(</span><span class="n">Object</span> <span class="n">obj</span><span class="p">,</span> <span class="n">BindingFlags</span> <span class="n">invokeAttr</span><span class="p">,</span> <span class="n">Binder</span> <span class="n">binder</span><span class="p">,</span> <span class="n">Object</span><span class="p">[]</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">,</span> <span class="n">StackCrawlMark</span><span class="p">&amp;</span> <span class="n">stackMark</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Reflection</span><span class="p">.</span><span class="n">RuntimePropertyInfo</span><span class="p">.</span><span class="n">InternalSetValue</span><span class="p">(</span><span class="n">PropertyInfo</span> <span class="n">thisProperty</span><span class="p">,</span> <span class="n">Object</span> <span class="n">obj</span><span class="p">,</span> <span class="n">Object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Object</span><span class="p">[]</span> <span class="n">index</span><span class="p">,</span> <span class="n">StackCrawlMark</span><span class="p">&amp;</span> <span class="n">stackMark</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Reflection</span><span class="p">.</span><span class="n">RuntimePropertyInfo</span><span class="p">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">Object</span> <span class="n">obj</span><span class="p">,</span> <span class="n">Object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Object</span><span class="p">[]</span> <span class="n">index</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XamlMemberInfo</span><span class="p">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">Object</span> <span class="n">target</span><span class="p">,</span> <span class="n">Object</span> <span class="k">value</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XamlManagedRuntimeRPInvokes</span><span class="p">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">XamlTypeToken</span> <span class="n">inType</span><span class="p">,</span> <span class="n">XamlQualifiedObject</span><span class="p">&amp;</span> <span class="n">inObj</span><span class="p">,</span> <span class="n">XamlPropertyToken</span> <span class="n">inProperty</span><span class="p">,</span> <span class="n">XamlQualifiedObject</span><span class="p">&amp;</span> <span class="n">inValue</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MeasureOverrideNative</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">element</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">FrameworkElement_MeasureOverride</span><span class="p">(</span><span class="n">FrameworkElement</span> <span class="n">element</span><span class="p">,</span> <span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">nativeTarget</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">Measure_WithDesiredSizeNative</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">element</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">UIElement_Measure_WithDesiredSize</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">element</span><span class="p">,</span> <span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">UIElement</span><span class="p">.</span><span class="n">Measure_WithDesiredSize</span><span class="p">(</span><span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">VirtualizingStackPanel</span><span class="p">.</span><span class="n">MeasureChild</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">child</span><span class="p">,</span> <span class="n">Size</span> <span class="n">layoutSlotSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">VirtualizingStackPanel</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">constraint</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">nativeTarget</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MeasureOverrideNative</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">element</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">FrameworkElement_MeasureOverride</span><span class="p">(</span><span class="n">FrameworkElement</span> <span class="n">element</span><span class="p">,</span> <span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">ScrollContentPresenter</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">constraint</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">nativeTarget</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MeasureNative</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">element</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">UIElement_Measure</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">element</span><span class="p">,</span> <span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">UIElement</span><span class="p">.</span><span class="n">Measure</span><span class="p">(</span><span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">ScrollViewer</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">constraint</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">nativeTarget</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MeasureOverrideNative</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">element</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">FrameworkElement_MeasureOverride</span><span class="p">(</span><span class="n">FrameworkElement</span> <span class="n">element</span><span class="p">,</span> <span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">nativeTarget</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">MeasureOverrideNative</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">element</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Single</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Single</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">MS</span><span class="p">.</span><span class="n">Internal</span><span class="p">.</span><span class="n">XcpImports</span><span class="p">.</span><span class="n">FrameworkElement_MeasureOverride</span><span class="p">(</span><span class="n">FrameworkElement</span> <span class="n">element</span><span class="p">,</span> <span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">Size</span> <span class="n">availableSize</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">MeasureOverride</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">nativeTarget</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inWidth</span><span class="p">,</span> <span class="n">Double</span> <span class="n">inHeight</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outWidth</span><span class="p">,</span> <span class="n">Double</span><span class="p">&amp;</span> <span class="n">outHeight</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>On a hunch I created non-generic version of my converter and it seemed to work. Oh, so I can&rsquo;t use generic base for UI controls? Nice job MS.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">EqualToVisibilityConverter</span> <span class="p">:</span> <span class="n">FrameworkElement</span><span class="p">,</span> <span class="n">IValueConverter</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ParameterProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="n">RegisterAttached</span><span class="p">(</span>
-</span><span class='line'>        <span class="s">&quot;BindingParameter&quot;</span><span class="p">,</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="n">EqualToVisibilityConverter</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="m">0</span><span class="p">));</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">OnBindingParameterChanged</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">d</span><span class="p">,</span> <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">BindingParameter</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">GetValue</span><span class="p">(</span><span class="n">ParameterProperty</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>        <span class="k">set</span> <span class="p">{</span> <span class="n">SetValue</span><span class="p">(</span><span class="n">ParameterProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="kt">int</span> <span class="n">bp</span> <span class="p">=</span> <span class="n">BindingParameter</span><span class="p">;</span>
-</span><span class='line'>        <span class="k">return</span> <span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="n">Equals</span><span class="p">(</span><span class="n">BindingParameter</span><span class="p">))</span> <span class="p">?</span> <span class="n">Visibility</span><span class="p">.</span><span class="n">Visible</span> <span class="p">:</span> <span class="n">Visibility</span><span class="p">.</span><span class="n">Collapsed</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">object</span> <span class="nf">ConvertBack</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">throw</span> <span class="k">new</span> <span class="nf">NotImplementedException</span><span class="p">();</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Note that I wrote &ldquo;seemed to work&rdquo;. It means only that the code didn&rsquo;t explode in my face, but it didn&rsquo;t work quite as I expected. Here&rsquo;s the quick breakdown: when the visibility converter is called for the first time, the bound parameter is null. Then the dependency value is changed (at least the callback is called; curiously, the setter is not) and the bound parameter is initialized with a proper value, but there is no way to invalidate the conversion result.</p>
-
-<p>That gave me another idea: why use IValueConverter interface at all? Let&rsquo;s create an UI element with 2 dependency properties for arguments and one property for result of binary operation:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">EqualToVisibilityConverter</span> <span class="p">:</span> <span class="n">FrameworkElement</span><span class="p">,</span> <span class="n">INotifyPropertyChanged</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">LeftArgumentProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span>
-</span><span class='line'>        <span class="s">&quot;LeftArgument&quot;</span><span class="p">,</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="n">EqualToVisibilityConverter</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="n">OnArgumentChanged</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">RightArgumentProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="n">Register</span><span class="p">(</span>
-</span><span class='line'>        <span class="s">&quot;RightArgument&quot;</span><span class="p">,</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="n">Visibility</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">typeof</span><span class="p">(</span><span class="n">EqualToVisibilityConverter</span><span class="p">),</span>
-</span><span class='line'>        <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="n">OnArgumentChanged</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">OnArgumentChanged</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">d</span><span class="p">,</span> <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="n">EqualToVisibilityConverter</span> <span class="n">converter</span> <span class="p">=</span> <span class="n">d</span> <span class="k">as</span> <span class="n">EqualToVisibilityConverter</span><span class="p">;</span>
-</span><span class='line'>        <span class="n">converter</span><span class="p">.</span><span class="n">Result</span> <span class="p">=</span> <span class="p">(</span><span class="n">converter</span><span class="p">.</span><span class="n">LeftArgument</span> <span class="p">==</span> <span class="n">converter</span><span class="p">.</span><span class="n">RightArgument</span><span class="p">)</span> <span class="p">?</span> <span class="n">Visibility</span><span class="p">.</span><span class="n">Visible</span> <span class="p">:</span> <span class="n">Visibility</span><span class="p">.</span><span class="n">Collapsed</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">LeftArgument</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">GetValue</span><span class="p">(</span><span class="n">LeftArgumentProperty</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>        <span class="k">set</span> <span class="p">{</span> <span class="n">SetValue</span><span class="p">(</span><span class="n">LeftArgumentProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">RightArgument</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">GetValue</span><span class="p">(</span><span class="n">RightArgumentProperty</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>        <span class="k">set</span> <span class="p">{</span> <span class="n">SetValue</span><span class="p">(</span><span class="n">RightArgumentProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">private</span> <span class="n">Visibility</span> <span class="n">_result</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">public</span> <span class="n">Visibility</span> <span class="n">Result</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_result</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>        <span class="k">set</span>
-</span><span class='line'>        <span class="p">{</span>
-</span><span class='line'>            <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">!=</span> <span class="n">_result</span><span class="p">)</span>
-</span><span class='line'>            <span class="p">{</span>
-</span><span class='line'>                <span class="n">_result</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
-</span><span class='line'>                <span class="n">OnPropertyChanged</span><span class="p">(</span><span class="s">&quot;Result&quot;</span><span class="p">);</span>
-</span><span class='line'>            <span class="p">}</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">protected</span> <span class="k">void</span> <span class="nf">OnPropertyChanged</span><span class="p">(</span><span class="kt">string</span> <span class="n">propertyName</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="k">null</span> <span class="p">!=</span> <span class="n">PropertyChanged</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">{</span>
-</span><span class='line'>            <span class="n">PropertyChanged</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">new</span> <span class="n">PropertyChangedEventArgs</span><span class="p">(</span><span class="n">propertyName</span><span class="p">));</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now the callbacks of dependency properties can trigger the result recalculation and everything will be fine and dandy. Edit XAML, rebuild, run, KABOOM! This time application blew up, but I didn&rsquo;t even get a call stack, it just closed without any message.</p>
-
-<p>This. Is. Fucking. Ridiculous.</p>
-
-<p>At this moment I decided I already lost enough time on this crap, so I just said &ldquo;screw it&rdquo; and added additional property to OpenListSetting class.</p>
-
-<p>This is when I finally got why the MVVM pattern got so much traction with XAML developers. I always assumed that it&rsquo;s supposed to be used for big model adaptations, and all minor stuff should be done in binding converters. However it seems that you have to use ViewModel for anything remotely useful. Don&rsquo;t get me wrong: I agree that preventing pollution of Model by stuff needed by View is a Good Thing TM, but I think a separation of View into View and ViewModel is necessary only because of limitations of XAML.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/9/">&larr; Older</a>
@@ -1469,6 +1170,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
       </li>
     
@@ -1482,10 +1187,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
   </ul>

@@ -9,7 +9,9 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="One of the first section of Android API Guides is the description of different app compontents. New developers can read about Activities, which map &hellip;">
+  <meta name="description" content="The ContentResolver and SQLiteDatabase APIs are very similar: 1
+2
+public Cursor query (Uri uri, String[] projection, String selection, String[] &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +79,89 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-14T21:19:18+02:00" pubdate data-updated="true">Sep 14<span>th</span>, 2014</time>
+        
+           | <a href="/blog/2014/09/14/contentprovider-series-uris/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2014/09/14/contentprovider-series-uris/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>The <code>ContentResolver</code> and <code>SQLiteDatabase</code> APIs are very similar:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>public Cursor query (Uri uri,      String[] projection, String selection, String[] selectionArgs,                                String sortOrder            )
+</span><span class='line'>public Cursor query (String table, String[] columns,    String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Some arguments are renamed, SQL-specific <code>groupBy</code>+<code>having</code> are omitted, and <code>limit</code> also got an axe, but it is pretty much the same, except for the first argument.</p>
+
+<h2>Content Uris 101</h2>
+
+<p>Instead of specifying database table, you have to pass the <code>Uri</code> describing the resource you want to access. By convention the Uri should have <code>content</code> scheme (use <a href="http://developer.android.com/reference/android/content/ContentResolver.html#SCHEME_CONTENT">SCHEME_CONTENT</a> constant), followed by the <code>ContentProvider</code> authority, and the path, which is mapped to resources.</p>
+
+<p>If you have ever accessed any REST-ish API, or built the routes table for the web app, you&rsquo;ll find it familiar. Querying <code>/foo</code> should return the list of <code>foo</code>s, <code>/foo/1</code> operates on <code>foo</code> with id <code>1</code> and <code>/foo/1/bar</code> refers to all <code>bar</code>s related to <code>foo</code> with id <code>1</code>. The last <code>Uri</code> pattern is not mentioned in <a href="http://developer.android.com/guide/topics/providers/content-provider-creating.html#ContentURI">API Guides</a>, but is widely used in <a href="https://github.com/google/iosched">Google I/O Schedule app</a> and system <code>ContentProvider</code>s.</p>
+
+<h2>Publish &ndash; subscribe</h2>
+
+<p>The <code>Uri</code> parameter leaks from <code>ContentProvider</code> API into <code>Cursor</code>. You can call <code>Cursor.setNotificationUri()</code> to specify that the <code>Cursor</code> will observe changes on the given <code>Uri</code> and propagate the notification to all <code>ContentObserver</code>s registered with <code>Cursor.registerContentObserver()</code>. So when someone calls <code>ContentResolver.notifyChange()</code> on the same Uri, these <code>ContentObserver</code>s will be notified of the change. This is the mechanism that powers the automatic reloading of <code>CursorLoader</code>s.</p>
+
+<p>But what about the related Uris? Shouldn&rsquo;t observers of <code>/foo</code> Uri be notified when the <code>/foo/1</code> is updated? In case of standard <code>Cursors</code> that&rsquo;s exactly what happens, because the observers registered in <code>AbstractCursor</code> base class use <code>true</code> as <code>notifyForDescendents</code> parameter. But if your specific use case requires observing only single specific Uri, you can call <code>contentResolver.registerContentObserver(uri, false, observer)</code>.</p>
+
+<h2>Semantics</h2>
+
+<p>Content Uri semantics for querying content, i.e. how the Uri path affects the query, were already described in &ldquo;Content Uris 101&rdquo; section above. Semantics for other actions are not explicitly specified anywhere in the Android documentation, but again I/O Schedule app and system <code>ContentPovider</code>s implement it in a common way that can be thought of as standard to be followed.</p>
+
+<p>For deletes and updates the Uri path are treated the same ways as for queries &ndash; as additional selection.</p>
+
+<p>For inserts, the Uri path is translated to additional <code>ContentValues</code> that should be inserted into database, e.g. insert on <code>/foo/42/bar</code> create new <code>bar</code> record with supplied <code>ContentValues</code> and with <code>foo_id</code> (or similar foreign key field) set to 42.</p>
+
+<h2>Issue #1 &ndash; many to many</h2>
+
+<p>The described mechanics work well for one-to-many relations, but there is a problem with entities in many-to-many relations. Let&rsquo;s use <code>sessions</code> and <code>tags</code> from Google I/O Schedule app as an example. Each session can be tagged with mutliple tags, and many sessions can be tagged with the same tag.</p>
+
+<p>The semantics of querying <code>/sessions/*/tags</code> or <code>/tags/*/sessions</code> are OK. The first one should return all tags of a given session and the second one should yield the list of sessions tagged with a given tag. But on which Uri should you insert a new link between existing tag and existing session?</p>
+
+<p>Usually many-to-many relationships are modeled with linking table, in this case &ldquo;sessions_tags&rdquo;. But you cannot really pass the related tag and session in Uri path: <code>/sessions/*/tags/*/sessions_tags</code> or similar Uris look weird. One option is to put it directly in ContentValues, but this means that this entities will be created in a different way than all the other entities in one-to-many relations. Another option is use query parameters, i.e. insert on <code>/sessions_tags?relatedTo=/tags/*&amp;relatedTo=/sessions/*</code> Uri, which is ugly, but explicit.</p>
+
+<h2>Issue #2 &ndash; subscription vs. joins</h2>
+
+<p>Let&rsquo;s go back to querying the <code>/sessions/*/tags</code> endpoint. Under the hood we&rsquo;d join <code>tags</code> table with <code>sessions_tags</code> table, but most likely we&rsquo;d set the <code>Cursor</code>&rsquo;s notification Uri to <code>/sessions/*/tags</code>. It means that our Cursor won&rsquo;t be notified of changes on <code>/tags</code>, <code>/sessions_tags</code> and descendant Uris, although it might affect the data we queried.</p>
+
+<p>The only solution offered by Android SDK is calling <code>notifyChange</code> on insert, delete and update with multiple Uris, but there are two issues with this approach: you might end up notifying half of your endpoints for every small change, forcing way to many content reloads; it&rsquo;s error prone, because changing one endpoint might require manual changes of many different endpoints.</p>
+
+<p>What you really need for such cases are multiple notification Uris on Cursor, alas, that&rsquo;s not possible with regular Cursors implementations.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1661,207 +1746,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/05/22/clicking-unclickable-list-items/">Clicking Unclickable List Items</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-05-22T22:26:00+02:00" pubdate data-updated="true">May 22<span>nd</span>, 2014</time>
-        
-           | <a href="/blog/2014/05/22/clicking-unclickable-list-items/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2014/05/22/clicking-unclickable-list-items/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>One of the UI patterns that improve lists usability is dividing items into sections. The section might be the first letter of the main text on the list item, date formatted and rounded in a specific way or whatever makes sense for your data.</p>
-
-<p>From the technical point of view you can either add the header view to every list item and show and hide them as needed or create the separate view for header and regular list item and register multiple view types in your Adapter. Both options were described in details by <a href="https://plus.google.com/118417777153109946393">+Cyril Mottier</a> in excellent <a href="http://cyrilmottier.com/2011/07/05/listview-tips-tricks-2-section-your-listview/">ListView Tips &amp; Tricks #2: Sectioning Your ListView</a> blog post.</p>
-
-<p>If you choose the second approach, you&rsquo;ll have to decide what to return from your <code>Adapter</code>&rsquo;s <code>getItem</code> and <code>getItemId</code> methods for items representing sections. If your sections are not supposed to be clickable, you might implement your <code>Adapter</code> like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="n">Object</span> <span class="nf">getItem</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span>
-</span><span class='line'>      <span class="o">?</span> <span class="n">mItems</span><span class="o">[</span><span class="n">getCursorPosition</span><span class="o">(</span><span class="n">position</span><span class="o">)]</span>
-</span><span class='line'>      <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">long</span> <span class="nf">getItemId</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span>
-</span><span class='line'>      <span class="o">?</span> <span class="n">getCursorPosition</span><span class="o">(</span><span class="n">position</span><span class="o">)</span>
-</span><span class='line'>      <span class="o">:</span> <span class="mi">0</span><span class="o">;</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">areAllItemsEnabled</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isEnabled</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nf">getItemViewType</span><span class="o">(</span><span class="n">position</span><span class="o">)</span> <span class="o">==</span> <span class="n">TYPE_ITEM</span><span class="o">;</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And your <code>onListItemClickListener</code> like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onListItemClick</span><span class="o">(</span><span class="n">ListView</span> <span class="n">l</span><span class="o">,</span> <span class="n">View</span> <span class="n">v</span><span class="o">,</span> <span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="kt">long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">l</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="n">position</span><span class="o">,</span> <span class="n">id</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// dummy action which uses Object returned from getItem(position)</span>
-</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="n">getListAdapter</span><span class="o">().</span><span class="na">getItem</span><span class="o">(</span><span class="n">position</span><span class="o">).</span><span class="na">toString</span><span class="o">());</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If you do so, the Android has a nasty surprise for you:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">NullPointerException</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">dialmformonkey</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">MainFragment</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">MainFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">38</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">ListFragment</span><span class="n">$2</span><span class="o">.</span><span class="na">onItemClick</span><span class="o">(</span><span class="n">ListFragment</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">160</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AdapterView</span><span class="o">.</span><span class="na">performItemClick</span><span class="o">(</span><span class="n">AdapterView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">298</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="o">.</span><span class="na">performItemClick</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1100</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="n">$PerformClick</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">2749</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="n">$1</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">3423</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Handler</span><span class="o">.</span><span class="na">handleCallback</span><span class="o">(</span><span class="n">Handler</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">725</span><span class="o">)</span>
-</span><span class='line'>    <span class="o">...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The only way this can happen is getting <code>null</code> from <code>Adapter.getItem()</code>, but this method will be called only for disabled items, right?</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onListItemClick</span><span class="o">(</span><span class="n">ListView</span> <span class="n">l</span><span class="o">,</span> <span class="n">View</span> <span class="n">v</span><span class="o">,</span> <span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="kt">long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onListItemClick</span><span class="o">(</span><span class="n">l</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="n">position</span><span class="o">,</span> <span class="n">id</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="s">&quot;Clicked on item &quot;</span> <span class="o">+</span> <span class="n">position</span> <span class="o">+</span> <span class="s">&quot; which is &quot;</span> <span class="o">+</span>
-</span><span class='line'>        <span class="o">(</span><span class="n">getListAdapter</span><span class="o">().</span><span class="na">isEnabled</span><span class="o">(</span><span class="n">position</span><span class="o">)</span>
-</span><span class='line'>            <span class="o">?</span> <span class="s">&quot;enabled&quot;</span>
-</span><span class='line'>            <span class="o">:</span> <span class="s">&quot;disabled&quot;</span><span class="o">)</span>
-</span><span class='line'>  <span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// dummy action which uses Object returned from getItem(position)</span>
-</span><span class='line'>  <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;DMFM&quot;</span><span class="o">,</span> <span class="n">getListAdapter</span><span class="o">().</span><span class="na">getItem</span><span class="o">(</span><span class="n">position</span><span class="o">).</span><span class="na">toString</span><span class="o">());</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Wrong:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">4</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Abondance</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">4</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Abondance</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">31</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Aragon</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">31</span> <span class="n">which</span> <span class="n">is</span> <span class="n">enabled</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Aragon</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">dalvikvm</span><span class="err">﹕</span> <span class="n">GC_CONCURRENT</span> <span class="n">freed</span> <span class="mi">138</span><span class="n">K</span><span class="o">,</span> <span class="mi">3</span><span class="o">%</span> <span class="n">free</span> <span class="mi">8825</span><span class="n">K</span><span class="o">/</span><span class="mi">9016</span><span class="n">K</span><span class="o">,</span> <span class="n">paused</span> <span class="mi">0</span><span class="n">ms</span><span class="o">+</span><span class="mi">0</span><span class="n">ms</span><span class="o">,</span> <span class="n">total</span> <span class="mi">3</span><span class="n">ms</span>
-</span><span class='line'><span class="n">D</span><span class="o">/</span><span class="n">DMFM</span><span class="err">﹕</span> <span class="n">Clicked</span> <span class="n">on</span> <span class="n">item</span> <span class="mi">28</span> <span class="n">which</span> <span class="n">is</span> <span class="n">disabled</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It&rsquo;s very difficult to reproduce this error manually, especially if tapping the list item does something more than writing to logcat, but I investigated this issue, because the stack traces above appeared in crash reports on Google Analytics, so several people managed to click exactly wrong area at the wrong time.</p>
-
-<p>I didn&rsquo;t investigate the issue thoroughly, but it seems there must be some disparity between checking the <code>isEnabled</code> method and getting the item. If I ever dive into <code>ListView</code> code, I&rsquo;ll definitely write about it. If you want to reproduce or investigate the issue yourself, compile <a href="https://github.com/chalup/blog-unclickable-items">this project</a> and run the monkey:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">$</span> <span class="n">adb</span> <span class="n">shell</span> <span class="n">monkey</span> <span class="o">-</span><span class="n">p</span> <span class="n">org</span><span class="o">.</span><span class="na">chalup</span><span class="o">.</span><span class="na">dialmformonkey</span><span class="o">.</span><span class="na">app</span> <span class="o">-</span><span class="n">v</span> <span class="mi">500</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So what can we do? First option is checking the <code>Adapter.isEnabled()</code> in your <code>onListItemClick</code> listener, which is yet another kind of boilerplate you have to add to your Android code, but it&rsquo;s super easy to add. The other option is going with the first sectioning approach, i.e. putting section as a part of the clickable list item, but it might not work for your use case (for example adapter with multiple item types).</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1877,6 +1761,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
       </li>
     
@@ -1890,10 +1778,6 @@
     
       <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
   </ul>

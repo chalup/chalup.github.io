@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="First let&rsquo;s have a quick refresher on what is the visitor design pattern. This pattern consists of two elements: the Visitor, which in the Gang &hellip;">
+  <meta name="description" content="Sometimes the code you write is hard to test, and the most likely reason for this is that you wrote a shitty code. Other times, the code is quite &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,213 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/09/12/forger-library/">Forger Library</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-12T23:19:00+02:00" pubdate data-updated="true">Sep 12<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/09/12/forger-library/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/09/12/forger-library/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Sometimes the code you write is hard to test, and the most likely reason for this is that you wrote a shitty code. Other times, the code is quite easy to test, but setting up the test fixture is extremely tedious. It may also mean that you wrote a shitty code, but it may also mean that you don&rsquo;t have the right tools.</p>
+
+<p>For me the most painful part of writing tests was filling the data model with some fake data. The most straightforward thing to do is to write helper methods for creating this data, but this means you&rsquo;ll have two pieces of code to maintain side by side: the data model and the helper methods. The problem gets even more complicated when you need to create a whole hierarchy of objects.</p>
+
+<p>The first step is generating a valid <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a> for your data model. You need to know the column names and the type of the data that should be generated for a given column. Note that for column data type you cannot really use the database table definitions &ndash; for example sqlite doesn&rsquo;t have boolean column type, so you&rsquo;d define your column as integer, but the valid values for this column are only 1 and 0.</p>
+
+<p>This is not enough though, because you&rsquo;d generate random values for the foreign keys, which might crash the app (if you enforce the foreign key constraints) or break some other invariants in your code. You might work around this by creating the objects in the right order and overriding generated data for foreign key columns, but this would be tedious and error prone solution.</p>
+
+<p>I have recently posted about my two side-projects: <a href="https://github.com/chalup/microorm">MicroOrm</a> and <a href="https://github.com/chalup/thneed">Thneed</a>. The former let&rsquo;s you annotate fields in POJO and handles the conversion from POJO to ContentValues and from Cursor to POJO:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Customer</span> <span class="o">{</span>
+</span><span class='line'>  <span class="nd">@Column</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">long</span> <span class="n">id</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Column</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">String</span> <span class="n">name</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Order</span> <span class="o">{</span>
+</span><span class='line'>  <span class="nd">@Column</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">long</span> <span class="n">id</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Column</span><span class="o">(</span><span class="s">&quot;amount&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="n">amount</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Column</span><span class="o">(</span><span class="s">&quot;customer_id&quot;</span><span class="o">)</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">long</span> <span class="n">customerId</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The latter allows you to define the relationships between entities in your data model:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">ModelGraph</span><span class="o">&lt;</span><span class="n">ModelInterface</span><span class="o">&gt;</span> <span class="n">modelGraph</span> <span class="o">=</span> <span class="n">ModelGraph</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">ModelInterface</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">identifiedByDefault</span><span class="o">().</span><span class="na">by</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">where</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">the</span><span class="o">(</span><span class="n">ORDER</span><span class="o">).</span><span class="na">references</span><span class="o">(</span><span class="n">CUSTOMER</span><span class="o">).</span><span class="na">by</span><span class="o">(</span><span class="s">&quot;customer_id&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>See what I&rsquo;m getting at?</p>
+
+<p>The returned ModelGraph object is a data structure that can be processed by independently written processors, i.e. they are the Visitable and Visitor parts of the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor design pattern</a>. The entities in relationship definitions are not a plain marker Objects &ndash; the first builder call specifies the interface they have to implement. This interface can be used by Visitors to get useful information about the connected models and, as a type parameter of ModelGraph, ensures that you are using the correct Visitors for your ModelGraph. See <a href="/blog/2013/08/25/random-musings-on-visitor-design">my last post about Visitors</a> for more information about generifying the visitor pattern.</p>
+
+<p>In our case the interface should declare which POJO contains <a href="https://github.com/chalup/microorm">MicroOrm</a> annotations and where should the generated <a href="http://developer.android.com/reference/android/content/ContentValues.html"><code>ContentValues</code></a> be inserted:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">MicroOrmModel</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">getModelClass</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">ContentResolverModel</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Uri</span> <span class="nf">getUri</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">interface</span> <span class="nc">ModelInterface</span> <span class="kd">extends</span> <span class="n">ContentResolverModel</span><span class="o">,</span> <span class="n">MicroOrmModel</span> <span class="o">{</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">ModelInterface</span> <span class="n">CUSTOMER</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ModelInterface</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Uri</span> <span class="nf">getUri</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">Customers</span><span class="o">.</span><span class="na">CONTENT_URI</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">getModelClass</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">Customer</span><span class="o">.</span><span class="na">class</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The final step is to wrap everything in fluent API:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Forger</span><span class="o">&lt;</span><span class="n">ModelInterface</span><span class="o">&gt;</span> <span class="n">forger</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Forger</span><span class="o">(</span><span class="n">modelGraph</span><span class="o">,</span> <span class="k">new</span> <span class="n">MicroOrm</span><span class="o">());</span>
+</span><span class='line'><span class="n">Order</span> <span class="n">order</span> <span class="o">=</span> <span class="n">forger</span><span class="o">.</span><span class="na">iNeed</span><span class="o">(</span><span class="n">Order</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">in</span><span class="o">(</span><span class="n">contentResolver</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// note: we didn&#39;t created the Customer dependency of Order, but:</span>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">order</span><span class="o">.</span><span class="na">customer_id</span><span class="o">).</span><span class="na">isNotEqualTo</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// of course we can create Customer first and then create Order for it:</span>
+</span><span class='line'><span class="n">Customer</span> <span class="n">customer</span> <span class="o">=</span> <span class="n">forger</span><span class="o">.</span><span class="na">iNeed</span><span class="o">(</span><span class="n">Customer</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">in</span><span class="o">(</span><span class="n">contentResolver</span><span class="o">);</span>
+</span><span class='line'><span class="n">Order</span> <span class="n">anotherOrder</span> <span class="o">=</span> <span class="n">forger</span><span class="o">.</span><span class="na">iNeed</span><span class="o">(</span><span class="n">Order</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">relatedTo</span><span class="o">(</span><span class="n">customer</span><span class="o">).</span><span class="na">in</span><span class="o">(</span><span class="n">contentResolver</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">anotherOrder</span><span class="o">.</span><span class="na">customer_id</span><span class="o">).</span><span class="na">isEqualTo</span><span class="o">(</span><span class="n">customer</span><span class="o">.</span><span class="na">id</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// or if we need multiple orders for the same customer:</span>
+</span><span class='line'><span class="n">Customer</span> <span class="n">anotherCustomer</span> <span class="o">=</span> <span class="n">forger</span><span class="o">.</span><span class="na">iNeed</span><span class="o">(</span><span class="n">Customer</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">in</span><span class="o">(</span><span class="n">contentResolver</span><span class="o">);</span>
+</span><span class='line'><span class="n">Forger</span><span class="o">&lt;</span><span class="n">ModelInterface</span><span class="o">&gt;</span> <span class="n">forgerWithContext</span> <span class="o">=</span> <span class="n">forger</span><span class="o">.</span><span class="na">inContextOf</span><span class="o">(</span><span class="n">anotherCustomer</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">Order</span> <span class="n">orderA</span> <span class="o">=</span> <span class="n">forgerWithContext</span><span class="o">.</span><span class="na">iNeed</span><span class="o">(</span><span class="n">Order</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">in</span><span class="o">(</span><span class="n">contentResolver</span><span class="o">);</span>
+</span><span class='line'><span class="n">Order</span> <span class="n">orderB</span> <span class="o">=</span> <span class="n">forgerWithContext</span><span class="o">.</span><span class="na">iNeed</span><span class="o">(</span><span class="n">Order</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">in</span><span class="o">(</span><span class="n">contentResolver</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">orderA</span><span class="o">.</span><span class="na">customer_id</span><span class="o">).</span><span class="na">isEqualTo</span><span class="o">(</span><span class="n">anotherCustomer</span><span class="o">.</span><span class="na">id</span><span class="o">);</span>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">orderB</span><span class="o">.</span><span class="na">customer_id</span><span class="o">).</span><span class="na">isEqualTo</span><span class="o">(</span><span class="n">anotherCustomer</span><span class="o">.</span><span class="na">id</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The most pathological case in our code base was a test with 10 lines of code calling over 100 lines of helper methods and 6 lines of the actual test logic. The <a href="https://github.com/futuresimple/forger">Forger</a> library allowed us to get rid of all the helper methods and reduce the 10 lines of setup to 1 fluent API call (it&rsquo;s quite a long call split into few lines, but it&rsquo;s much prettier than the original code).</p>
+
+<p>Check out the <a href="https://github.com/futuresimple/forger">code on github</a> and don&rsquo;t <a href="https://github.com/futuresimple/forger/star">forget to star</a> this project if you find it interesting.</p>
+
+<p>The funny thing about this project is that it&rsquo;s a byproduct of <a href="https://github.com/chalup/thneed">Thneed</a>, which I originally wrote to solve another problem. It makes me think that the whole idea of defining the relationships as a visitable structure is more flexible than I originally anticipated and it might become the cornerstone of the whole set of useful tools.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1105,110 +1312,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/05/29/android-stuff-you-probably-want-to-know/">Android Stuff You Probably Want to Know About</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-29T23:24:00+02:00" pubdate data-updated="true">May 29<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/05/29/android-stuff-you-probably-want-to-know/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/05/29/android-stuff-you-probably-want-to-know/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>About once a month I interview potential employees at <a href="http://getbase.com/">Base CRM</a>. The nice thing about this is that I usually learn a thing or two. The not-so-nice thing about it is that sometimes you have to tell someone that there is much they have to learn.</p>
-
-<p>At this point most of the candidates ask &ldquo;OK, so what else should I know?&rdquo;. I used to give some ad-hoc answer for this question, but it&rsquo;s not the best idea, because I tend to forget to mention about some stuff; and even if I don&rsquo;t miss anything, the candidate probably won&rsquo;t remember half of what I said because of the stress accompanying the job interview.</p>
-
-<p>Anyways, I decided to write down the list of Android learning materials, blogs, libraries, etc. I recommend reading about.</p>
-
-<h2>Android basics</h2>
-
-<p>Some people&rsquo;s Android knowledge can be summed up as &ldquo;<a href="http://developer.android.com/reference/android/app/Activity.html"><code>Activities</code></a> + <a href="http://developer.android.com/reference/android/os/AsyncTask.html"><code>AsyncTasks</code></a>&rdquo;. That&rsquo;s not enough to write anything more complex than Yet Another Twitter Feed app, so if you seriously think of being the Android developer, go to <a href="http://developer.android.com/guide/components/index.html">http://developer.android.com/guide/components/index.html</a> and fill the gaps in your education.</p>
-
-<p>At the very least you should also know about <a href="http://developer.android.com/reference/android/app/Fragment.html"><code>Fragments</code></a> and <a href="http://developer.android.com/reference/android/content/Loader.html"><code>Loaders</code></a>. If you want to persist the data, I recommend using the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>. It looks like a hassle to implement at first, but it solves all the issues with communication between Services and UI. While we&rsquo;re at the <a href="http://developer.android.com/reference/android/app/Service.html"><code>Services</code></a>: you should know the difference between the bound Service and started Service, and you should know that most likely all you need is the <a href="http://developer.android.com/reference/android/app/IntentService.html"><code>IntentService</code></a>. You should also know about <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html"><code>BroadcastReceivers</code></a>, and what is the ordered broadcast and sticky broadcast. Pay attention on what thread the different components operate.</p>
-
-<h2>Libraries</h2>
-
-<ul>
-<li><a href="http://developer.android.com/tools/extras/support-library.html">Support library</a></li>
-<li><a href="https://code.google.com/p/guava-libraries/">Guava</a></li>
-<li><a href="http://actionbarsherlock.com/">ActionBarSherlock</a></li>
-<li><a href="http://joda-time.sourceforge.net/">JodaTime</a></li>
-<li><a href="http://commons.apache.org/proper/commons-io/">Commons IO</a></li>
-<li><a href="http://square.github.io/dagger/">Dagger</a></li>
-<li><a href="http://square.github.io/otto/">Otto</a></li>
-<li><a href="https://code.google.com/p/google-gson/">Gson</a></li>
-<li><a href="https://github.com/Prototik/HoloEverywhere">HoloEverywhere</a></li>
-</ul>
-
-
-<h2>Blogs</h2>
-
-<ul>
-<li><a href="http://commonsware.com/blog/">Mark Murphy</a></li>
-<li><a href="http://cyrilmottier.com/">Cyril Mottier</a></li>
-<li><a href="http://www.curious-creature.org/category/android/">Romain Guy</a></li>
-<li><a href="http://roman.nurik.net/">Roman Nurik</a></li>
-</ul>
-
-
-<h2>Github</h2>
-
-<ul>
-<li><a href="https://github.com/JakeWharton">Jake Wharton</a></li>
-<li><a href="https://github.com/square">Square</a></li>
-</ul>
-
-
-<h2>Design / UI</h2>
-
-<ul>
-<li><a href="http://www.androidviews.net/">Android Views</a></li>
-<li><a href="http://www.androiduipatterns.com/">Android UI Patterns blog</a></li>
-<li><a href="http://androiduiux.com/">Android UI / UX</a></li>
-<li><a href="http://android-ui-utils.googlecode.com/hg/asset-studio/dist/index.html">Android Asset Studio</a></li>
-<li><a href="http://petrnohejl.github.io/Android-Cheatsheet-For-Graphic-Designers/">Android cheatsheet for graphic designers</a></li>
-</ul>
-
-
-<h2>Miscellaneous</h2>
-
-<ul>
-<li><a href="https://code.google.com/p/iosched/">Google I/O app sources</a></li>
-<li><a href="http://grepcode.com/project/repository.grepcode.com/java/ext/com.google.android/android/">Grepcode</a></li>
-<li><a href="http://androidxref.com/">AndroidXRef</a></li>
-</ul>
-
-
-<p>I probably forgot about something very important, so please leave the comment if you thing anything is missing.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -1226,6 +1329,10 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/10/contentprovider-series-introduction/">ContentProvider Series - Introduction</a>
       </li>
     
@@ -1239,10 +1346,6 @@ So far so good. Let&rsquo;s declare the dependency on another project (a.k.a. mo
     
       <li class="post">
         <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/20/on-git-ui/">On Git</a>
       </li>
     
   </ul>
