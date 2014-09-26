@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="I&rsquo;m the first to admit that the Word Judge is booooring application. Checking if the word can be used in a word game? Meh. From a programmer &hellip;">
+  <meta name="description" content="Today I have finally pushed both versions of Word Judge through Nokia Store QA. The version with an english dictionary was available for over the &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,49 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/23/word-judge-for-symbian-available-in/">Word Judge for Symbian Available in Nokia Store</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-23T23:23:00+01:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/23/word-judge-for-symbian-available-in/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/23/word-judge-for-symbian-available-in/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Today I have finally pushed both versions of Word Judge through Nokia Store QA. The version with an english dictionary was available for over the week now, but I had to submit the polish version few times until it passed the Nokia tests.</p>
+
+<p>Anyways, the applications are available for free in Nokia Store. Here&rsquo;s the link for <a href="http://store.ovi.com/content/262526">english version</a> and <a href="http://store.ovi.com/content/262535">polish version</a> (might not be available in all countries &ndash; I had to add some restrictions to pass QA process).</p>
+
+<p>Stay tuned for posts about development of Symbian version and enjoy your Scrabble games.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1086,73 +1129,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/">On CachePolicy, UriBuilder and Mobile .NET</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-19T11:00:00+01:00" pubdate data-updated="true">Feb 19<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/02/19/on-cachepolicy-uribuilder-and-mobile/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In the Windows Phone 7 application I was working on there was a problem with some WebRequest caching. I&rsquo;m not sure if it should have been fixed on the client side or server side, but since it&rsquo;s just a matter of setting proper CachePolicy property of WebRequest I was going to add it to mobile application.</p>
-
-<p>Imagine my surprise when I found out that CachePolicy is not supported on Windows Phone 7. The obvious workaround is adding an URI param <code>no-cache=MS_FROM_EPOCH</code> or something like that.</p>
-
-<p>Now, if you&rsquo;d ask me what is the cardinal example of stuff that shouldn&rsquo;t be done using string concatenation, but is notoriously done that way, I&rsquo;d answer: URI building. It&rsquo;s highly structured string with <a href="http://tools.ietf.org/html/rfc3986">RFC</a>, so it stands to reason to create and use a dedicated builder and parsers API to make sure everything is well-formed.</p>
-
-<p>Let&rsquo;s take a look at UriBuilder class and URIs in general. All the stuff between ? and # (VERIFY) is called query string, which contains key-value pairs separated by &amp;s. What kind of API for query string would make sense? An IDictionary&lt;String, String>! What API is presented by UriBuilder? A string! Take a look at the <a href="http://msdn.microsoft.com/en-us/library/system.uribuilder.query.aspx">documentation</a>. Here&rsquo;s the best part:</p>
-
-<blockquote><p><b>NOTE</b> Do not append a string directly to this property. If the length of Query is greater than 1, retrieve the property value as a string, remove the leading question mark, append the new query string, and set the property with the combined string.</p></blockquote>
-
-
-<p>Ridiculous. Seriously, MS, I don&rsquo;t care it&rsquo;s transformed to a string, it&rsquo;s a key-value dictionary, so let me treat it as such!</p>
-
-<p>Fortunately C# has this nice feature called extension methods, meaning we can &ldquo;add&rdquo; a method to a class. There are no extension properties, but we can have a method like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">UriBuilder</span> <span class="nf">WithQueryParam</span><span class="p">(</span><span class="k">this</span> <span class="n">UriBuilder</span> <span class="n">uri</span><span class="p">,</span> <span class="n">String</span> <span class="n">key</span><span class="p">,</span> <span class="n">String</span> <span class="k">value</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But now we need to check for duplicate keys and for that we have to parse existing query string. Fortunately there is a method for this: <a href="http://msdn.microsoft.com/en-us/library/system.web.httputility.parsequerystring.aspx">HttpUtility.ParseQueryString</a>.</p>
-
-<p>Except it&rsquo;s not available on mobile .NET. Again. But why?</p>
-
-<p>The same thing irritate me when I worked on Blackberry apps and I had to put up with Java ME no String.format, no date handling methods, no generics and sane collections. But I understand that Java ME is supposed to work on wider range of devices, some of them with very limited CPU and RAM resources, so every cycle and every byte of memory matters.</p>
-
-<p>Now let&rsquo;s take a look at Windows Phone 7 <a href="http://en.wikipedia.org/wiki/Windows_Phone#System_requirements">hardware requirements for manufacturers</a>: 256MB of RAM and 800MHz CPU. I&rsquo;m not an .NET expert, but I&rsquo;d hazard a guess that supporting  full desktop .NET would not make any difference on those powerhouses. Hell, you should be able to send a man to the Moon using this hardware, so please, can I have a query string parser?</p>
-
-<p>Is it some kind of Windows Mobile 6 legacy, or just a very bad MS joke that non-MS people don&rsquo;t get?</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/9/">&larr; Older</a>
@@ -1170,6 +1146,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/">Preparing for Android L - Fixing SQLite Queries</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a>
       </li>
     
@@ -1183,10 +1163,6 @@
     
       <li class="post">
         <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
   </ul>

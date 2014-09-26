@@ -4,7 +4,7 @@
   <title><![CDATA[Category: SQLite | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/sqlite/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-09-21T13:53:58+02:00</updated>
+  <updated>2014-09-26T20:38:06+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,33 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Preparing for Android L - Fixing SQLite Queries]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/"/>
+    <updated>2014-09-26T19:13:21+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries</id>
+    <content type="html"><![CDATA[<p>Today during the routine check of Android crash reports, I saw that one of the custom SQLite queries fails with <code>ambiguous column: id</code> message. There were two interesting aspects of this issue: nobody touched this part of code for a while; and there were only handful of crashes from a single device, and when you have a botched query it should crash left, right and center.</p>
+
+<p>Fortunately a while back we decided to log the sqlite version available on a given device, so I had the crucial piece of information that let me find the root cause in no time. This particular device used custom ROM with Sqlite 3.8.x installed, which caught my eye, because the standard version used by Android 4.x is 3.7.11.</p>
+
+<p>Here&rsquo;s the <a href="http://sscce.org/">short, self contained, correct example</a>:</p>
+
+<p><code>sql
+CREATE TABLE x (id INTEGER);
+CREATE TABLE y (id INTEGER, x_id INTEGER);
+SELECT * FROM x LEFT JOIN y ON x.id=y.x_id GROUP BY id
+</code></p>
+
+<p>SQLite 3.7.11 assumes the user wants to group the rows by <code>x.id</code>, 3.8 fails with <code>ambiguous column: id</code> error, which is more sensible thing to do. The fix is trivial:</p>
+
+<p><code>sql
+SELECT * FROM x LEFT JOIN y ON x.id=y.x_id GROUP BY x.id
+</code></p>
+
+<p>What&rsquo;s really important about this gotcha is that sqlite 3.8 will be the default version used by Android L, rumored to be released on November 1st. You might say that you don&rsquo;t have any custom queries in your app, but you&rsquo;d have to consider every dependency performing any data persistence you use. The best course of action is to test your application thoroughly on device with L preview image or emulator.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Offline Mode in Android Apps, Part 3 - Old Db Schemas]]></title>
@@ -344,33 +371,6 @@ selectid    order       from        detail</p>
 <p>Of course this behaviour is documented in the SQLite Query Planner overview (point 3 of the <a href="http://www.sqlite.org/optoverview.html#flattening">Subquery flattening</a> paragraph), and I even remember reading this docs few times, but I guess something like this has to bite me in the ass before I memorize it.</p>
 
 <p>Everything works fine if you copypaste the views selection in place of the joined view, which makes me a sad panda, because I wish SQLite could do this for me. On the other hand it&rsquo;s a very simple workaround for this issue, and, with a right library, the code might even be manageable.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[SQL Injection Through ContentProvider Projection]]></title>
-    <link href="http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider/"/>
-    <updated>2013-11-06T23:45:00+01:00</updated>
-    <id>http://chalup.github.io/blog/2013/11/06/sql-injection-through-contentprovider</id>
-    <content type="html"><![CDATA[<p>The <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> through query parameters is the common security issue of any system using SQL database. Android is no different than any other system, so if you&rsquo;re using SQLite database in your Android app, you should always sanitize the database inputs.</p>
-
-<p><a href="http://imgs.xkcd.com/comics/exploits_of_a_mom.png"><img class="center" src="http://imgs.xkcd.com/comics/exploits_of_a_mom.png" title="Obligatory XKCD" ></a></p>
-
-<p>If you are also using an exported <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a>, you need to take care of one more vector of attack: the projection parameter of the queries. Just like <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> allows the users to specify which columns they want to retrieve. It makes sense, because it reduces the amount of data fetched, which might improve performance and reduce the RAM footprint of your app. Unlike the <a href="http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html"><code>SQLiteDatabase</code></a>, the <a href="http://developer.android.com/reference/android/content/ContentProvider.html"><code>ContentProvider</code></a> might be exported, which means that the external applications can query the data from it requesting an arbitrary projection, which are then turned into raw SQL queries. For example:</p>
-
-<p><code>sql
-'Bobby Tables was here'; DROP TABLE Students; --
-* FROM sqlite_master; --
-* FROM non_public_table_I_found_out_about_using_previous_query; --
-</code></p>
-
-<p>Basically it means that if you exposed a single uri without sanitizing the projection, you have exposed your entire db.</p>
-
-<p>So how do you sanitize your projections? I&rsquo;ve given it some thought and it seems that the only sensible thing to do is allowing only subsets of predefined set of columns.</p>
-
-<p>You cannot allow any expression, because you&rsquo;d allow any expressions, including SELECTs from other tables and allowing certain expressions is not a trivial task.</p>
-
-<p>You shouldn&rsquo;t ignore the provided projection and return all columns, because one of the benefits of using projections is limiting the amount of data retrieved from database. Besides, <a href="https://play.google.com/store/apps/details?id=com.google.android.gm">certain widely used Google application</a> ignores the existence of <a href="http://developer.android.com/reference/android/database/Cursor.html#getColumnIndex%28java.lang.String%29"><code>Cursor.getColumnIndex</code></a> method and assumes that the columns will be returned in the same order they were specified in projection. The other app won&rsquo;t work correctly, and the users will probably blame you.</p>
 ]]></content>
   </entry>
   

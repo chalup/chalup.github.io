@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Gotcha | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/gotcha/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-09-21T13:53:58+02:00</updated>
+  <updated>2014-09-26T20:38:06+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,33 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Preparing for Android L - Fixing SQLite Queries]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/"/>
+    <updated>2014-09-26T19:13:21+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries</id>
+    <content type="html"><![CDATA[<p>Today during the routine check of Android crash reports, I saw that one of the custom SQLite queries fails with <code>ambiguous column: id</code> message. There were two interesting aspects of this issue: nobody touched this part of code for a while; and there were only handful of crashes from a single device, and when you have a botched query it should crash left, right and center.</p>
+
+<p>Fortunately a while back we decided to log the sqlite version available on a given device, so I had the crucial piece of information that let me find the root cause in no time. This particular device used custom ROM with Sqlite 3.8.x installed, which caught my eye, because the standard version used by Android 4.x is 3.7.11.</p>
+
+<p>Here&rsquo;s the <a href="http://sscce.org/">short, self contained, correct example</a>:</p>
+
+<p><code>sql
+CREATE TABLE x (id INTEGER);
+CREATE TABLE y (id INTEGER, x_id INTEGER);
+SELECT * FROM x LEFT JOIN y ON x.id=y.x_id GROUP BY id
+</code></p>
+
+<p>SQLite 3.7.11 assumes the user wants to group the rows by <code>x.id</code>, 3.8 fails with <code>ambiguous column: id</code> error, which is more sensible thing to do. The fix is trivial:</p>
+
+<p><code>sql
+SELECT * FROM x LEFT JOIN y ON x.id=y.x_id GROUP BY x.id
+</code></p>
+
+<p>What&rsquo;s really important about this gotcha is that sqlite 3.8 will be the default version used by Android L, rumored to be released on November 1st. You might say that you don&rsquo;t have any custom queries in your app, but you&rsquo;d have to consider every dependency performing any data persistence you use. The best course of action is to test your application thoroughly on device with L preview image or emulator.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Android Recent Apps List and Intent Extras]]></title>

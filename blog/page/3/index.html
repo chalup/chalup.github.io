@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="This year I gave a talk on Krakdroid conference about offline mode in Android apps. By offline mode I mean implementing the app such way that the &hellip;">
+  <meta name="description" content="I faced this dilemma recently, when I was preparing first release of Cerberus utility for Android. On one hand, in Cerberus I used a tiny subset of &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,53 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/12/27/to-guava-or-not-to-guava/">To Guava or Not to Guava?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-27T12:10:00+01:00" pubdate data-updated="true">Dec 27<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/12/27/to-guava-or-not-to-guava/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/12/27/to-guava-or-not-to-guava/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I faced this dilemma recently, when I was preparing first release of <a href="https://github.com/chalup/cerberus">Cerberus</a> utility for Android. On one hand, in <a href="https://github.com/chalup/cerberus">Cerberus</a> I used a tiny subset of Guava features which can be trivially rewritten in vanilla Java in 15 minutes, so maybe I should not force Guava down peoples throat?  On the other hand I&rsquo;m a <a href="/blog/2013/09/21/guava-goodies">huge</a> <a href="/blog/2013/10/04/more-guava-goodies-abstractiterator">fan</a> of Guava and I think you should definitely use it in anything more complicated than &ldquo;Hello, world!&rdquo; tutorial, because it either reduces a boilerplate or replaces your handrolled utilities with better, faster and more thoroughly tested implementations.</p>
+
+<p>The &ldquo;this library bloats my apk&rdquo; argument is moot, because you can easily set up the ProGuard configuration which only strips the unused code, without doing any expensive optimizations. It&rsquo;s a good idea, because the dex input will be smaller, which speeds up the build and the apk will be smaller, which reduces time required to upload and install the app on the device.</p>
+
+<p>I found the problem though, which is a bit harder to solve. Modern versions of Guava use some <a href="http://developer.android.com/reference/java/util/NavigableSet.html">Java 1.6 APIs, which are available from API level 9</a>, so when you try to use it on Android 2.2 (API level 8), you&rsquo;ll get the <code>NoSuchMethodException</code> or some other unpleasant runtime error (side note: position #233 on my TODO list was a jar analyzer which finds this problem). <a href="/blog/2013/06/26/guava-and-minsdkversion">On Android 2.2 you&rsquo;re stuck with Guava 13.0.1.</a></p>
+
+<p>This extends also to Guava as a library dependency. If one library supports Android 2.2 and older, it forces old version of Guava as dependency. And if another library depends on more recent version of Guava, you&rsquo;re basically screwed.</p>
+
+<p>One conclusion you can draw from this blog post is that you shouldn&rsquo;t use Guava in your open source libraries to prevent dependency hell, but that&rsquo;s spilling the baby with the bathwater. The problem is not Guava or any other library, the problem are Java 1.6 methods missing from Android API level 8! <a href="http://developer.android.com/about/dashboards/index.html">The statistics from Google</a> indicates that Froyo is used by 1.6%, in case of Base CRM user base it&rsquo;s only 0.2%. So more reasonable course of action is finally <strong>bumping minSdkVersion to 10</strong> (<a href="http://dannyroa.com/2013/10/17/why-its-time-to-support-only-android-4-0-and-above/">or even 14</a>), both for your applications and all the libraries.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -820,191 +867,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/09/21/guava-goodies/">Guava Goodies</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-09-21T14:49:00+02:00" pubdate data-updated="true">Sep 21<span>st</span>, 2013</time>
-        
-           | <a href="/blog/2013/09/21/guava-goodies/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/09/21/guava-goodies/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This is a long overdue post after my <a href="/blog/2013/02/20/guava-on-android">Guava on Android</a> post from February. Since then I&rsquo;ve been using <a href="https://code.google.com/p/guava-libraries/">Guava</a> in pretty much every Java project I was involved in and I still find new stuff that makes my code both shorter and clearer. Some random examples:</p>
-
-<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#equal%28java.lang.Object,%20java.lang.Object%29"><code>Objects.equal()</code></a></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
-</span><span class='line'><span class="kt">boolean</span> <span class="n">equal</span> <span class="o">=</span> <span class="n">one</span> <span class="o">==</span> <span class="kc">null</span>
-</span><span class='line'>    <span class="o">?</span> <span class="n">other</span> <span class="o">==</span> <span class="kc">null</span>
-</span><span class='line'>    <span class="o">:</span> <span class="n">one</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">other</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Guava style:</span>
-</span><span class='line'><span class="kt">boolean</span> <span class="n">equal</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">equal</span><span class="o">(</span><span class="n">one</span><span class="o">,</span> <span class="n">other</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Objects.html#hashCode%28java.lang.Object...%29"><code>Objects.hashcode()</code></a></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
-</span><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">x</span><span class="o">;</span>
-</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="n">y</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">hashCode</span><span class="o">(</span><span class="n">y</span><span class="o">)</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">result</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="n">z</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">z</span><span class="o">.</span><span class="na">hashCode</span><span class="o">()</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Guava style:</span>
-</span><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">Objects</span><span class="o">.</span><span class="na">hashCode</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">,</span> <span class="n">z</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/base/Joiner.html"><code>Joiner</code></a></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
-</span><span class='line'><span class="n">StringBuilder</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StringBuilder</span><span class="o">();</span>
-</span><span class='line'><span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">a</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">b</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">a</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">!=</span> <span class="n">a</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">b</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;, &quot;</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="k">return</span> <span class="n">b</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Guava style:</span>
-</span><span class='line'><span class="n">Joiner</span><span class="o">.</span><span class="na">on</span><span class="o">(</span><span class="s">&quot;, &quot;</span><span class="o">).</span><span class="na">join</span><span class="o">(</span><span class="n">a</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/collect/ComparisonChain.html"><code>ComparisonChain</code></a></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// instead of:</span>
-</span><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="kt">int</span> <span class="n">cmp</span> <span class="o">=</span> <span class="n">lastName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>  <span class="n">cmp</span> <span class="o">=</span> <span class="n">firstName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">Integer</span><span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Guava style:</span>
-</span><span class='line'><span class="nd">@Override</span>
-</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Person</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">ComparisonChain</span><span class="o">.</span><span class="na">start</span><span class="o">()</span>
-</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">lastName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">lastName</span><span class="o">)</span>
-</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">firstName</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">firstName</span><span class="o">)</span>
-</span><span class='line'>      <span class="o">.</span><span class="na">compare</span><span class="o">(</span><span class="n">zipCode</span><span class="o">,</span> <span class="n">other</span><span class="o">.</span><span class="na">zipCode</span><span class="o">)</span>
-</span><span class='line'>      <span class="o">.</span><span class="na">result</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Lists, Maps and Sets classes contain bunch of newFooCollection, which effectively replace the diamond operator from JDK7, but also allow you to initialize the collection from varargs.</p>
-
-<p>Sets also contain the difference, intersection, etc. methods for common operations on sets, which a) have sane names, unlike some stuff from JDK&rsquo;s Collections, and b) doesn&rsquo;t change operands, so you don&rsquo;t have to make a defensive copy if you want to use the same set in two operations.</p>
-
-<p>Speaking of defensive copying: Guava has a set of <a href="https://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">Immutable collections</a>, which were created just for this purpose. There are few other very useful collections: <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/cache/LoadingCache.html"><code>LoadingCache</code></a>, which you can think of as a lazy map with specified generator for new items; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Multiset.html"><code>Multiset</code></a>, very handy if you need to build something like a histogram; <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Table.html"><code>Table</code></a> if you need to lookup value using two keys.</p>
-
-<p>The other stuff I use very often are <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Preconditions.html"><code>Preconditions</code></a>. It&rsquo;s just a syntactic sugar for some sanity checks in your code, but it makes them more obvious, especially when you skim through some unfamiliar code. Bonus points: if you don&rsquo;t use the return values from <code>checkNotNull</code> and <code>checkPositionIndex</code>, you can remove those checks from performance critical sections using Proguard.</p>
-
-<p>On Android you have the <a href="http://developer.android.com/reference/android/util/Log.html#getStackTraceString%28java.lang.Throwable%29"><code>Log.getStackTraceString()</code></a> helper method, but in plain Java you&rsquo;d have to build one from <a href="http://developer.android.com/reference/java/lang/Throwable.html#getStackTrace%28%29"><code>Throwable.getStackTrace()</code></a>. Only you don&rsquo;t have to do this, since Guava have <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/base/Throwables.html#getStackTraceAsString%28java.lang.Throwable%29"><code>Throwables.getStackTraceAsString()</code></a> utility method.</p>
-
-<p>Guava introduces also some functional idioms in form of <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#transform%28java.util.Collection,%20com.google.common.base.Function%29"><code>Collections2.transform</code></a> and <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Collections2.html#filter%28java.util.Collection,%20com.google.common.base.Predicate%29"><code>Collections2.filter</code></a>, but I have mixed feelings about them. On one hand sometimes they are life savers, but usually they make the code much uglier than the good ol&#8217; imperative for loop, so ues them with caution. They get especially ugly when you need to chain multiple transformations and filters, but for this case the Guava provides the <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/FluentIterable.html"><code>FluentIterable</code></a> interface.</p>
-
-<p>None of the APIs listed above is absolutely necessary, but seriously, you want to use Guava (<a href="/blog/2013/06/26/guava-and-minsdkversion">but sometimes not the latest version</a>). Each part of it raises the abstraction level of your code a tiny bit, improving it one line at the time.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1022,6 +884,10 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/">Preparing for Android L - Fixing SQLite Queries</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/14/contentprovider-series-uris/">ContentProvider Series - Uris</a>
       </li>
     
@@ -1035,10 +901,6 @@ It might not be obvious why do you need the data migrations, so let&rsquo;s clea
     
       <li class="post">
         <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/27/google-i-slash-o-2014-summary/">Google I/O 2014 Summary</a>
       </li>
     
   </ul>
