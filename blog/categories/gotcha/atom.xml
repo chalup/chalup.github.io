@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Gotcha | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/gotcha/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-09-26T20:38:06+02:00</updated>
+  <updated>2014-09-28T23:58:39+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,21 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[setHasOptionsMenu Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha/"/>
+    <updated>2014-09-28T23:31:57+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha</id>
+    <content type="html"><![CDATA[<p>When your <code>Fragment</code> puts some actions in the action bar, it should call <code>setHasOptionsMenu(true)</code>. And where should you make this call? You probably follow samples and call it from <code>onCreate()</code> callback.</p>
+
+<p>Later you decide to hide one of the actions under certain circumstances. The way do to this is to implement <code>onPrepareOptionsMenu(Menu)</code> callback and alter the <code>Menu</code> object passed as an argument.</p>
+
+<p>If you are not careful, depending on the visibility precondition you apply, you might have implemented instant crash on OS versions before Jelly Bean. On API level 17, the <code>onPrepareOptionsMenu</code> is called from runnable posted on some handler; on older versions the menu callbacks are called synchronously, so they are really called from <code>onCreate()</code>, which means that your Fragment is not yet fully initialized.</p>
+
+<p>What&rsquo;s the takeaway? Always test your app on wide variety of devices and OSes before the release and do not trust official Android samples.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Preparing for Android L - Fixing SQLite Queries]]></title>

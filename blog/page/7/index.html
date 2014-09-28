@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Let&rsquo;s take a break from Android gotchas and do some mobile necrophilia, i.e. let&rsquo;s talk about Symbian. Recently I received an email from &hellip;">
+  <meta name="description" content="Unless you were writing your Android apps under some kind of digital rock, you heard about Mark Murphy a.k.a. commonsguy. Today I&rsquo;d like to &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,173 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/09/19/android-heterogeneous-adapters-gotcha/">Android Heterogeneous Adapters Gotcha</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-19T23:49:00+02:00" pubdate data-updated="true">Sep 19<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/09/19/android-heterogeneous-adapters-gotcha/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/09/19/android-heterogeneous-adapters-gotcha/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Unless you were writing your Android apps under some kind of digital rock, you heard about Mark Murphy a.k.a. <a href="https://github.com/commonsguy">commonsguy</a>. Today I&rsquo;d like to write about a gotcha related to heterogeneous Adapters in general, which recently bit me in the rear when I used (misused?) one of Mark&rsquo;s Android components &ndash; <a href="https://github.com/commonsguy/cwac-merge">MergeAdapter</a>.</p>
+
+<p>As you can read on the <a href="https://github.com/commonsguy/cwac-merge">project&rsquo;s site</a>, &ldquo;MergeAdapter accepts a mix of Adapters and Views and presents them as one contiguous whole to whatever ListView it is poured into&rdquo;. This means of course that this is a heterogeneous adapter, i.e. the one which returns integer > 1 from <a href="http://developer.android.com/reference/android/widget/BaseAdapter.html"><code>getViewTypeCount()</code></a>. The implementation of this method is pretty straightforward &ndash; it just iterates through the list of adapters it consists of and returns the sum of <code>getViewTypeCount()</code>s :</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">int</span> <span class="nf">getViewTypeCount</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">total</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">for</span> <span class="o">(</span><span class="n">PieceState</span> <span class="n">piece</span> <span class="o">:</span> <span class="n">pieces</span><span class="o">.</span><span class="na">getRawPieces</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">total</span><span class="o">+=</span><span class="n">piece</span><span class="o">.</span><span class="na">adapter</span><span class="o">.</span><span class="na">getViewTypeCount</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">total</span><span class="o">,</span> <span class="mi">1</span><span class="o">));</span> <span class="c1">// needed for</span>
+</span><span class='line'>                              <span class="c1">// setListAdapter() before</span>
+</span><span class='line'>                              <span class="c1">// content add&#39;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Everything is fine and dandy if you use the code like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">icicle</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">icicle</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">setContentView</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">main</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">MergeAdapter</span> <span class="n">adapter</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MergeAdapter</span><span class="o">();</span>
+</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addView</span><span class="o">(</span><span class="n">someView</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addAdapter</span><span class="o">(</span><span class="n">someAdapter</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">setListAdapter</span><span class="o">(</span><span class="n">adapter</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But sometimes you might want to attach the MergeAdapter to ListView and add fill it later (the real scenario for this case is adding stuff in <a href="http://developer.android.com/reference/android/support/v4/app/LoaderManager.LoaderCallbacks.html"><code>onLoadFinished</code></a> callback, I&rsquo;m using contrived example for sake of simplicity):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Override</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">icicle</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">icicle</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">setContentView</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">main</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">MergeAdapter</span> <span class="n">adapter</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MergeAdapter</span><span class="o">();</span>
+</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addAdapter</span><span class="o">(</span><span class="n">someAdapter</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">setListAdapter</span><span class="o">(</span><span class="n">adapter</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">addAdapter</span><span class="o">(</span><span class="n">someOtherAdapter</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This code will work as long as the adapter&rsquo;s contents fit on one screen, but if you start scrolling the list and the item recycling kicks in your app will crash with <code>ClassCastException</code> from your adapters&#8217; <code>getView()</code>. If by some chance you use the same IDs for the Views of the same type the app won&rsquo;t crash, but your items probably won&rsquo;t look exactly as they should. Either way, you won&rsquo;t be happy.</p>
+
+<p>The root cause is the undocumented fact that the getViewTypeCount() is called only once after attaching it with <a href="http://developer.android.com/reference/android/widget/ListView.html"><code>ListView.setAdapter()</code></a>. In the example above, the MergeAdapter contains only one item type when the <code>setAdapter()</code> is called, <code>getViewTypeCount()</code> will return 1, and adding the second adapter with another item type won&rsquo;t change this.</p>
+
+<p>Why doesn&rsquo;t this crash right away? The ListView will call <code>getView()</code> in correct adapters, but then it will try to reuse items created by one adapter for items in the second adapter, because it assumes there is only one view type (<code>getViewTypeCount()</code> returned 1).</p>
+
+<p>So what&rsquo;s the lesson here? Do not change the MergeAdapter in loader callbacks, either construct it before <code>setAdapter()</code> call (for example add empty <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html"><code>CursorAdapters</code></a> and call <a href="http://developer.android.com/reference/android/support/v4/widget/CursorAdapter.html"><code>CursorAdapter.swapCursor()</code></a> later) or postpone the <code>setAdapter()</code> call until you load all the parts. The more general rule is that you may not calculate the number of item types from the actual data, for example the following code won&rsquo;t work:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyCursorAdapter</span> <span class="kd">extends</span> <span class="n">CursorAdapter</span> <span class="o">{</span>
+</span><span class='line'>  <span class="c1">// Implementation of bindView, newView, etc. skipped</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">private</span> <span class="kt">int</span> <span class="n">mCalculatedItemTypeCount</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getViewTypeCount</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">mCalculatedItemTypeCount</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">changeCursor</span><span class="o">(</span><span class="n">Cursor</span> <span class="n">cursor</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">mCalculatedItemTypeCount</span> <span class="o">=</span> <span class="cm">/* some calculations */</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">super</span><span class="o">.</span><span class="na">changeCursor</span><span class="o">(</span><span class="n">cursor</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1041,235 +1208,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/28/qml-error-handling-revisited/">QML Error Handling Revisited</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-28T23:01:00+02:00" pubdate data-updated="true">Mar 28<span>th</span>, 2012</time>
-        
-           | <a href="/blog/2012/03/28/qml-error-handling-revisited/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/03/28/qml-error-handling-revisited/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>After releasing <a href="http://store.ovi.com/content/219800">Nu, Pogodi!</a> I learned the hard way that checking the QML runtime errors might be a good idea. For that particular application, simply checking the errors from <code>QDeclarativeView</code> after setting the main qml file was enough, because everything in qml file was statically declared. But what if you use <a href="https://qt-project.org/doc/qt-4.8/qml-loader.html">QML Loader</a> element, either explicitly or through some other qml element like <a href="http://doc.qt.nokia.com/qt-components-symbian/qml-pagestack.html">PageStack from Qt Components</a>, and something goes wrong?</p>
-
-<p>Well, if you don&rsquo;t improve the error handling code, your application will silently fail in some places, which probably won&rsquo;t make the users happy. I didn&rsquo;t wanted to repeat the <a href="http://store.ovi.com/content/219800">Nu, Pogodi!</a> screw up when releasing <a href="http://store.ovi.com/content/262535">Word Judge</a>, so I&rsquo;ve created a better error handling solution. First part is an error handler class:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-<span class='line-number'>64</span>
-<span class='line-number'>65</span>
-<span class='line-number'>66</span>
-<span class='line-number'>67</span>
-<span class='line-number'>68</span>
-<span class='line-number'>69</span>
-<span class='line-number'>70</span>
-<span class='line-number'>71</span>
-<span class='line-number'>72</span>
-<span class='line-number'>73</span>
-</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="c1">// ----------------------------------------</span>
-</span><span class='line'><span class="c1">//  qmlerrorhandler.h</span>
-</span><span class='line'><span class="c1">// ----------------------------------------</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">QmlErrorHandler</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QObject</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">Q_OBJECT</span>
-</span><span class='line'><span class="k">public</span><span class="o">:</span>
-</span><span class='line'>    <span class="k">explicit</span> <span class="n">QmlErrorHandler</span><span class="p">(</span><span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
-</span><span class='line'>    <span class="kt">bool</span> <span class="n">errorOccured</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">private</span> <span class="nl">slots:</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span> <span class="n">status</span><span class="p">);</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="n">handleQmlErrors</span><span class="p">(</span><span class="k">const</span> <span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;&amp;</span> <span class="n">qmlErrors</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">private</span><span class="o">:</span>
-</span><span class='line'>    <span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">mView</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">bool</span> <span class="n">mErrorOccured</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// ----------------------------------------</span>
-</span><span class='line'><span class="c1">//  qmlerrorhandler.cpp</span>
-</span><span class='line'><span class="c1">// ----------------------------------------</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">QmlErrorHandler</span><span class="p">(</span><span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span><span class="p">)</span> <span class="o">:</span>
-</span><span class='line'>    <span class="n">QObject</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span>
-</span><span class='line'>    <span class="n">mView</span><span class="p">(</span><span class="n">view</span><span class="p">),</span>
-</span><span class='line'>    <span class="n">mErrorOccured</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">connect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">statusChanged</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span><span class="p">)),</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span><span class="p">)));</span>
-</span><span class='line'>    <span class="n">connect</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">engine</span><span class="p">(),</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">warnings</span><span class="p">(</span><span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;</span><span class="p">)),</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">handleQmlErrors</span><span class="p">(</span><span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;</span><span class="p">)));</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kt">void</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span> <span class="n">status</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Error</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="n">handleQmlErrors</span><span class="p">(</span><span class="n">mView</span><span class="p">.</span><span class="n">errors</span><span class="p">());</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kt">void</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">handleQmlErrors</span><span class="p">(</span><span class="k">const</span> <span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;&amp;</span> <span class="n">qmlErrors</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">QStringList</span> <span class="n">errors</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">foreach</span> <span class="p">(</span><span class="k">const</span> <span class="n">QDeclarativeError</span><span class="o">&amp;</span> <span class="n">error</span><span class="p">,</span> <span class="n">qmlErrors</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="c1">// Special case for bug in QtComponents 1.1</span>
-</span><span class='line'>        <span class="c1">// https://bugreports.qt-project.org/browse/QTCOMPONENTS-1217</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">error</span><span class="p">.</span><span class="n">url</span><span class="p">().</span><span class="n">toString</span><span class="p">().</span><span class="n">endsWith</span><span class="p">(</span><span class="s">&quot;PageStackWindow.qml&quot;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">error</span><span class="p">.</span><span class="n">line</span><span class="p">()</span> <span class="o">==</span> <span class="mi">70</span><span class="p">)</span>
-</span><span class='line'>            <span class="k">continue</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">errors</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">errors</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">())</span>
-</span><span class='line'>        <span class="k">return</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">mErrorOccured</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">QMessageBox</span> <span class="n">msgBox</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&quot;Uh oh, something went terribly wrong!&quot;</span><span class="p">);</span>
-</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">setInformativeText</span><span class="p">(</span><span class="s">&quot;We&#39;re sorry, but it seems there are some problems &quot;</span>
-</span><span class='line'>                              <span class="s">&quot;with running our application on your phone. Please &quot;</span>
-</span><span class='line'>                              <span class="s">&quot;send us the following information to help us resolve &quot;</span>
-</span><span class='line'>                              <span class="s">&quot;this issue:</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">)</span> <span class="o">+</span>
-</span><span class='line'>                              <span class="n">errors</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
-</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
-</span><span class='line'>    <span class="n">qApp</span><span class="o">-&gt;</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kt">bool</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">errorOccured</span><span class="p">()</span> <span class="k">const</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">mErrorOccured</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And here&rsquo;s how I use it in my applications:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QApplication</span><span class="o">&gt;</span> <span class="n">app</span><span class="p">(</span><span class="n">createApplication</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">));</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QmlApplicationViewer</span><span class="o">&gt;</span> <span class="n">viewer</span><span class="p">(</span><span class="n">QmlApplicationViewer</span><span class="o">::</span><span class="n">create</span><span class="p">());</span>
-</span><span class='line'>    <span class="n">QmlErrorHandler</span> <span class="n">errorHandler</span><span class="p">(</span><span class="o">*</span><span class="n">viewer</span><span class="p">);</span>
-</span><span class='line'>    <span class="n">viewer</span><span class="o">-&gt;</span><span class="n">setMainQmlFile</span><span class="p">(</span><span class="n">QLatin1String</span><span class="p">(</span><span class="s">&quot;main.qml&quot;</span><span class="p">));</span>
-</span><span class='line'>    <span class="n">viewer</span><span class="o">-&gt;</span><span class="n">showExpanded</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">errorHandler</span><span class="p">.</span><span class="n">errorOccured</span><span class="p">())</span> <span class="p">{</span>
-</span><span class='line'>        <span class="k">return</span> <span class="n">app</span><span class="o">-&gt;</span><span class="n">exec</span><span class="p">();</span>
-</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Basically we need to catch the runtime errors, which are emitted from <code>QDeclarativeEngine</code> in signal named for some unfathomable reason <code>warnings</code>. Checking the <code>errorOccured()</code> in <code>main()</code> is ugly, but the <code>qApp-&gt;exit()</code> doesn&rsquo;t work until the event loop in main is started and that&rsquo;s the first thing which came to my mind. Please leave a comment if you know a simpler solution.</p>
-
-<p>Note the lines 46-49 in <code>QmlErrorHandler</code>: we&rsquo;re catching all warnings and the qt components are not completely free of them. I had to add a special case to prevent triggering the handler on every orientation change. If you stumble upon some other errors that should be ignored, please let me know.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/8/">&larr; Older</a>
@@ -1287,6 +1225,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/28/sethasoptionsmenu-gotcha/">setHasOptionsMenu Gotcha</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/">Preparing for Android L - Fixing SQLite Queries</a>
       </li>
     
@@ -1300,10 +1242,6 @@
     
       <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
       </li>
     
   </ul>

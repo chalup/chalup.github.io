@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: GMail - Porcupine Programmer</title>
+  <title>setHasOptionsMenu Gotcha - Porcupine Programmer</title>
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Category: GMail">
+  <meta name="description" content="When your Fragment puts some actions in the action bar, it should call setHasOptionsMenu(true). And where should you make this call? You probably &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://chalup.github.ioblog/categories/gmail">
+  <link rel="canonical" href="http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Porcupine Programmer" type="application/atom+xml">
@@ -76,36 +76,102 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: GMail</h1>
+    
+      <h1 class="entry-title">setHasOptionsMenu Gotcha</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-28T23:31:57+02:00" pubdate data-updated="true">Sep 28<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io">Comments</a>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>When your <code>Fragment</code> puts some actions in the action bar, it should call <code>setHasOptionsMenu(true)</code>. And where should you make this call? You probably follow samples and call it from <code>onCreate()</code> callback.</p>
 
-  
-  <h2>2013</h2>
+<p>Later you decide to hide one of the actions under certain circumstances. The way do to this is to implement <code>onPrepareOptionsMenu(Menu)</code> callback and alter the <code>Menu</code> object passed as an argument.</p>
 
-<article>
-  
-<h1><a href="/blog/2013/03/05/weekend-hack-viewing-markdown/">Weekend Hack: Viewing Markdown Attachments in GMail on Android</a></h1>
-<time datetime="2013-03-05T23:02:00+01:00" pubdate><span class='month'>Mar</span> <span class='day'>05</span> <span class='year'>2013</span></time>
+<p>If you are not careful, depending on the visibility precondition you apply, you might have implemented instant crash on OS versions before Jelly Bean. On API level 17, the <code>onPrepareOptionsMenu</code> is called from runnable posted on some handler; on older versions the menu callbacks are called synchronously, so they are really called from <code>onCreate()</code>, which means that your Fragment is not yet fully initialized.</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/gmail/'>GMail</a>, <a class='category' href='/blog/categories/release/'>Release</a>, <a class='category' href='/blog/categories/markdown/'>markdown</a></span>
-</footer>
-
-
-</article>
-
+<p>What&rsquo;s the takeaway? Always test your app on wide variety of devices and OSes before the release and do not trust official Android samples.</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">Jerzy Chalupski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-28T23:31:57+02:00" pubdate data-updated="true">Sep 28<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/android/'>Android</a>, <a class='category' href='/blog/categories/gotcha/'>gotcha</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha/" data-via="jchalupski" data-counturl="http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/" title="Previous Post: Preparing for Android L - fixing SQLite queries">&laquo; Preparing for Android L - fixing SQLite queries</a>
+      
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -199,7 +265,10 @@
       var disqus_shortname = 'porcupineprogrammer';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha/';
+        var disqus_url = 'http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Today I have finally pushed both versions of Word Judge through Nokia Store QA. The version with an english dictionary was available for over the &hellip;">
+  <meta name="description" content="After releasing Nu, Pogodi! I learned the hard way that checking the QML runtime errors might be a good idea. For that particular application, simply &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,235 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/28/qml-error-handling-revisited/">QML Error Handling Revisited</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-28T23:01:00+02:00" pubdate data-updated="true">Mar 28<span>th</span>, 2012</time>
+        
+           | <a href="/blog/2012/03/28/qml-error-handling-revisited/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2012/03/28/qml-error-handling-revisited/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>After releasing <a href="http://store.ovi.com/content/219800">Nu, Pogodi!</a> I learned the hard way that checking the QML runtime errors might be a good idea. For that particular application, simply checking the errors from <code>QDeclarativeView</code> after setting the main qml file was enough, because everything in qml file was statically declared. But what if you use <a href="https://qt-project.org/doc/qt-4.8/qml-loader.html">QML Loader</a> element, either explicitly or through some other qml element like <a href="http://doc.qt.nokia.com/qt-components-symbian/qml-pagestack.html">PageStack from Qt Components</a>, and something goes wrong?</p>
+
+<p>Well, if you don&rsquo;t improve the error handling code, your application will silently fail in some places, which probably won&rsquo;t make the users happy. I didn&rsquo;t wanted to repeat the <a href="http://store.ovi.com/content/219800">Nu, Pogodi!</a> screw up when releasing <a href="http://store.ovi.com/content/262535">Word Judge</a>, so I&rsquo;ve created a better error handling solution. First part is an error handler class:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'><span class="c1">//  qmlerrorhandler.h</span>
+</span><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">QmlErrorHandler</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QObject</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">Q_OBJECT</span>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>    <span class="k">explicit</span> <span class="n">QmlErrorHandler</span><span class="p">(</span><span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">bool</span> <span class="n">errorOccured</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="nl">slots:</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span> <span class="n">status</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">handleQmlErrors</span><span class="p">(</span><span class="k">const</span> <span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;&amp;</span> <span class="n">qmlErrors</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span><span class="o">:</span>
+</span><span class='line'>    <span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">mView</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">bool</span> <span class="n">mErrorOccured</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'><span class="c1">//  qmlerrorhandler.cpp</span>
+</span><span class='line'><span class="c1">// ----------------------------------------</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">QmlErrorHandler</span><span class="p">(</span><span class="n">QDeclarativeView</span> <span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">QObject</span> <span class="o">*</span><span class="n">parent</span><span class="p">)</span> <span class="o">:</span>
+</span><span class='line'>    <span class="n">QObject</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">mView</span><span class="p">(</span><span class="n">view</span><span class="p">),</span>
+</span><span class='line'>    <span class="n">mErrorOccured</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">connect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">view</span><span class="p">,</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">statusChanged</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span><span class="p">)),</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span><span class="p">)));</span>
+</span><span class='line'>    <span class="n">connect</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">engine</span><span class="p">(),</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">warnings</span><span class="p">(</span><span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;</span><span class="p">)),</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">handleQmlErrors</span><span class="p">(</span><span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;</span><span class="p">)));</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">void</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">handleQmlStatusChange</span><span class="p">(</span><span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Status</span> <span class="n">status</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">QDeclarativeView</span><span class="o">::</span><span class="n">Error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">handleQmlErrors</span><span class="p">(</span><span class="n">mView</span><span class="p">.</span><span class="n">errors</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">void</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">handleQmlErrors</span><span class="p">(</span><span class="k">const</span> <span class="n">QList</span><span class="o">&lt;</span><span class="n">QDeclarativeError</span><span class="o">&gt;&amp;</span> <span class="n">qmlErrors</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">QStringList</span> <span class="n">errors</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">foreach</span> <span class="p">(</span><span class="k">const</span> <span class="n">QDeclarativeError</span><span class="o">&amp;</span> <span class="n">error</span><span class="p">,</span> <span class="n">qmlErrors</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// Special case for bug in QtComponents 1.1</span>
+</span><span class='line'>        <span class="c1">// https://bugreports.qt-project.org/browse/QTCOMPONENTS-1217</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">error</span><span class="p">.</span><span class="n">url</span><span class="p">().</span><span class="n">toString</span><span class="p">().</span><span class="n">endsWith</span><span class="p">(</span><span class="s">&quot;PageStackWindow.qml&quot;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">error</span><span class="p">.</span><span class="n">line</span><span class="p">()</span> <span class="o">==</span> <span class="mi">70</span><span class="p">)</span>
+</span><span class='line'>            <span class="k">continue</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">errors</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">errors</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">())</span>
+</span><span class='line'>        <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">mErrorOccured</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">QMessageBox</span> <span class="n">msgBox</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&quot;Uh oh, something went terribly wrong!&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">setInformativeText</span><span class="p">(</span><span class="s">&quot;We&#39;re sorry, but it seems there are some problems &quot;</span>
+</span><span class='line'>                              <span class="s">&quot;with running our application on your phone. Please &quot;</span>
+</span><span class='line'>                              <span class="s">&quot;send us the following information to help us resolve &quot;</span>
+</span><span class='line'>                              <span class="s">&quot;this issue:</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">)</span> <span class="o">+</span>
+</span><span class='line'>                              <span class="n">errors</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">msgBox</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">qApp</span><span class="o">-&gt;</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">bool</span> <span class="n">QmlErrorHandler</span><span class="o">::</span><span class="n">errorOccured</span><span class="p">()</span> <span class="k">const</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">mErrorOccured</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And here&rsquo;s how I use it in my applications:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QApplication</span><span class="o">&gt;</span> <span class="n">app</span><span class="p">(</span><span class="n">createApplication</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">QScopedPointer</span><span class="o">&lt;</span><span class="n">QmlApplicationViewer</span><span class="o">&gt;</span> <span class="n">viewer</span><span class="p">(</span><span class="n">QmlApplicationViewer</span><span class="o">::</span><span class="n">create</span><span class="p">());</span>
+</span><span class='line'>    <span class="n">QmlErrorHandler</span> <span class="n">errorHandler</span><span class="p">(</span><span class="o">*</span><span class="n">viewer</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="o">-&gt;</span><span class="n">setMainQmlFile</span><span class="p">(</span><span class="n">QLatin1String</span><span class="p">(</span><span class="s">&quot;main.qml&quot;</span><span class="p">));</span>
+</span><span class='line'>    <span class="n">viewer</span><span class="o">-&gt;</span><span class="n">showExpanded</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">errorHandler</span><span class="p">.</span><span class="n">errorOccured</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">app</span><span class="o">-&gt;</span><span class="n">exec</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Basically we need to catch the runtime errors, which are emitted from <code>QDeclarativeEngine</code> in signal named for some unfathomable reason <code>warnings</code>. Checking the <code>errorOccured()</code> in <code>main()</code> is ugly, but the <code>qApp-&gt;exit()</code> doesn&rsquo;t work until the event loop in main is started and that&rsquo;s the first thing which came to my mind. Please leave a comment if you know a simpler solution.</p>
+
+<p>Note the lines 46-49 in <code>QmlErrorHandler</code>: we&rsquo;re catching all warnings and the qt components are not completely free of them. I had to add a special case to prevent triggering the handler on every orientation change. If you stumble upon some other errors that should be ignored, please let me know.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -644,491 +873,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/02/22/android-layoutinflater-gotcha/">Android LayoutInflater Gotcha</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-02-22T09:26:00+01:00" pubdate data-updated="true">Feb 22<span>nd</span>, 2012</time>
-        
-           | <a href="/blog/2012/02/22/android-layoutinflater-gotcha/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2012/02/22/android-layoutinflater-gotcha/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Many custom Adapter tutorials contain subtle error which can be hard to find and fix. Even <a href="http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/view/List14.html">efficient list adapter sample from Android SDK</a> contains this bug. If you compile and run the sample without any changes you should see something like this:</p>
-
-<p><img class="center" src="/images/original.png"></p>
-
-<p>There&rsquo;s nothing wrong with the list on this screenshot, as long as that&rsquo;s the look you want. But what if you want the list items to be wider? Let&rsquo;s change the list item layout:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
-</span><span class='line'><span class="c">&lt;!-- Copyright (C) 2007 The Android Open Source Project</span>
-</span><span class='line'>
-</span><span class='line'><span class="c">     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-</span><span class='line'><span class="c">     you may not use this file except in compliance with the License.</span>
-</span><span class='line'><span class="c">     You may obtain a copy of the License at</span>
-</span><span class='line'><span class="c">  </span>
-</span><span class='line'><span class="c">          http://www.apache.org/licenses/LICENSE-2.0</span>
-</span><span class='line'><span class="c">  </span>
-</span><span class='line'><span class="c">     Unless required by applicable law or agreed to in writing, software</span>
-</span><span class='line'><span class="c">     distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-</span><span class='line'><span class="c">     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-</span><span class='line'><span class="c">     See the License for the specific language governing permissions and</span>
-</span><span class='line'><span class="c">     limitations under the License.</span>
-</span><span class='line'><span class="c">--&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;LinearLayout</span> <span class="na">xmlns:android=</span><span class="s">&quot;http://schemas.android.com/apk/res/android&quot;</span>
-</span><span class='line'>    <span class="na">android:orientation=</span><span class="s">&quot;horizontal&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_width=</span><span class="s">&quot;match_parent&quot;</span>
-</span><span class='line'>    <span class="na">android:layout_height=</span><span class="s">&quot;150dip&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nt">&lt;ImageView</span> <span class="na">android:id=</span><span class="s">&quot;@+id/icon&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;48dip&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;48dip&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nt">&lt;TextView</span> <span class="na">android:id=</span><span class="s">&quot;@+id/text&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_gravity=</span><span class="s">&quot;center_vertical&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_width=</span><span class="s">&quot;0dip&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_weight=</span><span class="s">&quot;1.0&quot;</span>
-</span><span class='line'>        <span class="na">android:layout_height=</span><span class="s">&quot;wrap_content&quot;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;/LinearLayout&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>What&rsquo;s changed? Nothing, nada, zilch, zip. No changes whatsoever:</p>
-
-<p><img class="center" src="/images/changed.png"></p>
-
-<p>You can use hierarchy viewer tool to verify that the list item height was not set correctly.</p>
-
-<p><img class="center" src="/images/hierarchy.png"></p>
-
-<p>There&rsquo;s obviously nothing wrong with the layout xml, so let&rsquo;s take a look at the code:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-<span class='line-number'>64</span>
-<span class='line-number'>65</span>
-<span class='line-number'>66</span>
-<span class='line-number'>67</span>
-<span class='line-number'>68</span>
-<span class='line-number'>69</span>
-<span class='line-number'>70</span>
-<span class='line-number'>71</span>
-<span class='line-number'>72</span>
-<span class='line-number'>73</span>
-<span class='line-number'>74</span>
-<span class='line-number'>75</span>
-<span class='line-number'>76</span>
-<span class='line-number'>77</span>
-<span class='line-number'>78</span>
-<span class='line-number'>79</span>
-<span class='line-number'>80</span>
-<span class='line-number'>81</span>
-<span class='line-number'>82</span>
-<span class='line-number'>83</span>
-<span class='line-number'>84</span>
-<span class='line-number'>85</span>
-<span class='line-number'>86</span>
-<span class='line-number'>87</span>
-<span class='line-number'>88</span>
-<span class='line-number'>89</span>
-<span class='line-number'>90</span>
-<span class='line-number'>91</span>
-<span class='line-number'>92</span>
-<span class='line-number'>93</span>
-<span class='line-number'>94</span>
-<span class='line-number'>95</span>
-<span class='line-number'>96</span>
-<span class='line-number'>97</span>
-<span class='line-number'>98</span>
-<span class='line-number'>99</span>
-<span class='line-number'>100</span>
-<span class='line-number'>101</span>
-<span class='line-number'>102</span>
-<span class='line-number'>103</span>
-<span class='line-number'>104</span>
-<span class='line-number'>105</span>
-<span class='line-number'>106</span>
-<span class='line-number'>107</span>
-<span class='line-number'>108</span>
-<span class='line-number'>109</span>
-<span class='line-number'>110</span>
-<span class='line-number'>111</span>
-<span class='line-number'>112</span>
-<span class='line-number'>113</span>
-<span class='line-number'>114</span>
-<span class='line-number'>115</span>
-<span class='line-number'>116</span>
-<span class='line-number'>117</span>
-<span class='line-number'>118</span>
-<span class='line-number'>119</span>
-<span class='line-number'>120</span>
-<span class='line-number'>121</span>
-<span class='line-number'>122</span>
-<span class='line-number'>123</span>
-<span class='line-number'>124</span>
-<span class='line-number'>125</span>
-<span class='line-number'>126</span>
-<span class='line-number'>127</span>
-<span class='line-number'>128</span>
-<span class='line-number'>129</span>
-<span class='line-number'>130</span>
-<span class='line-number'>131</span>
-<span class='line-number'>132</span>
-<span class='line-number'>133</span>
-<span class='line-number'>134</span>
-<span class='line-number'>135</span>
-<span class='line-number'>136</span>
-<span class='line-number'>137</span>
-<span class='line-number'>138</span>
-<span class='line-number'>139</span>
-<span class='line-number'>140</span>
-<span class='line-number'>141</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="cm">/*</span>
-</span><span class='line'><span class="cm"> * Copyright (C) 2008 The Android Open Source Project</span>
-</span><span class='line'><span class="cm"> *</span>
-</span><span class='line'><span class="cm"> * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-</span><span class='line'><span class="cm"> * you may not use this file except in compliance with the License.</span>
-</span><span class='line'><span class="cm"> * You may obtain a copy of the License at</span>
-</span><span class='line'><span class="cm"> *</span>
-</span><span class='line'><span class="cm"> *      http://www.apache.org/licenses/LICENSE-2.0</span>
-</span><span class='line'><span class="cm"> *</span>
-</span><span class='line'><span class="cm"> * Unless required by applicable law or agreed to in writing, software</span>
-</span><span class='line'><span class="cm"> * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-</span><span class='line'><span class="cm"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-</span><span class='line'><span class="cm"> * See the License for the specific language governing permissions and</span>
-</span><span class='line'><span class="cm"> * limitations under the License.</span>
-</span><span class='line'><span class="cm"> */</span>
-</span><span class='line'>
-</span><span class='line'><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">apis</span><span class="o">.</span><span class="na">view</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.app.ListActivity</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.content.Context</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.os.Bundle</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.view.LayoutInflater</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.view.View</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.view.ViewGroup</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.BaseAdapter</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.TextView</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.ImageView</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.graphics.BitmapFactory</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">android.graphics.Bitmap</span><span class="o">;</span>
-</span><span class='line'><span class="kn">import</span> <span class="nn">com.example.android.apis.R</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="cm">/**</span>
-</span><span class='line'><span class="cm"> * Demonstrates how to write an efficient list adapter. The adapter used in this example binds</span>
-</span><span class='line'><span class="cm"> * to an ImageView and to a TextView for each row in the list.</span>
-</span><span class='line'><span class="cm"> *</span>
-</span><span class='line'><span class="cm"> * To work efficiently the adapter implemented here uses two techniques:</span>
-</span><span class='line'><span class="cm"> * - It reuses the convertView passed to getView() to avoid inflating View when it is not necessary</span>
-</span><span class='line'><span class="cm"> * - It uses the ViewHolder pattern to avoid calling findViewById() when it is not necessary</span>
-</span><span class='line'><span class="cm"> *</span>
-</span><span class='line'><span class="cm"> * The ViewHolder pattern consists in storing a data structure in the tag of the view returned by</span>
-</span><span class='line'><span class="cm"> * getView(). This data structures contains references to the views we want to bind data to, thus</span>
-</span><span class='line'><span class="cm"> * avoiding calls to findViewById() every time getView() is invoked.</span>
-</span><span class='line'><span class="cm"> */</span>
-</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">List14</span> <span class="kd">extends</span> <span class="n">ListActivity</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">EfficientAdapter</span> <span class="kd">extends</span> <span class="n">BaseAdapter</span> <span class="o">{</span>
-</span><span class='line'>        <span class="kd">private</span> <span class="n">LayoutInflater</span> <span class="n">mInflater</span><span class="o">;</span>
-</span><span class='line'>        <span class="kd">private</span> <span class="n">Bitmap</span> <span class="n">mIcon1</span><span class="o">;</span>
-</span><span class='line'>        <span class="kd">private</span> <span class="n">Bitmap</span> <span class="n">mIcon2</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">public</span> <span class="nf">EfficientAdapter</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="c1">// Cache the LayoutInflate to avoid asking for a new one each time.</span>
-</span><span class='line'>            <span class="n">mInflater</span> <span class="o">=</span> <span class="n">LayoutInflater</span><span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="c1">// Icons bound to the rows.</span>
-</span><span class='line'>            <span class="n">mIcon1</span> <span class="o">=</span> <span class="n">BitmapFactory</span><span class="o">.</span><span class="na">decodeResource</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getResources</span><span class="o">(),</span> <span class="n">R</span><span class="o">.</span><span class="na">drawable</span><span class="o">.</span><span class="na">icon48x48_1</span><span class="o">);</span>
-</span><span class='line'>            <span class="n">mIcon2</span> <span class="o">=</span> <span class="n">BitmapFactory</span><span class="o">.</span><span class="na">decodeResource</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getResources</span><span class="o">(),</span> <span class="n">R</span><span class="o">.</span><span class="na">drawable</span><span class="o">.</span><span class="na">icon48x48_2</span><span class="o">);</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="cm">/**</span>
-</span><span class='line'><span class="cm">         * The number of items in the list is determined by the number of speeches</span>
-</span><span class='line'><span class="cm">         * in our array.</span>
-</span><span class='line'><span class="cm">         *</span>
-</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getCount()</span>
-</span><span class='line'><span class="cm">         */</span>
-</span><span class='line'>        <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getCount</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">DATA</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="cm">/**</span>
-</span><span class='line'><span class="cm">         * Since the data comes from an array, just returning the index is</span>
-</span><span class='line'><span class="cm">         * sufficent to get at the data. If we were using a more complex data</span>
-</span><span class='line'><span class="cm">         * structure, we would return whatever object represents one row in the</span>
-</span><span class='line'><span class="cm">         * list.</span>
-</span><span class='line'><span class="cm">         *</span>
-</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getItem(int)</span>
-</span><span class='line'><span class="cm">         */</span>
-</span><span class='line'>        <span class="kd">public</span> <span class="n">Object</span> <span class="nf">getItem</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">position</span><span class="o">;</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="cm">/**</span>
-</span><span class='line'><span class="cm">         * Use the array index as a unique id.</span>
-</span><span class='line'><span class="cm">         *</span>
-</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getItemId(int)</span>
-</span><span class='line'><span class="cm">         */</span>
-</span><span class='line'>        <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getItemId</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">position</span><span class="o">;</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="cm">/**</span>
-</span><span class='line'><span class="cm">         * Make a view to hold each row.</span>
-</span><span class='line'><span class="cm">         *</span>
-</span><span class='line'><span class="cm">         * @see android.widget.ListAdapter#getView(int, android.view.View,</span>
-</span><span class='line'><span class="cm">         *      android.view.ViewGroup)</span>
-</span><span class='line'><span class="cm">         */</span>
-</span><span class='line'>        <span class="kd">public</span> <span class="n">View</span> <span class="nf">getView</span><span class="o">(</span><span class="kt">int</span> <span class="n">position</span><span class="o">,</span> <span class="n">View</span> <span class="n">convertView</span><span class="o">,</span> <span class="n">ViewGroup</span> <span class="n">parent</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>            <span class="c1">// A ViewHolder keeps references to children views to avoid unneccessary calls</span>
-</span><span class='line'>            <span class="c1">// to findViewById() on each row.</span>
-</span><span class='line'>            <span class="n">ViewHolder</span> <span class="n">holder</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="c1">// When convertView is not null, we can reuse it directly, there is no need</span>
-</span><span class='line'>            <span class="c1">// to reinflate it. We only inflate a new View when the convertView supplied</span>
-</span><span class='line'>            <span class="c1">// by ListView is null.</span>
-</span><span class='line'>            <span class="k">if</span> <span class="o">(</span><span class="n">convertView</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>                <span class="n">convertView</span> <span class="o">=</span> <span class="n">mInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">list_item_icon_text</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>                <span class="c1">// Creates a ViewHolder and store references to the two children views</span>
-</span><span class='line'>                <span class="c1">// we want to bind data to.</span>
-</span><span class='line'>                <span class="n">holder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ViewHolder</span><span class="o">();</span>
-</span><span class='line'>                <span class="n">holder</span><span class="o">.</span><span class="na">text</span> <span class="o">=</span> <span class="o">(</span><span class="n">TextView</span><span class="o">)</span> <span class="n">convertView</span><span class="o">.</span><span class="na">findViewById</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">id</span><span class="o">.</span><span class="na">text</span><span class="o">);</span>
-</span><span class='line'>                <span class="n">holder</span><span class="o">.</span><span class="na">icon</span> <span class="o">=</span> <span class="o">(</span><span class="n">ImageView</span><span class="o">)</span> <span class="n">convertView</span><span class="o">.</span><span class="na">findViewById</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">id</span><span class="o">.</span><span class="na">icon</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>                <span class="n">convertView</span><span class="o">.</span><span class="na">setTag</span><span class="o">(</span><span class="n">holder</span><span class="o">);</span>
-</span><span class='line'>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-</span><span class='line'>                <span class="c1">// Get the ViewHolder back to get fast access to the TextView</span>
-</span><span class='line'>                <span class="c1">// and the ImageView.</span>
-</span><span class='line'>                <span class="n">holder</span> <span class="o">=</span> <span class="o">(</span><span class="n">ViewHolder</span><span class="o">)</span> <span class="n">convertView</span><span class="o">.</span><span class="na">getTag</span><span class="o">();</span>
-</span><span class='line'>            <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="c1">// Bind the data efficiently with the holder.</span>
-</span><span class='line'>            <span class="n">holder</span><span class="o">.</span><span class="na">text</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">DATA</span><span class="o">[</span><span class="n">position</span><span class="o">]);</span>
-</span><span class='line'>            <span class="n">holder</span><span class="o">.</span><span class="na">icon</span><span class="o">.</span><span class="na">setImageBitmap</span><span class="o">((</span><span class="n">position</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">?</span> <span class="n">mIcon1</span> <span class="o">:</span> <span class="n">mIcon2</span><span class="o">);</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="k">return</span> <span class="n">convertView</span><span class="o">;</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kd">static</span> <span class="kd">class</span> <span class="nc">ViewHolder</span> <span class="o">{</span>
-</span><span class='line'>            <span class="n">TextView</span> <span class="n">text</span><span class="o">;</span>
-</span><span class='line'>            <span class="n">ImageView</span> <span class="n">icon</span><span class="o">;</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nd">@Override</span>
-</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">setListAdapter</span><span class="o">(</span><span class="k">new</span> <span class="n">EfficientAdapter</span><span class="o">(</span><span class="k">this</span><span class="o">));</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span><span class="o">[]</span> <span class="n">DATA</span> <span class="o">=</span> <span class="n">Cheeses</span><span class="o">.</span><span class="na">sCheeseStrings</span><span class="o">;</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>I&rsquo;ve highlighted the problematic line. It turns out that you have to use another overload of LayoutInflater.inflate method:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">convertView</span> <span class="o">=</span> <span class="n">mInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">list_item_icon_text</span><span class="o">,</span> <span class="n">parent</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>We set the attachToRoot to false, because we just want to properly intialize LayoutParams for the LinearLayout of the item and let the ListView to add the inflated views wherever it needs. In fact, setting it to true causes exception to be thrown from AdapterView:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">UnsupportedOperationException</span><span class="o">:</span> <span class="n">addView</span><span class="o">(</span><span class="n">View</span><span class="o">,</span> <span class="n">LayoutParams</span><span class="o">)</span> <span class="n">is</span> <span class="n">not</span> <span class="n">supported</span> <span class="n">in</span> <span class="n">AdapterView</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AdapterView</span><span class="o">.</span><span class="na">addView</span><span class="o">(</span><span class="n">AdapterView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">461</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">LayoutInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">LayoutInflater</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">416</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">LayoutInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">LayoutInflater</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">320</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">LayoutInflater</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">LayoutInflater</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">276</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">fu</span><span class="o">.</span><span class="na">InflaterBugActivity</span><span class="n">$EfficientAdapter</span><span class="o">.</span><span class="na">getView</span><span class="o">(</span><span class="n">InflaterBugActivity</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">77</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="o">.</span><span class="na">obtainView</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1430</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">makeAndAddView</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1745</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">fillDown</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">670</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">fillFromTop</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">727</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">ListView</span><span class="o">.</span><span class="na">layoutChildren</span><span class="o">(</span><span class="n">ListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1598</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">AbsListView</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">AbsListView</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1260</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">FrameLayout</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">FrameLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">338</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">LinearLayout</span><span class="o">.</span><span class="na">setChildFrame</span><span class="o">(</span><span class="n">LinearLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1254</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">LinearLayout</span><span class="o">.</span><span class="na">layoutVertical</span><span class="o">(</span><span class="n">LinearLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1130</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">LinearLayout</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">LinearLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1047</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">widget</span><span class="o">.</span><span class="na">FrameLayout</span><span class="o">.</span><span class="na">onLayout</span><span class="o">(</span><span class="n">FrameLayout</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">338</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">View</span><span class="o">.</span><span class="na">layout</span><span class="o">(</span><span class="n">View</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">7175</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">ViewRoot</span><span class="o">.</span><span class="na">performTraversals</span><span class="o">(</span><span class="n">ViewRoot</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1140</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">view</span><span class="o">.</span><span class="na">ViewRoot</span><span class="o">.</span><span class="na">handleMessage</span><span class="o">(</span><span class="n">ViewRoot</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">1859</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Handler</span><span class="o">.</span><span class="na">dispatchMessage</span><span class="o">(</span><span class="n">Handler</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">99</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Looper</span><span class="o">.</span><span class="na">loop</span><span class="o">(</span><span class="n">Looper</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">123</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">android</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">ActivityThread</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">ActivityThread</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">3683</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">reflect</span><span class="o">.</span><span class="na">Method</span><span class="o">.</span><span class="na">invokeNative</span><span class="o">(</span><span class="n">Native</span> <span class="n">Method</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">reflect</span><span class="o">.</span><span class="na">Method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">Method</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">507</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">internal</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">ZygoteInit</span><span class="n">$MethodAndArgsCaller</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">ZygoteInit</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">839</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">com</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">internal</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">ZygoteInit</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">ZygoteInit</span><span class="o">.</span><span class="na">java</span><span class="o">:</span><span class="mi">597</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">at</span> <span class="n">dalvik</span><span class="o">.</span><span class="na">system</span><span class="o">.</span><span class="na">NativeStart</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">Native</span> <span class="n">Method</span><span class="o">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Here&rsquo;s the application screenshot after the change:</p>
-
-<p><img class="center" src="/images/fixed.png"></p>
-
-<p>Ugly, but that&rsquo;s exactly what we should get after setting layout height to 150dip.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/9/">&larr; Older</a>
@@ -1146,6 +890,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/28/sethasoptionsmenu-gotcha/">setHasOptionsMenu Gotcha</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/">Preparing for Android L - Fixing SQLite Queries</a>
       </li>
     
@@ -1159,10 +907,6 @@
     
       <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
       </li>
     
   </ul>

@@ -9,7 +9,7 @@
   <meta name="author" content="Jerzy Chalupski">
 
   
-  <meta name="description" content="Last weekend I have found some time again to work on the MicroOrm. Basically it&rsquo;s something like google-gson for Android database types &ndash &hellip;">
+  <meta name="description" content="About a year ago I have wrote about a certain SQLite gotcha on Android. tl;dr: in some cases when you create a view with unions, SQLite cannot &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,81 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/06/06/sqlite-type-affinity-strikes-back/">SQLite Type Affinity Strikes Back</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-06T22:22:00+02:00" pubdate data-updated="true">Jun 6<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/06/06/sqlite-type-affinity-strikes-back/#disqus_thread"
+             data-disqus-identifier="http://chalup.github.io/blog/2013/06/06/sqlite-type-affinity-strikes-back/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>About a year ago I have wrote about a certain <a href="/blog/2012/06/22/sqlite-unions-gotcha">SQLite gotcha on Android</a>. <strong>tl;dr</strong>: in some cases when you create a view with unions, SQLite cannot determine a type of the column, and since Android binds all selection arguments as strings, SQLite ends up comparing X with &ldquo;X&rdquo;, concludes those are not the same thing and returns fewer rows than you&rsquo;d expect.</p>
+
+<p>Recently the same problem reared it&rsquo;s ugly head. It turns out that it&rsquo;s very easy to create in a view a column with undefined type. It might happen in case of joins, using aggregation functions, subqueries, etc. pretty much anything more fancy than simple select. Therefore I recommend checking the columns type using the <code>pragma table_info(table)</code> command for <strong>every</strong> view:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sqlite&gt; .head on
+</span><span class='line'>sqlite&gt; .mode column
+</span><span class='line'>sqlite&gt; pragma table_info (v);
+</span><span class='line'>
+</span><span class='line'>cid         name        type        notnull     dflt_value  pk
+</span><span class='line'>----------  ----------  ----------  ----------  ----------  ----------
+</span><span class='line'>0           test                    0                       0</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If the type of a column is undefined and you need to use this column in your selection arguments, you should add the UNION with an empty row with well defined column types:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sqlite&gt; CREATE TABLE types (i INTEGER, t TEXT);
+</span><span class='line'>sqlite&gt; CREATE VIEW vfix AS SELECT i AS test FROM types WHERE 1=0 UNION SELECT * FROM v;
+</span><span class='line'>sqlite&gt; pragma table_info (vfix);
+</span><span class='line'>
+</span><span class='line'>cid         name        type        notnull     dflt_value  pk
+</span><span class='line'>----------  ----------  ----------  ----------  ----------  ----------
+</span><span class='line'>0           test        INTEGER     0                       0</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -924,56 +999,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/02/20/guava-on-android/">Guava on Android</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-02-20T22:15:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/02/20/guava-on-android/#disqus_thread"
-             data-disqus-identifier="http://chalup.github.io/blog/2013/02/20/guava-on-android/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In November 2012, the revision 21 of Android SDK Tools was released and one of the items in the <a href="http://developer.android.com/tools/sdk/tools-notes.html">release notes</a> made me a very happy panda:</p>
-
-<blockquote><p>Improved the build time by pre-dexing libraries (both JAR files and library projects).</p></blockquote>
-
-
-<p>This change solved the most problematic issue with <a href="http://code.google.com/p/guava-libraries/">Guava</a> and other large libraries &ndash; build time. Before this change Android tools executed dex for your code and every referenced library every time you wanted to launch the application, which in case of Guava took ages and required increasing heap space for Java VM, because the Eclipse closed with &ldquo;Unable to execute dex: Java heap space&rdquo; error.</p>
-
-<p>IntelliJ users could work around this issue by enabling Proguard for debug builds, which could reduce the size of dex input by removing unused code. Eclipse users might try generalizing the <a href="http://code.google.com/p/treeshaker/">Treeshaker plugin</a>, which does pretty much the same inside a custom compilation step added before dexing. But there was no straight way to use Guava and keep the build times on the sane level.</p>
-
-<p>Now the first build still takes ages, and the Eclipse still crashes if you don&rsquo;t bump its heap space, but for all consecutive builds everything works blazing fast. Goodbye hand rolled stuff, welcome <a href="http://code.google.com/p/guava-libraries/wiki/ImmutableCollectionsExplained">immutable collections</a>, <a href="http://code.google.com/p/guava-libraries/wiki/OrderingExplained">fluent comparators</a>, <a href="http://code.google.com/p/guava-libraries/wiki/CommonObjectUtilitiesExplained#hashCode">hashCode helper</a> and tons of <a href="http://code.google.com/p/guava-libraries/wiki/GuavaExplained">other goodness</a>. I keep finding in our code base whole chunks of code which can be replaced with one or two lines utilizing Guava features. I plan to post a summary of those changes.</p>
-
-<p>Final note: if you are using Proguard, remember to add Guava specific entries <a href="http://code.google.com/p/guava-libraries/wiki/UsingProGuardWithGuava">mentioned in the documentation</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/6/">&larr; Older</a>
@@ -991,6 +1016,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/09/28/sethasoptionsmenu-gotcha/">setHasOptionsMenu Gotcha</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/09/26/preparing-for-android-l-fixing-sqlite-queries/">Preparing for Android L - Fixing SQLite Queries</a>
       </li>
     
@@ -1004,10 +1033,6 @@
     
       <li class="post">
         <a href="/blog/2014/09/04/my-shortest-lived-project-ever/">My Shortest-lived Project Ever</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/07/03/android-recent-apps-list-and-intent-extras/">Android Recent Apps List and Intent Extras</a>
       </li>
     
   </ul>

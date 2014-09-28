@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Android | Porcupine Programmer]]></title>
   <link href="http://chalup.github.io/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://chalup.github.io/"/>
-  <updated>2014-09-26T20:38:06+02:00</updated>
+  <updated>2014-09-28T23:58:39+02:00</updated>
   <id>http://chalup.github.io/</id>
   <author>
     <name><![CDATA[Jerzy Chalupski]]></name>
@@ -12,6 +12,21 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[setHasOptionsMenu Gotcha]]></title>
+    <link href="http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha/"/>
+    <updated>2014-09-28T23:31:57+02:00</updated>
+    <id>http://chalup.github.io/blog/2014/09/28/sethasoptionsmenu-gotcha</id>
+    <content type="html"><![CDATA[<p>When your <code>Fragment</code> puts some actions in the action bar, it should call <code>setHasOptionsMenu(true)</code>. And where should you make this call? You probably follow samples and call it from <code>onCreate()</code> callback.</p>
+
+<p>Later you decide to hide one of the actions under certain circumstances. The way do to this is to implement <code>onPrepareOptionsMenu(Menu)</code> callback and alter the <code>Menu</code> object passed as an argument.</p>
+
+<p>If you are not careful, depending on the visibility precondition you apply, you might have implemented instant crash on OS versions before Jelly Bean. On API level 17, the <code>onPrepareOptionsMenu</code> is called from runnable posted on some handler; on older versions the menu callbacks are called synchronously, so they are really called from <code>onCreate()</code>, which means that your Fragment is not yet fully initialized.</p>
+
+<p>What&rsquo;s the takeaway? Always test your app on wide variety of devices and OSes before the release and do not trust official Android samples.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Preparing for Android L - Fixing SQLite Queries]]></title>
@@ -200,27 +215,6 @@ static {
 <p>It&rsquo;s not as flexible solution as my <a href="https://github.com/chalup/proguard-please">proguard-please</a> plugin, but it&rsquo;s much simpler, much easier to contribute to and the net effect is the same. In this light I chose to put my project on hold and redirect developers to squadleader page.</p>
 
 <p>Despite of that, I&rsquo;m glad I worked on this project. I&rsquo;m very excited by the fact that you can easily build an useful tool that&rsquo;s incredibly easy to use. Using gradle for a new build system was a great call.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Android Recent Apps List and Intent Extras]]></title>
-    <link href="http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras/"/>
-    <updated>2014-07-03T22:14:06+02:00</updated>
-    <id>http://chalup.github.io/blog/2014/07/03/android-recent-apps-list-and-intent-extras</id>
-    <content type="html"><![CDATA[<p>If you&rsquo;re programming for the same platform for some time, you have probably developed some habits. You do some stuff in a particular way, because you&rsquo;ve always done it this way. It might be a good thing if you know all pros and cons of your solution, because your code will be consistent and you don&rsquo;t waste time rethinking the same things over and over again. On the other hand it is a good practice to question this established ways of doing things from time to time &ndash; maybe you&rsquo;ve missed something when you thought about this last time or some of your arguments are no longer valid.</p>
-
-<p>For me one of such things was the <code>Serializable</code> vs. <code>Parcelable</code> conundrum. A long time ago I read somewhere that <code>Serializable</code> is much slower than <code>Parcelable</code> and it shouldn&rsquo;t be used for large objects, but it&rsquo;s fast enough for passing simple POJOs between <code>Fragments</code> and <code>Activities</code> with <code>Intent</code> or arguments <code>Bundle</code>. While this is still a generally good advice, I realized I don&rsquo;t know how much faster the <code>Parcelable</code> is. Are we looking at 10µs vs. 15µs or 10µs vs. 10ms?</p>
-
-<p>I&rsquo;m too lazy to write a benchmark myself, but I found a <a href="http://www.developerphil.com/parcelable-vs-serializable/">decent article</a>. Tl;dr: on modern hardware (Nexus 4) serializing a simple data structure takes about 2ms and using <code>Parcelable</code> is about 10 times faster.</p>
-
-<p>Another hit on Google was a <a href="http://www.reddit.com/r/androiddev/comments/1daiib/parcelable_vs_serializable/">reddit thread</a> for this article. I found there an interesting comment by <a href="https://plus.google.com/u/1/+JakeWharton">+Jake Wharton</a>:</p>
-
-<p><blockquote><p>Serializable is like a tattoo. You are committing to a class name, package, and field structure forever. The only way to &ldquo;remove&rdquo; it is epic deserialization hacks.</p></p><p><p>Yes using it in an Intent isn&rsquo;t much harm, but if you use serialization there&rsquo;s a potential for crashing your app. They upgrade, hit your icon on the launcher, and Android tries to restore the previous Intent for where they were at in your app. You changed the object so deserialization fails and the app crashes. Not a good upgrade experience. Granted this is rare, but if you ever persist something to disk like this it can leave you in an extremely bad place.</p></blockquote></p>
-
-<p>There are two inaccuracies in the comment above. First, the problem will happen only if the app is started from the recet apps list, not from the launcher icon. Second, the problem is not limited to <code>Serializable</code> extras: <code>Parcelable</code> might read the byte stream originally written from a different structure (in this situation crash is a best case scenario), some extras might be missing, some might hold wrong type of data.</p>
-
-<p>Can you prevent this issue? I don&rsquo;t think so, at least not without some sophisticated validation of Intent extras. Considering that this issue is very rare and it goes away after starting the faulty app from somewhere else than recent apps list I don&rsquo;t think you should spend any time trying to fix it, but it&rsquo;s good to know about it, as it might explain some WTF crash reports coming your way.</p>
 ]]></content>
   </entry>
   
