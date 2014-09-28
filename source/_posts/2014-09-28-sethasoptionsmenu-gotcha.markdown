@@ -13,4 +13,4 @@ Later you decide to hide one of the actions under certain circumstances. The way
 
 If you are not careful, depending on the visibility precondition you apply, you might have implemented instant crash on OS versions before Jelly Bean. On API level 17, the `onPrepareOptionsMenu` is called from runnable posted on some handler; on older versions the menu callbacks are called synchronously, so they are really called from `onCreate()`, which means that your Fragment is not yet fully initialized.
 
-What's the takeaway? Always test your app on wide variety of devices and OSes before the release and do not trust official Android samples.
+What's the takeaway? Always test your app on wide variety of devices and OSes before the release, do not trust official Android samples, and call `setHasOptionsMenu(true)` at the end of `onActivityCreated()`.
